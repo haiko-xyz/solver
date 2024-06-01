@@ -13,11 +13,7 @@ pub trait ISolver<TContractState> {
     // # Returns
     // * `amount_in` - amount in
     // * `amount_out` - amount out
-    fn quote(
-        self: @TContractState, 
-        market_id: felt252,
-        swap_params: SwapParams,
-    ) -> (u256, u256);
+    fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
 
     // Swap through a market.
     // 
@@ -28,9 +24,5 @@ pub trait ISolver<TContractState> {
     // # Returns
     // * `amount_in` - amount in
     // * `amount_out` - amount out
-    fn swap(
-        ref self: TContractState, 
-        market_id: felt252,
-        swap_params: SwapParams,
-    ) -> (u256, u256);
+    fn swap(ref self: TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
 }

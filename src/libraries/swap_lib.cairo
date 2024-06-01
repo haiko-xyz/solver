@@ -3,11 +3,8 @@ use core::cmp::{min, max};
 use core::integer::{u512, u256_wide_mul};
 
 // Haiko imports.
-use haiko_lib::id;
-use haiko_lib::math::{math, price_math, liquidity_math};
+use haiko_lib::math::{math, liquidity_math};
 use haiko_lib::constants::{ONE, MAX_SQRT_PRICE};
-use haiko_lib::interfaces::IMarketManager::IMarketManager;
-use haiko_lib::types::core::MarketState;
 use haiko_lib::types::i128::I128Trait;
 
 // Compute amounts swapped and new price after swapping between two prices.

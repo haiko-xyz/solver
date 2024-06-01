@@ -1,6 +1,6 @@
 // Core lib imports.
 use starknet::ContractAddress;
-use starknet::syscalls::{replace_class_syscall, deploy_syscall, call_contract_syscall};
+use starknet::syscalls::call_contract_syscall;
 
 // Fetch the symbol of an ERC20 token.
 // Older ERC20 tokens use `felt252` symbols, whereas newer ones use `ByteArray`.

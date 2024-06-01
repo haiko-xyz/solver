@@ -6,10 +6,6 @@ use haiko_solver_replicating::types::replicating::{
     MarketParams, MarketState, PackedMarketParams, PackedMarketState
 };
 
-// Haiko imports.
-use haiko_lib::constants::MAX_FEE_FACTOR;
-use haiko_lib::types::core::PositionInfo;
-
 ////////////////////////////////
 // CONSTANTS
 ////////////////////////////////
@@ -68,7 +64,6 @@ pub(crate) impl MarketParamsStorePacking of StorePacking<MarketParams, PackedMar
 }
 
 pub(crate) impl MarketStateStorePacking of StorePacking<MarketState, PackedMarketState> {
-    // Pack strategy state.
     fn pack(value: MarketState) -> PackedMarketState {
         let slab0: felt252 = value.base_reserves.try_into().unwrap();
         let slab1: felt252 = value.quote_reserves.try_into().unwrap();
@@ -77,7 +72,6 @@ pub(crate) impl MarketStateStorePacking of StorePacking<MarketState, PackedMarke
         PackedMarketState { slab0, slab1, slab2, slab3 }
     }
 
-    // Unpack strategy state.
     fn unpack(value: PackedMarketState) -> MarketState {
         MarketState {
             base_reserves: value.slab0.try_into().unwrap(),

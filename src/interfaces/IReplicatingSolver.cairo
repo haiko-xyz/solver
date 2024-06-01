@@ -9,22 +9,22 @@ use haiko_solver_replicating::types::replicating::{MarketParams, MarketState, Ma
 pub trait IReplicatingSolver<TContractState> {
     // Market id
     fn market_id(self: @TContractState, market_info: MarketInfo) -> felt252;
-    
+
     // Immutable market information
     fn market_info(self: @TContractState, market_id: felt252) -> MarketInfo;
 
     // Configurable market parameters
     fn market_params(self: @TContractState, market_id: felt252) -> MarketParams;
-    
+
     // Market state
     fn market_state(self: @TContractState, market_id: felt252) -> MarketState;
-    
+
     // Pragma oracle contract address
     fn oracle(self: @TContractState) -> ContractAddress;
 
     // ERC20 vault token class hash
-    fn vault_token_class(self: @TContractState) -> ClassHash; 
-    
+    fn vault_token_class(self: @TContractState) -> ClassHash;
+
     // Contract owner
     fn owner(self: @TContractState) -> ContractAddress;
 
@@ -54,19 +54,16 @@ pub trait IReplicatingSolver<TContractState> {
     // * `quote_amount` - total quote tokens owned
     fn get_balances(self: @TContractState, market_id: felt252) -> (u256, u256);
 
-    // Get total token balances for a list of markets.
+    // Get token amounts held in reserve for a list of markets.
     // 
     // # Arguments
     // * `market_ids` - list of market ids
     //
     // # Returns
-    // * `base_amount` - base amount held in strategy market
-    // * `quote_amount` - quote amount held in strategy market
-    fn get_balances_array(
-        self: @TContractState, market_ids: Span<felt252>
-    ) -> Span<(u256, u256)>;
+    // * `balances` - list of base and quote token amounts
+    fn get_balances_array(self: @TContractState, market_ids: Span<felt252>) -> Span<(u256, u256)>;
 
-    // Get user's share of amounts held in market, for a list of users.
+    // Get token amounts and shares held in solver market for a list of users.
     // 
     // # Arguments
     // * `users` - list of user address
@@ -76,7 +73,7 @@ pub trait IReplicatingSolver<TContractState> {
     // * `base_amount` - base tokens owned by user
     // * `quote_amount` - quote tokens owned by user
     // * `user_shares` - user shares
-    // * `total_shares` - total shares of market
+    // * `total_shares` - total shares in market
     fn get_user_balances(
         self: @TContractState, users: Span<ContractAddress>, market_ids: Span<felt252>
     ) -> Span<(u256, u256, u256, u256)>;
@@ -89,17 +86,17 @@ pub trait IReplicatingSolver<TContractState> {
     // * `params` - solver params
     fn add_market(ref self: TContractState, market_info: MarketInfo, params: MarketParams);
 
-    // Change the parameters of the strategy.
-    // Only callable by strategy owner.
+    // Change parameters of the solver market.
+    // Only callable by market owner.
     //
     // # Params
     // * `market_id` - market id
-    // * `params` - solver params
+    // * `params` - market params
     fn set_params(ref self: TContractState, market_id: felt252, params: MarketParams);
 
     // Deposit initial liquidity to market.
-    // Should be used whenever total deposits in a strategy are zero. This can happen both
-    // when a solver is first initialised, or subsequently whenever all deposits are withdrawn.
+    // Should be used whenever total deposits in a market are zero. This can happen both
+    // when a market is first initialised, or subsequently whenever all deposits are withdrawn.
     //
     // # Arguments
     // * `market_id` - market id
@@ -130,7 +127,7 @@ pub trait IReplicatingSolver<TContractState> {
         referrer: ContractAddress
     ) -> u256;
 
-    // Deposit liquidity to strategy.
+    // Deposit liquidity to market.
     // For public markets, this will take the lower of requested and available balances, 
     // and refund any excess tokens remaining after coercing to the prevailing vault token 
     // ratio. For private markets, will deposit the exact requested amounts.
@@ -141,8 +138,8 @@ pub trait IReplicatingSolver<TContractState> {
     // * `quote_requested` - quote asset requested to be deposited
     //
     // # Returns
-    // * `base_amount` - base asset deposited
-    // * `quote_amount` - quote asset deposited
+    // * `base_deposit` - base asset deposited
+    // * `quote_deposit` - quote asset deposited
     // * `shares` - pool shares minted
     fn deposit(
         ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
@@ -168,8 +165,8 @@ pub trait IReplicatingSolver<TContractState> {
         referrer: ContractAddress
     ) -> (u256, u256, u256);
 
-    // Burn pool shares and withdraw funds from strategy.
-    // Called when vault has multiple owners.
+    // Burn pool shares and withdraw funds from market.
+    // Called for public vaults. For private vaults, use `withdraw_amount`.
     //
     // # Arguments
     // * `market_id` - market id
@@ -178,15 +175,17 @@ pub trait IReplicatingSolver<TContractState> {
     // # Returns
     // * `base_amount` - base asset withdrawn
     // * `quote_amount` - quote asset withdrawn
-    fn withdraw_at_ratio(ref self: TContractState, market_id: felt252, shares: u256) -> (u256, u256);
+    fn withdraw_at_ratio(
+        ref self: TContractState, market_id: felt252, shares: u256
+    ) -> (u256, u256);
 
-    // Withdraw funds from strategy.
-    // Allows user to withdraw a specific amount of tokens. 
+    // Withdraw exact token amounts from market.
+    // Called for private vaults. For public vaults, use `withdraw_at_ratio`.
     //
     // # Arguments
     // * `market_id` - market id
-    // * `base_amount` - amount of base asset to withdraw
-    // * `quote_amount` - amount of quote asset to withdraw
+    // * `base_amount` - base amount requested
+    // * `quote_amount` - quote amount requested
     //
     // # Returns
     // * `base_amount` - base asset withdrawn
@@ -225,7 +224,7 @@ pub trait IReplicatingSolver<TContractState> {
     //
     // # Arguments
     // * `new_class_hash` - new class hash of vault token
-    fn change_vault_token_class(ref self: TContractState, new_class_hash: ClassHash); 
+    fn change_vault_token_class(ref self: TContractState, new_class_hash: ClassHash);
 
     // Request transfer ownership of the contract.
     // Part 1 of 2 step process to transfer ownership.
@@ -238,18 +237,18 @@ pub trait IReplicatingSolver<TContractState> {
     // Part 2 of 2 step process to transfer ownership.
     fn accept_owner(ref self: TContractState);
 
-    // Pause strategy. 
-    // Only callable by strategy owner. 
+    // Pause solver market. 
+    // Only callable by market owner. 
     // 
     // # Arguments
-    // * `market_id` - market id of strategy
+    // * `market_id` - market id
     fn pause(ref self: TContractState, market_id: felt252);
 
-    // Unpause strategy.
-    // Only callable by strategy owner.
+    // Unpause solver market.
+    // Only callable by market owner.
     //
     // # Arguments
-    // * `market_id` - market id of strategy
+    // * `market_id` - market id
     fn unpause(ref self: TContractState, market_id: felt252);
 
     // Upgrade contract class.

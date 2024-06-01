@@ -4,7 +4,7 @@ use core::cmp::{min, max};
 // Local imports.
 use haiko_solver_replicating::libraries::swap_lib;
 use haiko_solver_replicating::types::{
-    replicating::{MarketState, MarketParams, PositionInfo}, solver::SwapParams
+    replicating::{MarketState, MarketParams, PositionInfo}, core::SwapParams
 };
 
 // Haiko imports.
@@ -52,24 +52,25 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
 //
 // # Arguments
 // `is_bid` - whether to calculate bid or ask position
-// `market_params` - market parameters  
-// `oracle_price` - current oracle price (base 10e28)
+// `min_spread` - minimum spread to apply
 // `delta` - inventory delta (+ve if ask spread, -ve if bid spread)
+// `range` - position range
+// `oracle_price` - current oracle price (base 10e28)
 // `amount` - token amount in reserve
 // 
 // # Returns
 // `position` - virtual liquidity position to execute swap over
 pub fn get_virtual_position(
-    is_bid: bool, market_params: MarketParams, oracle_price: u256, delta: i32, amount: u256,
+    is_bid: bool, min_spread: u32, delta: i32, range: u32, oracle_price: u256, amount: u256,
 ) -> PositionInfo {
     // Start with the oracle price, and convert it to limits.
     let mut limit = price_math::price_to_limit(oracle_price, 1, !is_bid);
 
     // Apply minimum spread.
     if is_bid {
-        limit -= market_params.min_spread;
+        limit -= min_spread;
     } else {
-        limit += market_params.min_spread;
+        limit += min_spread;
     }
 
     // Apply delta.
@@ -82,13 +83,13 @@ pub fn get_virtual_position(
     // Calculate position range.
     let (lower_sqrt_price, upper_sqrt_price) = if is_bid {
         (
-            price_math::limit_to_sqrt_price(limit - market_params.range, 1),
+            price_math::limit_to_sqrt_price(limit - range, 1),
             price_math::limit_to_sqrt_price(limit, 1)
         )
     } else {
         (
             price_math::limit_to_sqrt_price(limit, 1),
-            price_math::limit_to_sqrt_price(limit + market_params.range, 1)
+            price_math::limit_to_sqrt_price(limit + range, 1)
         )
     };
 
@@ -135,7 +136,8 @@ pub fn get_delta(max_delta: u32, base_reserves: u256, quote_reserves: u256, pric
 pub fn get_skew(base_reserves: u256, quote_reserves: u256, price: u256,) -> (u256, bool) {
     let base_in_quote = math::mul_div(base_reserves, price, ONE, false);
     let diff = max(base_in_quote, quote_reserves) - min(base_in_quote, quote_reserves);
-    let skew = math::mul_div(diff, DENOMINATOR, base_in_quote + quote_reserves, false);
+    let sum = base_in_quote + quote_reserves;
+    let skew = math::mul_div(DENOMINATOR, diff, sum, false);
     let is_skew_bid = base_in_quote < quote_reserves;
     (skew, is_skew_bid)
 }

@@ -23,7 +23,7 @@ pub mod ReplicatingSolver {
         AggregationMode, DataType, SimpleDataType, PragmaPricesResponse, IOracleABIDispatcher,
         IOracleABIDispatcherTrait
     };
-    use haiko_solver_replicating::types::solver::SwapParams;
+    use haiko_solver_replicating::types::core::SwapParams;
     use haiko_solver_replicating::types::replicating::{MarketInfo, MarketParams, MarketState};
 
     // Haiko imports.
@@ -274,9 +274,9 @@ pub mod ReplicatingSolver {
             assert(is_valid, 'InvalidOraclePrice');
 
             // Calculate swap amounts.
-            let market_params = self.market_params.read(market_id);
+            let params = self.market_params.read(market_id);
             let delta = spread_math::get_delta(
-                market_params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
+                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
             );
             let reserves = if swap_params.is_buy {
                 state.quote_reserves
@@ -284,7 +284,7 @@ pub mod ReplicatingSolver {
                 state.base_reserves
             };
             let position = spread_math::get_virtual_position(
-                !swap_params.is_buy, market_params, oracle_price, delta, reserves
+                !swap_params.is_buy, params.min_spread, delta, params.range, oracle_price, reserves
             );
             let (amount_in, amount_out) = spread_math::get_swap_amounts(swap_params, position);
 
@@ -295,7 +295,7 @@ pub mod ReplicatingSolver {
                 (state.base_reserves - amount_in, state.quote_reserves + amount_out)
             };
             let (skew, _) = spread_math::get_skew(base_reserves, quote_reserves, oracle_price);
-            assert(skew <= market_params.max_skew.into(), 'MaxSkew');
+            assert(skew <= params.max_skew.into(), 'MaxSkew');
 
             // Return amounts.
             (amount_in, amount_out)
@@ -636,17 +636,17 @@ pub mod ReplicatingSolver {
             self.market_state.write(market_id, state);
 
             // Calculate liquidity.
-            let market_params = self.market_params.read(market_id);
+            let params = self.market_params.read(market_id);
             let (oracle_price, is_valid) = self.get_oracle_price(market_id);
             assert(is_valid, 'InvalidOraclePrice');
             let delta = spread_math::get_delta(
-                market_params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
+                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
             );
             let bid = spread_math::get_virtual_position(
-                true, market_params, oracle_price, delta, state.quote_reserves
+                true, params.min_spread, delta, params.range, oracle_price, state.quote_reserves
             );
             let ask = spread_math::get_virtual_position(
-                false, market_params, oracle_price, delta, state.base_reserves
+                false, params.min_spread, delta, params.range, oracle_price, state.base_reserves
             );
             assert(bid.liquidity != 0 || ask.liquidity != 0, 'LiqZero');
 

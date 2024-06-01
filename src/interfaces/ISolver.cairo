@@ -1,6 +1,6 @@
 // TODO: move this to a central repo
 
-use haiko_solver_replicating::types::solver::SwapParams;
+use haiko_solver_replicating::types::core::SwapParams;
 
 #[starknet::interface]
 pub trait ISolver<TContractState> {

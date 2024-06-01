@@ -3,7 +3,9 @@ use starknet::ContractAddress;
 use starknet::class_hash::ClassHash;
 
 // Local imports.
-use haiko_solver_replicating::types::replicating::{MarketParams, MarketState, MarketInfo};
+use haiko_solver_replicating::types::replicating::{
+    MarketParams, MarketState, MarketInfo, PositionInfo
+};
 
 #[starknet::interface]
 pub trait IReplicatingSolver<TContractState> {
@@ -77,6 +79,18 @@ pub trait IReplicatingSolver<TContractState> {
     fn get_user_balances(
         self: @TContractState, users: Span<ContractAddress>, market_ids: Span<felt252>
     ) -> Span<(u256, u256, u256, u256)>;
+
+    // Get virtual liquidity positions against which swaps are executed.
+    // 
+    // # Arguments
+    // * `market_id` - market id
+    //
+    // # Returns
+    // * `bid` - bid position
+    // * `ask` - ask position
+    fn get_virtual_positions(
+        self: @TContractState, market_id: felt252
+    ) -> (PositionInfo, PositionInfo);
 
     // Initialise market for solver.
     // At the moment, only callable by contract owner to prevent unwanted claiming of markets. 

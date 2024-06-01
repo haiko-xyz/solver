@@ -24,7 +24,9 @@ pub mod ReplicatingSolver {
         IOracleABIDispatcherTrait
     };
     use haiko_solver_replicating::types::core::SwapParams;
-    use haiko_solver_replicating::types::replicating::{MarketInfo, MarketParams, MarketState};
+    use haiko_solver_replicating::types::replicating::{
+        MarketInfo, MarketParams, MarketState, PositionInfo
+    };
 
     // Haiko imports.
     use haiko_lib::{math::{math, fee_math}, constants::{ONE, LOG2_1_00001, MAX_FEE_RATE}};
@@ -524,6 +526,33 @@ pub mod ReplicatingSolver {
                 i += 1;
             };
             balances.span()
+        }
+
+        // Get virtual liquidity positions against which swaps are executed.
+        // 
+        // # Arguments
+        // * `market_id` - market id
+        //
+        // # Returns
+        // * `bid` - bid position
+        // * `ask` - ask position
+        fn get_virtual_positions(
+            self: @ContractState, market_id: felt252
+        ) -> (PositionInfo, PositionInfo) {
+            let state = self.market_state.read(market_id);
+            let params = self.market_params.read(market_id);
+            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
+            assert(is_valid, 'InvalidOraclePrice');
+            let delta = spread_math::get_delta(
+                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
+            );
+            let bid = spread_math::get_virtual_position(
+                true, params.min_spread, delta, params.range, oracle_price, state.quote_reserves
+            );
+            let ask = spread_math::get_virtual_position(
+                false, params.min_spread, delta, params.range, oracle_price, state.base_reserves
+            );
+            (bid, ask)
         }
 
         // Add market to solver.

@@ -589,7 +589,12 @@ pub mod ReplicatingSolver {
         // # Arguments
         // * `market_info` - market info
         // * `params` - solver params
-        fn create_market(ref self: ContractState, market_info: MarketInfo, params: MarketParams) {
+        //
+        // # Returns
+        // * `market_id` - market id
+        fn create_market(
+            ref self: ContractState, market_info: MarketInfo, params: MarketParams
+        ) -> felt252 {
             // Only callable by contract owner.
             self.assert_owner();
 
@@ -648,6 +653,9 @@ pub mod ReplicatingSolver {
                         }
                     )
                 );
+
+            // Return market id
+            market_id
         }
 
         // Deposit initial liquidity to market.

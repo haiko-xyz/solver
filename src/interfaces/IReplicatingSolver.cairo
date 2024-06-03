@@ -76,7 +76,7 @@ pub trait IReplicatingSolver<TContractState> {
     // * `quote_amount` - quote tokens owned by user
     // * `user_shares` - user shares
     // * `total_shares` - total shares in market
-    fn get_user_balances(
+    fn get_user_balances_array(
         self: @TContractState, users: Span<ContractAddress>, market_ids: Span<felt252>
     ) -> Span<(u256, u256, u256, u256)>;
 
@@ -92,13 +92,14 @@ pub trait IReplicatingSolver<TContractState> {
         self: @TContractState, market_id: felt252
     ) -> (PositionInfo, PositionInfo);
 
-    // Initialise market for solver.
+    // Create market for solver.
     // At the moment, only callable by contract owner to prevent unwanted claiming of markets. 
+    // Each market must be unique in `market_info`.
     //
     // # Arguments
     // * `market_info` - market info
     // * `params` - solver params
-    fn add_market(ref self: TContractState, market_info: MarketInfo, params: MarketParams);
+    fn create_market(ref self: TContractState, market_info: MarketInfo, params: MarketParams);
 
     // Change parameters of the solver market.
     // Only callable by market owner.

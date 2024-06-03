@@ -75,7 +75,7 @@ pub mod ReplicatingSolver {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub(crate) enum Event {
-        AddMarket: AddMarket,
+        CreateMarket: CreateMarket,
         Deposit: Deposit,
         Withdraw: Withdraw,
         Swap: Swap,
@@ -93,7 +93,7 @@ pub mod ReplicatingSolver {
     }
 
     #[derive(Drop, starknet::Event)]
-    pub(crate) struct AddMarket {
+    pub(crate) struct CreateMarket {
         #[key]
         pub market_id: felt252,
         pub base_token: ContractAddress,
@@ -319,6 +319,17 @@ pub mod ReplicatingSolver {
             let (amount_in, amount_out) = self.quote(market_id, swap_params);
             assert(amount_in != 0 && amount_out != 0, 'AmountsZero');
 
+            // Check against threshold amount.
+            if swap_params.threshold_amount.is_some() {
+                let threshold_amount_val = swap_params.threshold_amount.unwrap();
+                if swap_params.exact_input && (amount_out < threshold_amount_val) {
+                    panic(array!['ThresholdAmount', amount_out.low.into(), amount_out.high.into()]);
+                }
+                if !swap_params.exact_input && (amount_in > threshold_amount_val) {
+                    panic(array!['ThresholdAmount', amount_in.low.into(), amount_in.high.into()]);
+                }
+            }
+
             // Transfer tokens.
             let market_info = self.market_info.read(market_id);
             let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
@@ -425,7 +436,7 @@ pub mod ReplicatingSolver {
             // Validate number of sources and age of oracle price.
             let now = get_block_timestamp();
             let is_valid = (output.num_sources_aggregated >= params.min_sources)
-                && (output.last_updated_timestamp + params.max_age >= now);
+                && (params.max_age == 0 || output.last_updated_timestamp + params.max_age >= now);
 
             // Calculate and return scaled price. We want to return the price base 1e28,
             // but we must also scale it by the number of decimals in the oracle price and
@@ -489,7 +500,7 @@ pub mod ReplicatingSolver {
         // * `quote_amount` - quote tokens owned by user
         // * `user_shares` - user shares
         // * `total_shares` - total shares in market
-        fn get_user_balances(
+        fn get_user_balances_array(
             self: @ContractState, users: Span<ContractAddress>, market_ids: Span<felt252>
         ) -> Span<(u256, u256, u256, u256)> {
             // Check users and market ids of equal length.
@@ -555,13 +566,14 @@ pub mod ReplicatingSolver {
             (bid, ask)
         }
 
-        // Add market to solver.
+        // Create market for solver.
         // At the moment, only callable by contract owner to prevent unwanted claiming of markets. 
+        // Each market must be unique in `market_info`.
         //
         // # Arguments
         // * `market_info` - market info
         // * `params` - solver params
-        fn add_market(ref self: ContractState, market_info: MarketInfo, params: MarketParams) {
+        fn create_market(ref self: ContractState, market_info: MarketInfo, params: MarketParams) {
             // Only callable by contract owner.
             self.assert_owner();
 
@@ -576,8 +588,6 @@ pub mod ReplicatingSolver {
             assert(market_info.base_token != contract_address_const::<0x0>(), 'BaseTokenNull');
             assert(market_info.quote_token != contract_address_const::<0x0>(), 'QuoteTokenNull');
             assert(params.range != 0, 'RangeZero');
-            assert(params.min_sources != 0, 'MinSourcesZero');
-            assert(params.max_age != 0, 'MaxAgeZero');
             assert(params.base_currency_id != 0, 'BaseIdNull');
             assert(params.quote_currency_id != 0, 'QuoteIdNull');
 
@@ -596,8 +606,8 @@ pub mod ReplicatingSolver {
             // Emit events.
             self
                 .emit(
-                    Event::AddMarket(
-                        AddMarket {
+                    Event::CreateMarket(
+                        CreateMarket {
                             market_id,
                             base_token: market_info.base_token,
                             quote_token: market_info.quote_token,

@@ -1,13 +1,13 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-pub trait IUpgradedReplicatingStrategy<TContractState> {
+pub trait IUpgradedReplicatingSolver<TContractState> {
     fn foo(self: @TContractState) -> u32;
 }
 
 #[starknet::contract]
-pub mod UpgradedReplicatingStrategy {
-    use super::IUpgradedReplicatingStrategy;
+pub mod UpgradedReplicatingSolver {
+    use super::IUpgradedReplicatingSolver;
 
     ////////////////////////////////
     // STORAGE
@@ -23,7 +23,7 @@ pub mod UpgradedReplicatingStrategy {
     ////////////////////////////////
 
     #[abi(embed_v0)]
-    impl UpgradedReplicatingStrategy of IUpgradedReplicatingStrategy<ContractState> {
+    impl UpgradedReplicatingSolver of IUpgradedReplicatingSolver<ContractState> {
         ////////////////////////////////
         // VIEW FUNCTIONS
         ////////////////////////////////

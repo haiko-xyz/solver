@@ -25,8 +25,8 @@ pub mod VaultToken {
         erc20: ERC20Component::Storage,
         // The decimals value is stored locally
         decimals: u8,
-        // Solver contract address
-        solver: ContractAddress
+        // Owner contract address
+        owner: ContractAddress
     }
 
     #[event]
@@ -42,12 +42,12 @@ pub mod VaultToken {
         name: felt252,
         symbol: felt252,
         decimals: u8,
-        solver: ContractAddress,
+        owner: ContractAddress,
     ) {
         // Call the internal function that writes decimals to storage
         self.set_decimals(decimals);
         self.erc20.initializer(name, symbol);
-        self.solver.write(solver);
+        self.owner.write(owner);
     }
 
     #[abi(embed_v0)]
@@ -67,17 +67,17 @@ pub mod VaultToken {
 
     #[abi(embed_v0)]
     impl IVaultTokenImpl of IVaultToken<ContractState> {
-        fn solver(self: @ContractState) -> ContractAddress {
-            self.solver.read()
+        fn owner(self: @ContractState) -> ContractAddress {
+            self.owner.read()
         }
 
         fn mint(ref self: ContractState, account: ContractAddress, amount: u256) {
-            self.assert_solver();
+            self.assert_owner();
             self.erc20._mint(account, amount);
         }
 
         fn burn(ref self: ContractState, account: ContractAddress, amount: u256) {
-            self.assert_solver();
+            self.assert_owner();
             self.erc20._burn(account, amount);
         }
     }
@@ -89,8 +89,8 @@ pub mod VaultToken {
             self.decimals.write(decimals);
         }
 
-        fn assert_solver(ref self: ContractState) {
-            assert(get_caller_address() == self.solver.read(), 'OnlySolver');
+        fn assert_owner(ref self: ContractState) {
+            assert(get_caller_address() == self.owner.read(), 'OnlyOwner');
         }
     }
 }

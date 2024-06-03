@@ -33,10 +33,23 @@ pub const DENOMINATOR: u256 = 10000;
 // `amount_out` - amount swapped out
 pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u256, u256) {
     // Define start and target prices based on swap direction.
-    let (start_sqrt_price, target_sqrt_price) = if swap_params.is_buy {
-        (position.lower_sqrt_price, position.upper_sqrt_price)
+    let start_sqrt_price = if swap_params.is_buy {
+        position.lower_sqrt_price
     } else {
-        (position.upper_sqrt_price, position.lower_sqrt_price)
+        position.upper_sqrt_price
+    };
+    let target_sqrt_price = if swap_params.is_buy {
+        if swap_params.threshold_sqrt_price.is_some() {
+            min(position.upper_sqrt_price, swap_params.threshold_sqrt_price.unwrap())
+        } else {
+            position.upper_sqrt_price
+        }
+    } else {
+        if swap_params.threshold_sqrt_price.is_some() {
+            max(position.lower_sqrt_price, swap_params.threshold_sqrt_price.unwrap())
+        } else {
+            position.lower_sqrt_price
+        }
     };
     // Compute swap amounts.
     swap_lib::compute_swap_amounts(
@@ -64,6 +77,7 @@ pub fn get_virtual_position(
     is_bid: bool, min_spread: u32, delta: i32, range: u32, oracle_price: u256, amount: u256,
 ) -> PositionInfo {
     // Start with the oracle price, and convert it to limits.
+    // TODO: add checks for min and max oracle price values.
     let mut limit = price_math::price_to_limit(oracle_price, 1, !is_bid);
 
     // Apply minimum spread.
@@ -79,6 +93,8 @@ pub fn get_virtual_position(
     } else {
         limit += delta.val;
     }
+
+    // TODO: add checks and throw errors for range overflow (max value for limit).
 
     // Calculate position range.
     let (lower_sqrt_price, upper_sqrt_price) = if is_bid {

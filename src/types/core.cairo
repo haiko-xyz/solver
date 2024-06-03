@@ -12,4 +12,6 @@ pub struct SwapParams {
     pub is_buy: bool,
     pub amount: u256,
     pub exact_input: bool,
+    pub threshold_sqrt_price: Option<u256>,
+    pub threshold_amount: Option<u256>,
 }

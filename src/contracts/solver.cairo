@@ -253,6 +253,22 @@ pub mod ReplicatingSolver {
 
     #[abi(embed_v0)]
     impl Solver of ISolver<ContractState> {
+        // Get the name of the solver.
+        // 
+        // # Returns
+        // * `name` - solver name
+        fn name(self: @ContractState) -> felt252 {
+            'Replicating'
+        }
+
+        // Get the symbol of the solver.
+        // 
+        // # Returns
+        // * `symbol` - solver symbol
+        fn symbol(self: @ContractState) -> felt252 {
+            'REPL'
+        }
+
         // Obtain quote for swap through a market.
         // 
         // # Arguments

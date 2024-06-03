@@ -4,6 +4,18 @@ use haiko_solver_replicating::types::core::SwapParams;
 
 #[starknet::interface]
 pub trait ISolver<TContractState> {
+    // Get the name of the solver.
+    // 
+    // # Returns
+    // * `name` - solver name
+    fn name(self: @TContractState) -> felt252;
+
+    // Get the symbol of the solver.
+    // 
+    // # Returns
+    // * `symbol` - solver symbol
+    fn symbol(self: @TContractState) -> felt252;
+
     // Obtain quote for swap through a market.
     // 
     // # Arguments

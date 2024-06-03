@@ -30,6 +30,7 @@
 ### `test_swap_lib.cairo`
 
 - Copy over test cases from `amm` repo
+- Add tests for threshold sqrt price and threshold amount
 
 ### `test_id.cairo`
 

@@ -11,7 +11,7 @@ pub mod ReplicatingSolver {
 
     // Local imports.
     use haiko_solver_replicating::libraries::{
-        spread_math, id, erc20_versioned_call,
+        swap_lib, spread_math, id, erc20_versioned_call,
         store_packing::{MarketParamsStorePacking, MarketStateStorePacking}
     };
     use haiko_solver_replicating::interfaces::ISolver::ISolver;
@@ -288,7 +288,7 @@ pub mod ReplicatingSolver {
             let position = spread_math::get_virtual_position(
                 !swap_params.is_buy, params.min_spread, delta, params.range, oracle_price, reserves
             );
-            let (amount_in, amount_out) = spread_math::get_swap_amounts(swap_params, position);
+            let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
 
             // Throw if amounts bring portfolio skew above maximum.
             let (base_reserves, quote_reserves) = if swap_params.is_buy {

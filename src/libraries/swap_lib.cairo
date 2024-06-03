@@ -2,10 +2,54 @@
 use core::cmp::{min, max};
 use core::integer::{u512, u256_wide_mul};
 
+// Local imports.
+use haiko_solver_replicating::types::{
+    replicating::{MarketState, MarketParams, PositionInfo}, core::SwapParams
+};
+
 // Haiko imports.
 use haiko_lib::math::{math, liquidity_math};
 use haiko_lib::constants::{ONE, MAX_SQRT_PRICE};
 use haiko_lib::types::i128::I128Trait;
+
+// Calculate the amounts swapped in and out. Wrapper around `compute_swap_amounts`.
+//
+// # Arguments
+// `swap_params` - swap parameters
+// `position` - virtual liquidity position to execute swap over
+//
+// # Returns
+// `amount_in` - amount swapped in
+// `amount_out` - amount swapped out
+pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u256, u256) {
+    // Define start and target prices based on swap direction.
+    let start_sqrt_price = if swap_params.is_buy {
+        position.lower_sqrt_price
+    } else {
+        position.upper_sqrt_price
+    };
+    let target_sqrt_price = if swap_params.is_buy {
+        if swap_params.threshold_sqrt_price.is_some() {
+            min(position.upper_sqrt_price, swap_params.threshold_sqrt_price.unwrap())
+        } else {
+            position.upper_sqrt_price
+        }
+    } else {
+        if swap_params.threshold_sqrt_price.is_some() {
+            max(position.lower_sqrt_price, swap_params.threshold_sqrt_price.unwrap())
+        } else {
+            position.lower_sqrt_price
+        }
+    };
+    // Compute swap amounts.
+    compute_swap_amounts(
+        start_sqrt_price,
+        target_sqrt_price,
+        position.liquidity,
+        swap_params.amount,
+        swap_params.exact_input,
+    )
+}
 
 // Compute amounts swapped and new price after swapping between two prices.
 //

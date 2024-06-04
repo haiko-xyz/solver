@@ -18,6 +18,7 @@ const TWO_POW_112: felt252 = 0x10000000000000000000000000000;
 const TWO_POW_144: felt252 = 0x1000000000000000000000000000000000000;
 
 const MASK_1: u256 = 0x1;
+const MASK_16: u256 = 0xffff;
 const MASK_32: u256 = 0xffffffff;
 const MASK_64: u256 = 0xffffffffffffffff;
 
@@ -42,13 +43,13 @@ pub(crate) impl MarketParamsStorePacking of StorePacking<MarketParams, PackedMar
     }
 
     fn unpack(value: PackedMarketParams) -> MarketParams {
-        let slab0: u256 = value.slab0.into();
-        let min_spread: u32 = (slab0 & MASK_32).try_into().unwrap();
-        let range: u32 = ((slab0 / TWO_POW_32.into()) & MASK_32).try_into().unwrap();
-        let max_delta: u32 = ((slab0 / TWO_POW_64.into()) & MASK_32).try_into().unwrap();
-        let max_skew: u16 = ((slab0 / TWO_POW_96.into()) & MASK_32).try_into().unwrap();
-        let min_sources: u32 = ((slab0 / TWO_POW_112.into()) & MASK_32).try_into().unwrap();
-        let max_age: u64 = ((slab0 / TWO_POW_144.into()) & MASK_64).try_into().unwrap();
+        let slab2: u256 = value.slab2.into();
+        let min_spread: u32 = (slab2 & MASK_32).try_into().unwrap();
+        let range: u32 = ((slab2 / TWO_POW_32.into()) & MASK_32).try_into().unwrap();
+        let max_delta: u32 = ((slab2 / TWO_POW_64.into()) & MASK_32).try_into().unwrap();
+        let max_skew: u16 = ((slab2 / TWO_POW_96.into()) & MASK_16).try_into().unwrap();
+        let min_sources: u32 = ((slab2 / TWO_POW_112.into()) & MASK_32).try_into().unwrap();
+        let max_age: u64 = ((slab2 / TWO_POW_144.into()) & MASK_64).try_into().unwrap();
 
         MarketParams {
             min_spread,

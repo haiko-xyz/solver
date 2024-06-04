@@ -65,7 +65,7 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
             panic(array!['ThresholdAmount', amount_in.low.into(), amount_in.high.into()]);
         }
     }
-    
+
     (amount_in, amount_out)
 }
 

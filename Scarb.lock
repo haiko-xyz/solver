@@ -2,16 +2,6 @@
 version = 1
 
 [[package]]
-name = "haiko_amm"
-version = "1.0.0"
-source = "git+https://github.com/haiko-xyz/amm.git#add3cf213f38f1010c46f3df8cb6028408bfc3c4"
-dependencies = [
- "haiko_lib",
- "openzeppelin",
- "snforge_std",
-]
-
-[[package]]
 name = "haiko_lib"
 version = "1.0.0"
 source = "git+https://github.com/haiko-xyz/library.git#dc0ceabc4ba7398048def8f0442b8db30690c9fc"
@@ -24,7 +14,6 @@ dependencies = [
 name = "haiko_solver_replicating"
 version = "1.0.0"
 dependencies = [
- "haiko_amm",
  "haiko_lib",
  "openzeppelin",
  "snforge_std",

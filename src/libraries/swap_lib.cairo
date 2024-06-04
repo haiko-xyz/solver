@@ -30,25 +30,43 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
     };
     let target_sqrt_price = if swap_params.is_buy {
         if swap_params.threshold_sqrt_price.is_some() {
-            min(position.upper_sqrt_price, swap_params.threshold_sqrt_price.unwrap())
+            let threshold = swap_params.threshold_sqrt_price.unwrap();
+            assert(threshold > position.lower_sqrt_price, 'ThresholdInvalid');
+            min(position.upper_sqrt_price, threshold)
         } else {
             position.upper_sqrt_price
         }
     } else {
         if swap_params.threshold_sqrt_price.is_some() {
-            max(position.lower_sqrt_price, swap_params.threshold_sqrt_price.unwrap())
+            let threshold = swap_params.threshold_sqrt_price.unwrap();
+            assert(threshold < position.upper_sqrt_price, 'ThresholdInvalid');
+            max(position.lower_sqrt_price, threshold)
         } else {
             position.lower_sqrt_price
         }
     };
+
     // Compute swap amounts.
-    compute_swap_amounts(
+    let (amount_in, amount_out, _) = compute_swap_amounts(
         start_sqrt_price,
         target_sqrt_price,
         position.liquidity,
         swap_params.amount,
         swap_params.exact_input,
-    )
+    );
+
+    // Check against threshold amount.
+    if swap_params.threshold_amount.is_some() {
+        let threshold_amount_val = swap_params.threshold_amount.unwrap();
+        if swap_params.exact_input && (amount_out < threshold_amount_val) {
+            panic(array!['ThresholdAmount', amount_out.low.into(), amount_out.high.into()]);
+        }
+        if !swap_params.exact_input && (amount_in > threshold_amount_val) {
+            panic(array!['ThresholdAmount', amount_in.low.into(), amount_in.high.into()]);
+        }
+    }
+    
+    (amount_in, amount_out)
 }
 
 // Compute amounts swapped and new price after swapping between two prices.
@@ -63,13 +81,14 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
 // # Returns
 // * `amount_in` - amount of tokens swapped in
 // * `amount_out` - amount of tokens swapped out
+// * `next_sqrt_price` - next sqrt price
 pub fn compute_swap_amounts(
     curr_sqrt_price: u256,
     target_sqrt_price: u256,
     liquidity: u128,
     amount: u256,
     exact_input: bool,
-) -> (u256, u256) {
+) -> (u256, u256, u256) {
     // Determine whether swap is a buy or sell.
     let is_buy = target_sqrt_price > curr_sqrt_price;
 
@@ -146,7 +165,7 @@ pub fn compute_swap_amounts(
     }
 
     // Return amounts.
-    (amount_in, amount_out)
+    (amount_in, amount_out, next_sqrt_price)
 }
 
 // Calculates next sqrt price after swapping in certain amount of tokens at given starting 

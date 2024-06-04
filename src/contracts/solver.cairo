@@ -296,13 +296,17 @@ pub mod ReplicatingSolver {
             let delta = spread_math::get_delta(
                 params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
             );
-            let reserves = if swap_params.is_buy {
+            let is_bid = !swap_params.is_buy;
+            let reserves = if is_bid {
                 state.quote_reserves
             } else {
                 state.base_reserves
             };
+            let (lower_limit, upper_limit) = spread_math::get_virtual_position_range(
+                is_bid, params.min_spread, delta, params.range, oracle_price
+            );
             let position = spread_math::get_virtual_position(
-                !swap_params.is_buy, params.min_spread, delta, params.range, oracle_price, reserves
+                is_bid, lower_limit, upper_limit, reserves
             );
             let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
 
@@ -555,19 +559,33 @@ pub mod ReplicatingSolver {
         fn get_virtual_positions(
             self: @ContractState, market_id: felt252
         ) -> (PositionInfo, PositionInfo) {
+            // Fetch state.
             let state = self.market_state.read(market_id);
             let params = self.market_params.read(market_id);
+            
+            // Fetch oracle price.
             let (oracle_price, is_valid) = self.get_oracle_price(market_id);
             assert(is_valid, 'InvalidOraclePrice');
+            
+            // Calculate position ranges.
             let delta = spread_math::get_delta(
                 params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
             );
+            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
+                true, params.min_spread, delta, params.range, oracle_price
+            );
+            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
+                false, params.min_spread, delta, params.range, oracle_price
+            );
+
+            // Calculate and return positions.
             let bid = spread_math::get_virtual_position(
-                true, params.min_spread, delta, params.range, oracle_price, state.quote_reserves
+                true, bid_lower, bid_upper, state.quote_reserves
             );
             let ask = spread_math::get_virtual_position(
-                false, params.min_spread, delta, params.range, oracle_price, state.base_reserves
+                false, ask_lower, ask_upper, state.base_reserves
             );
+            
             (bid, ask)
         }
 
@@ -694,11 +712,17 @@ pub mod ReplicatingSolver {
             let delta = spread_math::get_delta(
                 params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
             );
+            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
+                true, params.min_spread, delta, params.range, oracle_price
+            );
+            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
+                false, params.min_spread, delta, params.range, oracle_price
+            );
             let bid = spread_math::get_virtual_position(
-                true, params.min_spread, delta, params.range, oracle_price, state.quote_reserves
+                true, bid_lower, bid_upper, state.quote_reserves
             );
             let ask = spread_math::get_virtual_position(
-                false, params.min_spread, delta, params.range, oracle_price, state.base_reserves
+                false, ask_lower, ask_upper, state.base_reserves
             );
             assert(bid.liquidity != 0 || ask.liquidity != 0, 'LiqZero');
 

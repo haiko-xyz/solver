@@ -9,7 +9,7 @@ use haiko_solver_replicating::types::{
 
 // Haiko imports.
 use haiko_lib::math::{price_math, liquidity_math, math};
-use haiko_lib::constants::ONE;
+use haiko_lib::constants::{ONE, MAX_LIMIT_SHIFTED};
 use haiko_lib::types::i32::{i32, I32Trait};
 
 ////////////////////////////////
@@ -35,10 +35,40 @@ pub const DENOMINATOR: u256 = 10000;
 // # Returns
 // `position` - virtual liquidity position to execute swap over
 pub fn get_virtual_position(
-    is_bid: bool, min_spread: u32, delta: i32, range: u32, oracle_price: u256, amount: u256,
+    is_bid: bool, lower_limit: u32, upper_limit: u32, amount: u256,
 ) -> PositionInfo {
+    // Convert position range to sqrt prices.
+    let lower_sqrt_price = price_math::limit_to_sqrt_price(lower_limit, 1);
+    let upper_sqrt_price = price_math::limit_to_sqrt_price(upper_limit, 1);
+
+    // Calculate liquidity.
+    let liquidity = if is_bid {
+        liquidity_math::quote_to_liquidity(lower_sqrt_price, upper_sqrt_price, amount, false)
+    } else {
+        liquidity_math::base_to_liquidity(lower_sqrt_price, upper_sqrt_price, amount, false)
+    };
+
+    // Return position.
+    PositionInfo { lower_sqrt_price, upper_sqrt_price, liquidity }
+}
+
+// Calculate virtual bid or ask position to execute swap over.
+//
+// # Arguments
+// `is_bid` - whether to calculate bid or ask position
+// `min_spread` - minimum spread to apply
+// `delta` - inventory delta (+ve if ask spread, -ve if bid spread)
+// `range` - position range
+// `oracle_price` - current oracle price (base 10e28)
+// 
+// # Returns
+// `lower_limit` - virtual position lower limit
+// `upper_limit` - virtual position upper limit
+pub fn get_virtual_position_range(
+    is_bid: bool, min_spread: u32, delta: i32, range: u32, oracle_price: u256
+) -> (u32, u32) {
     // Start with the oracle price, and convert it to limits.
-    // TODO: add checks for min and max oracle price values.
+    assert(oracle_price != 0, 'OraclePriceZero');
     let mut limit = price_math::price_to_limit(oracle_price, 1, !is_bid);
 
     // Apply minimum spread.
@@ -55,30 +85,14 @@ pub fn get_virtual_position(
         limit += delta.val;
     }
 
-    // TODO: add checks and throw errors for range overflow (max value for limit).
-
     // Calculate position range.
-    let (lower_sqrt_price, upper_sqrt_price) = if is_bid {
-        (
-            price_math::limit_to_sqrt_price(limit - range, 1),
-            price_math::limit_to_sqrt_price(limit, 1)
-        )
+    if is_bid {
+        assert(limit >= range, 'LimitUF');
+        (limit - range, limit)
     } else {
-        (
-            price_math::limit_to_sqrt_price(limit, 1),
-            price_math::limit_to_sqrt_price(limit + range, 1)
-        )
-    };
-
-    // Calculate liquidity.
-    let liquidity = if is_bid {
-        liquidity_math::quote_to_liquidity(lower_sqrt_price, upper_sqrt_price, amount, false)
-    } else {
-        liquidity_math::base_to_liquidity(lower_sqrt_price, upper_sqrt_price, amount, false)
-    };
-
-    // Return position.
-    PositionInfo { lower_sqrt_price, upper_sqrt_price, liquidity }
+        assert(limit + range <= MAX_LIMIT_SHIFTED, 'LimitOF');
+        (limit, limit + range)
+    }
 }
 
 // Calculate the single-sided spread to add to either the bid or ask positions based on delta,

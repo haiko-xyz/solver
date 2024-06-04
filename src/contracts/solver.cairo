@@ -562,11 +562,11 @@ pub mod ReplicatingSolver {
             // Fetch state.
             let state = self.market_state.read(market_id);
             let params = self.market_params.read(market_id);
-            
+
             // Fetch oracle price.
             let (oracle_price, is_valid) = self.get_oracle_price(market_id);
             assert(is_valid, 'InvalidOraclePrice');
-            
+
             // Calculate position ranges.
             let delta = spread_math::get_delta(
                 params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
@@ -585,7 +585,7 @@ pub mod ReplicatingSolver {
             let ask = spread_math::get_virtual_position(
                 false, ask_lower, ask_upper, state.base_reserves
             );
-            
+
             (bid, ask)
         }
 

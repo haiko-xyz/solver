@@ -2,9 +2,7 @@
 use core::integer::BoundedInt;
 
 // Local imports.
-use haiko_solver_replicating::types::{
-    core::SwapParams, replicating::PositionInfo
-};
+use haiko_solver_replicating::types::{core::SwapParams, replicating::PositionInfo};
 use haiko_solver_replicating::libraries::swap_lib::{
     get_swap_amounts, compute_swap_amounts, next_sqrt_price_input, next_sqrt_price_output
 };
@@ -12,7 +10,9 @@ use haiko_solver_replicating::libraries::swap_lib::{
 // Haiko imports.
 use haiko_lib::math::fee_math::gross_to_net;
 use haiko_lib::constants::{ONE, MAX};
-use haiko_lib::helpers::utils::{approx_eq, encode_sqrt_price, to_e18, to_e28, to_e18_u128, to_e28_u128};
+use haiko_lib::helpers::utils::{
+    approx_eq, encode_sqrt_price, to_e18, to_e28, to_e18_u128, to_e28_u128
+};
 
 ////////////////////////////////
 // TESTS - get_swap_amounts
@@ -70,7 +70,10 @@ fn test_get_swap_amounts_bid_threshold_sqrt_price() {
         liquidity: to_e18_u128(200),
     };
     let (amount_in, amount_out) = get_swap_amounts(swap_params, position);
-    assert(amount_in < 10000000000000000000 && amount_out < 9523809523809523809, 'Swap amts: bid threshold');
+    assert(
+        amount_in < 10000000000000000000 && amount_out < 9523809523809523809,
+        'Swap amts: bid threshold'
+    );
 }
 
 #[test]
@@ -88,7 +91,10 @@ fn test_get_swap_amounts_ask_threshold_sqrt_price() {
         liquidity: to_e18_u128(200),
     };
     let (amount_in, amount_out) = get_swap_amounts(swap_params, position);
-    assert(amount_in < 10000000000000000000 && amount_out < 9523809523809523809, 'Swap amts: ask threshold');
+    assert(
+        amount_in < 10000000000000000000 && amount_out < 9523809523809523809,
+        'Swap amts: ask threshold'
+    );
 }
 
 ////////////////////////////////

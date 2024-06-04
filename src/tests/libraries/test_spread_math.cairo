@@ -3,7 +3,7 @@ use core::integer::BoundedInt;
 
 // Local imports.
 use haiko_solver_replicating::libraries::{
-    spread_math::{get_virtual_position, get_virtual_position_range, get_delta, get_skew}, 
+    spread_math::{get_virtual_position, get_virtual_position_range, get_delta, get_skew},
     swap_lib::get_swap_amounts
 };
 
@@ -144,12 +144,8 @@ fn test_get_virtual_position_cases() {
             break;
         }
         let case = *cases.at(i);
-        let bid = get_virtual_position(
-            true, case.lower_limit, case.upper_limit, case.amount
-        );
-        let ask = get_virtual_position(
-            false, case.lower_limit, case.upper_limit, case.amount
-        );
+        let bid = get_virtual_position(true, case.lower_limit, case.upper_limit, case.amount);
+        let ask = get_virtual_position(false, case.lower_limit, case.upper_limit, case.amount);
         if (!approx_eq_pct(bid.lower_sqrt_price, case.lower_sqrt_price_exp, 22)) {
             panic!(
                 "Lower sqrt p {}: {} (act), {} (exp)",
@@ -171,14 +167,18 @@ fn test_get_virtual_position_cases() {
         } else {
             !approx_eq_pct(bid.liquidity.into(), case.bid_liquidity_exp.into(), 22)
         }) {
-            panic!("Bid liquidity {}: {} (act), {} (exp)", i + 1, bid.liquidity, case.bid_liquidity_exp);
+            panic!(
+                "Bid liquidity {}: {} (act), {} (exp)", i + 1, bid.liquidity, case.bid_liquidity_exp
+            );
         }
         if (if ask.liquidity < ONE {
             !approx_eq(ask.liquidity.into(), case.ask_liquidity_exp.into(), 10000)
         } else {
             !approx_eq_pct(ask.liquidity.into(), case.ask_liquidity_exp.into(), 22)
         }) {
-            panic!("Ask liquidity {}: {} (act), {} (exp)", i + 1, ask.liquidity, case.ask_liquidity_exp);
+            panic!(
+                "Ask liquidity {}: {} (act), {} (exp)", i + 1, ask.liquidity, case.ask_liquidity_exp
+            );
         }
         i += 1;
     };
@@ -301,7 +301,7 @@ fn test_get_virtual_position_range_cases() {
         // Case 11: 500 min spread, no delta, range 1000, very small oracle price
         PositionRangeTestCase {
             min_spread: 500,
-            delta: I32Trait::new(0, false), 
+            delta: I32Trait::new(0, false),
             range: 1000,
             oracle_price: 1, // limit: 1459354
             bid_lower_exp: 1457854,
@@ -312,7 +312,7 @@ fn test_get_virtual_position_range_cases() {
         // Case 12: 500 min spread, no delta, range 1000, very large oracle price
         PositionRangeTestCase {
             min_spread: 500,
-            delta: I32Trait::new(0, false), 
+            delta: I32Trait::new(0, false),
             range: 1000,
             oracle_price: 214459684708337062817548134114224826295263805072231182393896500, // limit: 7905125 (roundup)
             bid_lower_exp: MAX_LIMIT_SHIFTED - 3000,
@@ -320,7 +320,7 @@ fn test_get_virtual_position_range_cases() {
             ask_lower_exp: MAX_LIMIT_SHIFTED - 1000,
             ask_upper_exp: MAX_LIMIT_SHIFTED,
         },
-        ]
+    ]
         .span();
 
     // Loop through test cases and perform checks.
@@ -337,36 +337,16 @@ fn test_get_virtual_position_range_cases() {
             false, case.min_spread, case.delta, case.range, case.oracle_price
         );
         if (!approx_eq(bid_lower.into(), case.bid_lower_exp.into(), 1)) {
-            panic!(
-                "Bid lower {}: {} (act), {} (exp)",
-                i + 1,
-                bid_lower,
-                case.bid_lower_exp
-            );
+            panic!("Bid lower {}: {} (act), {} (exp)", i + 1, bid_lower, case.bid_lower_exp);
         }
         if (!approx_eq(bid_upper.into(), case.bid_upper_exp.into(), 1)) {
-            panic!(
-                "Bid upper {}: {} (act), {} (exp)",
-                i + 1,
-                bid_upper,
-                case.bid_upper_exp
-            );
+            panic!("Bid upper {}: {} (act), {} (exp)", i + 1, bid_upper, case.bid_upper_exp);
         }
         if (!approx_eq(ask_lower.into(), case.ask_lower_exp.into(), 1)) {
-            panic!(
-                "Ask lower {}: {} (act), {} (exp)",
-                i + 1,
-                ask_lower,
-                case.ask_lower_exp
-            );
+            panic!("Ask lower {}: {} (act), {} (exp)", i + 1, ask_lower, case.ask_lower_exp);
         }
         if (!approx_eq(ask_upper.into(), case.ask_upper_exp.into(), 1)) {
-            panic!(
-                "Ask upper {}: {} (act), {} (exp)",
-                i + 1,
-                ask_upper,
-                case.ask_upper_exp
-            );
+            panic!("Ask upper {}: {} (act), {} (exp)", i + 1, ask_upper, case.ask_upper_exp);
         }
         i += 1;
     };
@@ -381,7 +361,13 @@ fn test_get_virtual_position_range_bid_limit_underflow() {
 #[test]
 #[should_panic(expected: ('ShiftLimitOF',))]
 fn test_get_virtual_position_range_ask_limit_overflow() {
-    get_virtual_position_range(false, 10, I32Trait::new(0, false), 0, 217702988461462792141570404997617821806367875652638254199700027);
+    get_virtual_position_range(
+        false,
+        10,
+        I32Trait::new(0, false),
+        0,
+        217702988461462792141570404997617821806367875652638254199700027
+    );
 }
 
 #[test]
@@ -393,7 +379,13 @@ fn test_get_virtual_position_range_oracle_price_zero() {
 #[test]
 #[should_panic(expected: ('ShiftLimitOF',))]
 fn test_get_virtual_position_range_oracle_price_overflow() {
-    get_virtual_position_range(true, 0, I32Trait::new(0, false), 0, 217713873828591030783410061480731509152483726437928216295905367);
+    get_virtual_position_range(
+        true,
+        0,
+        I32Trait::new(0, false),
+        0,
+        217713873828591030783410061480731509152483726437928216295905367
+    );
 }
 
 #[test]

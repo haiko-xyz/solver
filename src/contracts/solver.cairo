@@ -96,6 +96,7 @@ pub mod ReplicatingSolver {
         pub quote_token: ContractAddress,
         pub owner: ContractAddress,
         pub is_public: bool,
+        pub vault_token: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -442,7 +443,7 @@ pub mod ReplicatingSolver {
             // Validate number of sources and age of oracle price.
             let now = get_block_timestamp();
             let is_valid = (output.num_sources_aggregated >= params.min_sources)
-                && (params.max_age == 0 || output.last_updated_timestamp + params.max_age >= now);
+                && (output.last_updated_timestamp + params.max_age >= now);
 
             // Calculate and return scaled price. We want to return the price base 1e28,
             // but we must also scale it by the number of decimals in the oracle price and
@@ -607,15 +608,18 @@ pub mod ReplicatingSolver {
             let market_id = id::market_id(market_info);
             assert(
                 self.market_info.read(market_id).base_token == contract_address_const::<0x0>(),
-                'AlreadyExists'
+                'MarketExists'
             );
 
             // Check params.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'BaseTokenNull');
             assert(market_info.quote_token != contract_address_const::<0x0>(), 'QuoteTokenNull');
             assert(params.range != 0, 'RangeZero');
+            assert(params.min_sources != 0, 'MinSourcesZero');
+            assert(params.max_age != 0, 'MaxAgeZero');
             assert(params.base_currency_id != 0, 'BaseIdNull');
             assert(params.quote_currency_id != 0, 'QuoteIdNull');
+            assert(market_info.owner != contract_address_const::<0x0>(), 'OwnerNull');
 
             // Set market info and params.
             self.market_info.write(market_id, market_info);
@@ -641,6 +645,10 @@ pub mod ReplicatingSolver {
                             quote_token: market_info.quote_token,
                             owner: market_info.owner,
                             is_public: market_info.is_public,
+                            vault_token: match vault_token {
+                                Option::Some(addr) => addr,
+                                Option::None => contract_address_const::<0x0>(),
+                            },
                         }
                     )
                 );
@@ -1048,6 +1056,8 @@ pub mod ReplicatingSolver {
             self.assert_market_owner(market_id);
             let old_params = self.market_params.read(market_id);
             assert(old_params != params, 'ParamsUnchanged');
+            assert(params.min_sources != 0, 'MinSourcesZero');
+            assert(params.max_age != 0, 'MaxAgeZero');
             assert(params.base_currency_id != 0, 'BaseIdZero');
             assert(params.quote_currency_id != 0, 'QuoteIdZero');
 

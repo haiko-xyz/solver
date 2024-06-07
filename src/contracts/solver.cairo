@@ -221,14 +221,10 @@ pub mod ReplicatingSolver {
     fn constructor(
         ref self: ContractState,
         owner: ContractAddress,
-        name: felt252,
-        symbol: felt252,
         oracle: ContractAddress,
         vault_token_class: ClassHash,
     ) {
         self.owner.write(owner);
-        self.name.write(name);
-        self.symbol.write(symbol);
         let oracle_dispatcher = IOracleABIDispatcher { contract_address: oracle };
         self.oracle.write(oracle_dispatcher);
         self.vault_token_class.write(vault_token_class);
@@ -257,16 +253,16 @@ pub mod ReplicatingSolver {
         // 
         // # Returns
         // * `name` - solver name
-        fn name(self: @ContractState) -> felt252 {
-            'Replicating'
+        fn name(self: @ContractState) -> ByteArray {
+            "Replicating"
         }
 
         // Get the symbol of the solver.
         // 
         // # Returns
         // * `symbol` - solver symbol
-        fn symbol(self: @ContractState) -> felt252 {
-            'REPL'
+        fn symbol(self: @ContractState) -> ByteArray {
+            "REPL"
         }
 
         // Obtain quote for swap through a market.
@@ -355,8 +351,13 @@ pub mod ReplicatingSolver {
 
             // Update reserves.
             let mut state = self.market_state.read(market_id);
-            state.base_reserves += amount_in;
-            state.quote_reserves -= amount_out;
+            if swap_params.is_buy {
+                state.quote_reserves += amount_in;
+                state.base_reserves -= amount_out;
+            } else {
+                state.base_reserves += amount_in;
+                state.quote_reserves -= amount_out;
+            }
             self.market_state.write(market_id, state);
 
             // Emit events.
@@ -671,14 +672,16 @@ pub mod ReplicatingSolver {
         //
         // # Arguments
         // * `market_id` - market id
-        // * `base_amount` - base asset to deposit
-        // * `quote_amount` - quote asset to deposit
+        // * `base_amount` - amount of base asset requested to be deposited
+        // * `quote_amount` - amount of quote asset requested to be deposited
         //
         // # Returns
+        // * `base_deposit` - base asset deposited
+        // * `quote_deposit` - quote asset deposited
         // * `shares` - pool shares minted in the form of liquidity
         fn deposit_initial(
             ref self: ContractState, market_id: felt252, base_amount: u256, quote_amount: u256
-        ) -> u256 {
+        ) -> (u256, u256, u256) {
             // Fetch market info and state.
             let market_info = self.market_info.read(market_id);
             let mut state = self.market_state.read(market_id);
@@ -686,23 +689,29 @@ pub mod ReplicatingSolver {
             // Run checks
             assert(!state.is_paused, 'Paused');
             assert(market_info.base_token != contract_address_const::<0x0>(), 'NotInit');
-            assert(base_amount != 0 || quote_amount != 0, 'AmountsZero');
-            assert(state.base_reserves != 0 || state.quote_reserves != 0, 'UseDeposit');
+            assert(state.base_reserves == 0 && state.quote_reserves == 0, 'UseDeposit');
             if !market_info.is_public {
                 self.assert_market_owner(market_id);
             }
 
-            // Transfer tokens to contract.
-            let contract = get_contract_address();
+            // Cap deposit at available.
             let caller = get_caller_address();
             let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
             let quote_token = ERC20ABIDispatcher { contract_address: market_info.quote_token };
-            base_token.transferFrom(caller, contract, base_amount);
-            quote_token.transferFrom(caller, contract, quote_amount);
+            let base_available = base_token.balanceOf(caller);
+            let quote_available = quote_token.balanceOf(caller);
+            let base_deposit = min(base_amount, base_available);
+            let quote_deposit = min(quote_amount, quote_available);
+            assert(base_deposit != 0 || quote_deposit != 0, 'AmountsZero');
+
+            // Transfer tokens to contract.
+            let contract = get_contract_address();
+            base_token.transferFrom(caller, contract, base_deposit);
+            quote_token.transferFrom(caller, contract, quote_deposit);
 
             // Update reserves.
-            state.base_reserves += base_amount;
-            state.quote_reserves += quote_amount;
+            state.base_reserves += base_deposit;
+            state.quote_reserves += quote_deposit;
             self.market_state.write(market_id, state);
 
             // Calculate liquidity.
@@ -727,28 +736,42 @@ pub mod ReplicatingSolver {
             assert(bid.liquidity != 0 || ask.liquidity != 0, 'LiqZero');
 
             // Mint shares.
-            let shares: u256 = (bid.liquidity + ask.liquidity).into();
-            let token = IVaultTokenDispatcher { contract_address: state.vault_token };
-            token.mint(caller, shares);
+            let mut shares: u256 = 0;
+            if market_info.is_public {
+                shares = (bid.liquidity + ask.liquidity).into();
+                println!("vault token 0: {}", state.vault_token == contract_address_const::<0x0>());
+                let token = IVaultTokenDispatcher { contract_address: state.vault_token };
+                token.mint(caller, shares);
+            }
 
             // Emit event
             self
                 .emit(
-                    Event::Deposit(Deposit { market_id, caller, base_amount, quote_amount, shares })
+                    Event::Deposit(
+                        Deposit {
+                            market_id,
+                            caller,
+                            base_amount: quote_deposit,
+                            quote_amount: quote_deposit,
+                            shares
+                        }
+                    )
                 );
 
-            shares
+            (base_deposit, quote_deposit, shares)
         }
 
         // Same as `deposit_initial`, but with a referrer.
         //
         // # Arguments
         // * `market_id` - market id
-        // * `base_amount` - base asset to deposit
-        // * `quote_amount` - quote asset to deposit
+        // * `base_requested` - base asset requested to be deposited
+        // * `quote_requested` - quote asset requested to be deposited
         // * `referrer` - referrer address
         //
         // # Returns
+        // * `base_deposit` - base asset deposited
+        // * `quote_deposit` - quote asset deposited
         // * `shares` - pool shares minted in the form of liquidity
         fn deposit_initial_with_referrer(
             ref self: ContractState,
@@ -756,7 +779,7 @@ pub mod ReplicatingSolver {
             base_amount: u256,
             quote_amount: u256,
             referrer: ContractAddress
-        ) -> u256 {
+        ) -> (u256, u256, u256) {
             // Check referrer is non-null.
             assert(referrer != contract_address_const::<0x0>(), 'ReferrerZero');
 
@@ -808,7 +831,7 @@ pub mod ReplicatingSolver {
             let base_capped = min(base_amount, available_base_amount);
             let quote_capped = min(quote_amount, available_quote_amount);
 
-            // Calculate shares to mint.
+            // Calculate deposit amounts.
             let mut base_deposit = base_capped;
             let mut quote_deposit = quote_capped;
             if market_info.is_public {
@@ -928,7 +951,7 @@ pub mod ReplicatingSolver {
             let mut state = self.market_state.read(market_id);
 
             // Run checks.
-            assert(market_info.is_public, 'UseWithdrawAmounts');
+            assert(market_info.is_public, 'UseWithdraw');
             assert(shares != 0, 'SharesZero');
             assert(market_info.base_token != contract_address_const::<0x0>(), 'NotInit');
             let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
@@ -962,7 +985,7 @@ pub mod ReplicatingSolver {
         // # Returns
         // * `base_amount` - base asset withdrawn
         // * `quote_amount` - quote asset withdrawn
-        fn withdraw_amounts(
+        fn withdraw(
             ref self: ContractState, market_id: felt252, base_amount: u256, quote_amount: u256
         ) -> (u256, u256) {
             // Fetch state.
@@ -990,28 +1013,29 @@ pub mod ReplicatingSolver {
         // # Arguments
         // * `receiver` - address to receive fees
         // * `token` - token to collect fees for
-        // * `amount` - amount of fees requested
         fn collect_withdraw_fees(
-            ref self: ContractState, receiver: ContractAddress, token: ContractAddress, amount: u256
+            ref self: ContractState, receiver: ContractAddress, token: ContractAddress
         ) -> u256 {
             // Run checks.
             self.assert_owner();
-            let mut fees = self.withdraw_fees.read(token);
-            assert(fees >= amount, 'InsuffFees');
+            let fees = self.withdraw_fees.read(token);
+            assert(fees > 0, 'NoFees');
 
             // Update fee balance.
-            fees -= amount;
-            self.withdraw_fees.write(token, fees);
+            self.withdraw_fees.write(token, 0);
 
             // Transfer fees to caller.
             let dispatcher = ERC20ABIDispatcher { contract_address: token };
-            dispatcher.transfer(get_caller_address(), amount);
+            dispatcher.transfer(get_caller_address(), fees);
 
             // Emit event.
-            self.emit(Event::CollectWithdrawFee(CollectWithdrawFee { receiver, token, amount }));
+            self
+                .emit(
+                    Event::CollectWithdrawFee(CollectWithdrawFee { receiver, token, amount: fees })
+                );
 
             // Return amount collected.
-            amount
+            fees
         }
 
         // Change parameters of the solver market.
@@ -1185,14 +1209,14 @@ pub mod ReplicatingSolver {
                 "{}-{}-{}", self.symbol.read(), base_symbol, quote_symbol
             );
             let decimals: u8 = 18;
-            let solver = get_contract_address();
+            let owner = get_contract_address();
 
             // Populate calldata
             let mut calldata: Array<felt252> = array![];
             name.serialize(ref calldata);
             symbol.serialize(ref calldata);
             decimals.serialize(ref calldata);
-            solver.serialize(ref calldata);
+            owner.serialize(ref calldata);
 
             // Deploy vault token.
             let (token, _) = deploy_syscall(

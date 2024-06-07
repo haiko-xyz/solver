@@ -8,13 +8,13 @@ pub trait ISolver<TContractState> {
     // 
     // # Returns
     // * `name` - solver name
-    fn name(self: @TContractState) -> felt252;
+    fn name(self: @TContractState) -> ByteArray;
 
     // Get the symbol of the solver.
     // 
     // # Returns
     // * `symbol` - solver symbol
-    fn symbol(self: @TContractState) -> felt252;
+    fn symbol(self: @TContractState) -> ByteArray;
 
     // Obtain quote for swap through a market.
     // 

@@ -39,8 +39,8 @@ pub mod VaultToken {
     #[constructor]
     fn constructor(
         ref self: ContractState,
-        name: felt252,
-        symbol: felt252,
+        name: ByteArray,
+        symbol: ByteArray,
         decimals: u8,
         owner: ContractAddress,
     ) {
@@ -52,11 +52,11 @@ pub mod VaultToken {
 
     #[abi(embed_v0)]
     impl ERC20MetadataImpl of IERC20Metadata<ContractState> {
-        fn name(self: @ContractState) -> felt252 {
+        fn name(self: @ContractState) -> ByteArray {
             self.erc20.name()
         }
 
-        fn symbol(self: @ContractState) -> felt252 {
+        fn symbol(self: @ContractState) -> ByteArray {
             self.erc20.symbol()
         }
 

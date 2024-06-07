@@ -117,24 +117,28 @@ pub trait IReplicatingSolver<TContractState> {
     //
     // # Arguments
     // * `market_id` - market id
-    // * `base_amount` - base asset to deposit
-    // * `quote_amount` - quote asset to deposit
+    // * `base_requested` - base asset requested to be deposited
+    // * `quote_requested` - quote asset requested to be deposited
     //
     // # Returns
+    // * `base_deposit` - base asset deposited
+    // * `quote_deposit` - quote asset deposited
     // * `shares` - pool shares minted in the form of liquidity
     fn deposit_initial(
         ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
-    ) -> u256;
+    ) -> (u256, u256, u256);
 
     // Same as `deposit_initial`, but with a referrer.
     //
     // # Arguments
     // * `market_id` - market id
-    // * `base_amount` - base asset to deposit
-    // * `quote_amount` - quote asset to deposit
+    // * `base_requested` - base asset requested to be deposited
+    // * `quote_requested` - quote asset requested to be deposited
     // * `referrer` - referrer address
     //
     // # Returns
+    // * `base_deposit` - base asset deposited
+    // * `quote_deposit` - quote asset deposited
     // * `shares` - pool shares minted in the form of liquidity
     fn deposit_initial_with_referrer(
         ref self: TContractState,
@@ -142,7 +146,7 @@ pub trait IReplicatingSolver<TContractState> {
         base_amount: u256,
         quote_amount: u256,
         referrer: ContractAddress
-    ) -> u256;
+    ) -> (u256, u256, u256);
 
     // Deposit liquidity to market.
     // For public markets, this will take the lower of requested and available balances, 
@@ -207,7 +211,7 @@ pub trait IReplicatingSolver<TContractState> {
     // # Returns
     // * `base_amount` - base asset withdrawn
     // * `quote_amount` - quote asset withdrawn
-    fn withdraw_amounts(
+    fn withdraw(
         ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
     ) -> (u256, u256);
 
@@ -217,9 +221,8 @@ pub trait IReplicatingSolver<TContractState> {
     // # Arguments
     // * `receiver` - address to receive fees
     // * `token` - token to collect fees for
-    // * `amount` - amount of fees requested
     fn collect_withdraw_fees(
-        ref self: TContractState, receiver: ContractAddress, token: ContractAddress, amount: u256
+        ref self: TContractState, receiver: ContractAddress, token: ContractAddress
     ) -> u256;
 
     // Set withdraw fee for a given market.

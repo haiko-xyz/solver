@@ -277,7 +277,7 @@ pub mod ReplicatingSolver {
             // Run validity checks.
             let state = self.market_state.read(market_id);
             let market_info = self.market_info.read(market_id);
-            assert(market_info.base_token != contract_address_const::<0x0>(), 'NotInit');
+            assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(!state.is_paused, 'Paused');
 
             // Fetch oracle price.
@@ -577,12 +577,20 @@ pub mod ReplicatingSolver {
             );
 
             // Calculate and return positions.
-            let bid = spread_math::get_virtual_position(
-                true, bid_lower, bid_upper, state.quote_reserves
-            );
-            let ask = spread_math::get_virtual_position(
-                false, ask_lower, ask_upper, state.base_reserves
-            );
+            let mut bid: PositionInfo = Default::default();
+            let mut ask: PositionInfo = Default::default();
+            if state.quote_reserves != 0 {
+                bid =
+                    spread_math::get_virtual_position(
+                        true, bid_lower, bid_upper, state.quote_reserves
+                    );
+            }
+            if state.base_reserves != 0 {
+                ask =
+                    spread_math::get_virtual_position(
+                        false, ask_lower, ask_upper, state.base_reserves
+                    );
+            }
 
             (bid, ask)
         }
@@ -695,7 +703,7 @@ pub mod ReplicatingSolver {
 
             // Run checks
             assert(!state.is_paused, 'Paused');
-            assert(market_info.base_token != contract_address_const::<0x0>(), 'NotInit');
+            assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(state.base_reserves == 0 && state.quote_reserves == 0, 'UseDeposit');
             if !market_info.is_public {
                 self.assert_market_owner(market_id);
@@ -717,36 +725,18 @@ pub mod ReplicatingSolver {
             quote_token.transferFrom(caller, contract, quote_deposit);
 
             // Update reserves.
+            // Must commit state here to be able to fetch virtual positions.
             state.base_reserves += base_deposit;
             state.quote_reserves += quote_deposit;
             self.market_state.write(market_id, state);
 
             // Calculate liquidity.
-            let params = self.market_params.read(market_id);
-            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-            assert(is_valid, 'InvalidOraclePrice');
-            let delta = spread_math::get_delta(
-                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
-            );
-            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
-                true, params.min_spread, delta, params.range, oracle_price
-            );
-            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
-                false, params.min_spread, delta, params.range, oracle_price
-            );
-            let bid = spread_math::get_virtual_position(
-                true, bid_lower, bid_upper, state.quote_reserves
-            );
-            let ask = spread_math::get_virtual_position(
-                false, ask_lower, ask_upper, state.base_reserves
-            );
-            assert(bid.liquidity != 0 || ask.liquidity != 0, 'LiqZero');
+            let (bid, ask) = self.get_virtual_positions(market_id);
 
             // Mint shares.
             let mut shares: u256 = 0;
             if market_info.is_public {
                 shares = (bid.liquidity + ask.liquidity).into();
-                println!("vault token 0: {}", state.vault_token == contract_address_const::<0x0>());
                 let token = IVaultTokenDispatcher { contract_address: state.vault_token };
                 token.mint(caller, shares);
             }
@@ -758,7 +748,7 @@ pub mod ReplicatingSolver {
                         Deposit {
                             market_id,
                             caller,
-                            base_amount: quote_deposit,
+                            base_amount: base_deposit,
                             quote_amount: quote_deposit,
                             shares
                         }
@@ -823,7 +813,7 @@ pub mod ReplicatingSolver {
 
             // Run checks.
             assert(!state.is_paused, 'Paused');
-            assert(market_info.base_token != contract_address_const::<0x0>(), 'NotInit');
+            assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(base_amount != 0 || quote_amount != 0, 'UseDepositInitial');
             if !market_info.is_public {
                 self.assert_market_owner(market_id);
@@ -960,7 +950,7 @@ pub mod ReplicatingSolver {
             // Run checks.
             assert(market_info.is_public, 'UseWithdraw');
             assert(shares != 0, 'SharesZero');
-            assert(market_info.base_token != contract_address_const::<0x0>(), 'NotInit');
+            assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
             let caller = get_caller_address();
             assert(shares <= vault_token.balanceOf(caller), 'InsuffShares');
@@ -1001,7 +991,7 @@ pub mod ReplicatingSolver {
 
             // Run checks.
             assert(!market_info.is_public, 'UseWithdrawAtRatio');
-            assert(market_info.base_token != contract_address_const::<0x0>(), 'NotInit');
+            assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
 
             // Cap withdraw amount at available. Commit state changes.
             let base_withdraw = min(base_amount, state.base_reserves);
@@ -1211,12 +1201,8 @@ pub mod ReplicatingSolver {
             // felt252 and ByteArray symbols.
             let base_symbol = erc20_versioned_call::get_symbol(market_info.base_token);
             let quote_symbol = erc20_versioned_call::get_symbol(market_info.quote_token);
-            let name: ByteArray = format!(
-                "Haiko {} {}-{}", self.name(), base_symbol, quote_symbol
-            );
-            let symbol: ByteArray = format!(
-                "{}-{}-{}", self.symbol(), base_symbol, quote_symbol
-            );
+            let name: ByteArray = format!("Haiko {} {}-{}", self.name(), base_symbol, quote_symbol);
+            let symbol: ByteArray = format!("{}-{}-{}", self.symbol(), base_symbol, quote_symbol);
             let decimals: u8 = 18;
             let owner = get_contract_address();
 
@@ -1238,7 +1224,7 @@ pub mod ReplicatingSolver {
             let (token, _) = deploy_syscall(
                 self.vault_token_class.read(), salt, calldata.span(), false
             )
-            .unwrap();
+                .unwrap();
 
             // Return vault token address.
             token

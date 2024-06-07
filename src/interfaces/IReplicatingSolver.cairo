@@ -99,9 +99,13 @@ pub trait IReplicatingSolver<TContractState> {
     // # Arguments
     // * `market_info` - market info
     // * `params` - solver params
+    //
+    // # Returns
+    // * `market_id` - market id
+    // * `vault_token` (optional) - vault token address (if public market)
     fn create_market(
         ref self: TContractState, market_info: MarketInfo, params: MarketParams
-    ) -> felt252;
+    ) -> (felt252, Option<ContractAddress>);
 
     // Change parameters of the solver market.
     // Only callable by market owner.

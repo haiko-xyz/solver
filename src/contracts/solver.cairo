@@ -600,9 +600,10 @@ pub mod ReplicatingSolver {
         //
         // # Returns
         // * `market_id` - market id
+        // * `vault_token` (optional) - vault token address (if public market)
         fn create_market(
             ref self: ContractState, market_info: MarketInfo, params: MarketParams
-        ) -> felt252 {
+        ) -> (felt252, Option<ContractAddress>) {
             // Only callable by contract owner.
             self.assert_owner();
 
@@ -625,10 +626,12 @@ pub mod ReplicatingSolver {
             self.market_params.write(market_id, params);
 
             // If vault is public, deploy vault token and update state.
+            let mut vault_token: Option<ContractAddress> = Option::None(());
             if market_info.is_public {
-                let vault_token = self._deploy_vault_token(market_info);
+                let vault_token_addr = self._deploy_vault_token(market_info);
+                vault_token = Option::Some(vault_token_addr);
                 let mut state = self.market_state.read(market_id);
-                state.vault_token = vault_token;
+                state.vault_token = vault_token_addr;
                 self.market_state.write(market_id, state);
             }
 
@@ -663,7 +666,7 @@ pub mod ReplicatingSolver {
                 );
 
             // Return market id
-            market_id
+            (market_id, vault_token)
         }
 
         // Deposit initial liquidity to market.

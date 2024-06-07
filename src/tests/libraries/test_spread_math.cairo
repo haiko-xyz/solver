@@ -420,30 +420,36 @@ fn test_get_delta() {
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
     assert(inv_delta == I32Trait::new(2000, true), 'Inv delta 5');
 
+    // Zero amounts of both
+    base_amount = 0;
+    quote_amount = 0;
+    inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
+    assert(inv_delta == I32Trait::new(0, false), 'Inv delta 6');
+
     // Small token values
     base_amount = 1;
     quote_amount = 3;
     price = to_e28(2);
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(400, true), 'Inv delta 6');
+    assert(inv_delta == I32Trait::new(400, true), 'Inv delta 7');
 
     // Large token values
     base_amount = to_e28(1000);
     quote_amount = to_e28(20000);
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(1636, true), 'Inv delta 7');
+    assert(inv_delta == I32Trait::new(1636, true), 'Inv delta 8');
 
     // Near max delta
     base_amount = to_e18(50);
     quote_amount = 0;
     max_delta = 7906600;
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(7906600, false), 'Inv delta 8');
+    assert(inv_delta == I32Trait::new(7906600, false), 'Inv delta 9');
 
     // Zero delta
     max_delta = 0;
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(0, false), 'Inv delta 9');
+    assert(inv_delta == I32Trait::new(0, false), 'Inv delta 10');
 // TODO: price 0
 
 // TODO: very small price

@@ -2,6 +2,7 @@
 pub mod ReplicatingSolver {
     // Core lib imports.
     use core::integer::BoundedInt;
+    use core::poseidon::poseidon_hash_span;
     use core::cmp::{min, max};
     use starknet::ContractAddress;
     use starknet::contract_address::contract_address_const;
@@ -1221,11 +1222,20 @@ pub mod ReplicatingSolver {
             decimals.serialize(ref calldata);
             owner.serialize(ref calldata);
 
+            // Ensure uniqueness of token by hashing MarketInfo as salt.
+            let mut salt_data: Array<felt252> = array![];
+            market_info.base_token.serialize(ref salt_data);
+            market_info.quote_token.serialize(ref salt_data);
+            market_info.owner.serialize(ref salt_data);
+            let salt = poseidon_hash_span(salt_data.span());
+
             // Deploy vault token.
+            println!("reached before");
             let (token, _) = deploy_syscall(
-                self.vault_token_class.read(), 0, calldata.span(), false
+                self.vault_token_class.read(), salt, calldata.span(), false
             )
-                .unwrap();
+            .unwrap();
+            println!("reached after");
 
             // Return vault token address.
             token

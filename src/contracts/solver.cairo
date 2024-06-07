@@ -721,8 +721,14 @@ pub mod ReplicatingSolver {
 
             // Transfer tokens to contract.
             let contract = get_contract_address();
-            base_token.transferFrom(caller, contract, base_deposit);
-            quote_token.transferFrom(caller, contract, quote_deposit);
+            if base_deposit != 0 {
+                assert(base_token.allowance(caller, contract) >= base_deposit, 'BaseAllowance');
+                base_token.transferFrom(caller, contract, base_deposit);
+            }
+            if quote_deposit != 0 {
+                assert(quote_token.allowance(caller, contract) >= quote_deposit, 'QuoteAllowance');
+                quote_token.transferFrom(caller, contract, quote_deposit);
+            }
 
             // Update reserves.
             // Must commit state here to be able to fetch virtual positions.
@@ -814,7 +820,7 @@ pub mod ReplicatingSolver {
             // Run checks.
             assert(!state.is_paused, 'Paused');
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
-            assert(base_amount != 0 || quote_amount != 0, 'UseDepositInitial');
+            assert(state.base_reserves != 0 || state.quote_reserves != 0, 'UseDepositInitial');
             if !market_info.is_public {
                 self.assert_market_owner(market_id);
             }

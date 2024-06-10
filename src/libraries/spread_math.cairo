@@ -132,6 +132,6 @@ pub fn get_skew(base_reserves: u256, quote_reserves: u256, price: u256,) -> (u25
         return (0, false);
     }
     let skew = math::mul_div(DENOMINATOR, diff, sum, false);
-    let is_skew_bid = base_in_quote < quote_reserves;
+    let is_skew_bid = base_in_quote > quote_reserves;
     (skew, is_skew_bid)
 }

@@ -302,7 +302,7 @@ pub mod ReplicatingSolver {
                 is_bid, lower_limit, upper_limit, reserves
             );
             let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
-            
+
             // Throw if amounts bring portfolio skew above maximum.
             let (base_reserves, quote_reserves) = if swap_params.is_buy {
                 (state.base_reserves - amount_out, state.quote_reserves + amount_in)

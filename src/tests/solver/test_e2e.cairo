@@ -21,8 +21,7 @@ use haiko_solver_replicating::{
     },
     types::{core::SwapParams, replicating::{MarketInfo, MarketParams, MarketState}},
     tests::{
-        helpers::actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-        solver::utils::before,
+        helpers::{actions::{deploy_replicating_solver, deploy_mock_pragma_oracle}, utils::before,},
     },
 };
 

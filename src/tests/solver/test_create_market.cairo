@@ -10,10 +10,9 @@ use haiko_solver_replicating::{
     },
     types::replicating::{MarketInfo, MarketParams},
     tests::{
-        solver::utils::before,
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params
+            params::default_market_params, utils::before,
         },
     },
 };

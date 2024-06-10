@@ -22,9 +22,9 @@ export const getVirtualPosition = (
 ): PositionInfo => {
   Decimal.set({ precision: PRECISION, rounding: ROUNDING });
 
+  const lowerSqrtPrice = limitToSqrtPrice(lowerLimit, 1);
+  const upperSqrtPrice = limitToSqrtPrice(upperLimit, 1);
   if (isBid) {
-    const lowerSqrtPrice = limitToSqrtPrice(lowerLimit, 1);
-    const upperSqrtPrice = limitToSqrtPrice(upperLimit, 1);
     const liquidity = quoteToLiquidity(
       lowerSqrtPrice,
       upperSqrtPrice,
@@ -32,8 +32,6 @@ export const getVirtualPosition = (
     ).toFixed();
     return { lowerSqrtPrice, upperSqrtPrice, liquidity };
   } else {
-    const lowerSqrtPrice = limitToSqrtPrice(lowerLimit, 1);
-    const upperSqrtPrice = limitToSqrtPrice(upperLimit, 1);
     const liquidity = baseToLiquidity(
       lowerSqrtPrice,
       upperSqrtPrice,
@@ -52,7 +50,7 @@ export const getVirtualPositionRange = (
 ): PositionRange => {
   Decimal.set({ precision: PRECISION, rounding: ROUNDING });
 
-  let limit = priceToLimit(oraclePrice, 1);
+  let limit = priceToLimit(oraclePrice, 1, !isBid);
 
   if (isBid) {
     const upperLimit = new Decimal(limit).sub(minSpread).add(delta);
@@ -63,4 +61,33 @@ export const getVirtualPositionRange = (
     const upperLimit = lowerLimit.add(range);
     return { lowerLimit, upperLimit };
   }
+};
+
+export const getDelta = (
+  maxDelta: Decimal.Value,
+  baseReserves: Decimal.Value,
+  quoteReserves: Decimal.Value,
+  price: Decimal.Value
+): Decimal.Value => {
+  Decimal.set({ precision: PRECISION, rounding: ROUNDING });
+
+  const skew = getSkew(baseReserves, quoteReserves, price);
+  const delta = new Decimal(maxDelta).mul(skew);
+
+  return delta.toDP(0, Decimal.ROUND_DOWN);
+};
+
+export const getSkew = (
+  baseReserves: Decimal.Value,
+  quoteReserves: Decimal.Value,
+  price: Decimal.Value
+): Decimal.Value => {
+  Decimal.set({ precision: PRECISION, rounding: ROUNDING });
+
+  const baseInQuote = new Decimal(baseReserves).mul(price);
+  const diff = new Decimal(quoteReserves).sub(baseInQuote);
+  const sum = new Decimal(baseInQuote).add(quoteReserves);
+  const skew = diff.div(sum);
+
+  return skew.toDP(4, Decimal.ROUND_DOWN);
 };

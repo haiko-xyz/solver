@@ -32,7 +32,7 @@ export const getSwapAmounts = (
   if (thresholdAmount) {
     if (exactInput) {
       if (amountOut < thresholdAmount)
-        throw new Error("Threshold amount exceeded");
+        throw new Error("Threshold amount not met");
     } else {
       if (amountIn > thresholdAmount)
         throw new Error("Threshold amount exceeded");
@@ -54,7 +54,6 @@ export const computeSwapAmount = (
   let amountIn: Decimal.Value = "0";
   let amountOut: Decimal.Value = "0";
   let nextSqrtPrice: Decimal.Value = "0";
-  let fee: Decimal.Value = "0";
 
   if (exactInput) {
     amountIn = isBuy

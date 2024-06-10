@@ -71,6 +71,15 @@ struct Snapshot {
 // HELPERS
 ////////////////////////////////
 
+pub fn declare_classes() -> (ContractClass, ContractClass, ContractClass, ContractClass) {
+    let erc20_class = declare("ERC20");
+    let vault_token_class = declare("VaultToken");
+    let solver_class = declare("ReplicatingSolver");
+    let oracle_class = declare("MockPragmaOracle");
+
+    (erc20_class, vault_token_class, solver_class, oracle_class)
+}
+
 pub fn before(
     is_market_public: bool
 ) -> (
@@ -82,7 +91,7 @@ pub fn before(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true)
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, 0, Option::None(()))
 }
 
 pub fn before_custom_decimals(
@@ -96,7 +105,7 @@ pub fn before_custom_decimals(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, base_decimals, quote_decimals, true)
+    _before(is_market_public, base_decimals, quote_decimals, true, 0, Option::None(()))
 }
 
 pub fn before_skip_approve(
@@ -110,11 +119,13 @@ pub fn before_skip_approve(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, false)
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, false, 0, Option::None(()))
 }
 
-fn _before(
-    is_market_public: bool, base_decimals: u8, quote_decimals: u8, approve_solver: bool,
+pub fn before_with_salt(
+    is_market_public: bool,
+    salt: felt252,
+    classes: (ContractClass, ContractClass, ContractClass, ContractClass),
 ) -> (
     ERC20ABIDispatcher,
     ERC20ABIDispatcher,
@@ -124,6 +135,32 @@ fn _before(
     felt252,
     Option<ContractAddress>,
 ) {
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, salt, Option::Some(classes))
+}
+
+fn _before(
+    is_market_public: bool,
+    base_decimals: u8,
+    quote_decimals: u8,
+    approve_solver: bool,
+    salt: felt252,
+    classes: Option<(ContractClass, ContractClass, ContractClass, ContractClass)>,
+) -> (
+    ERC20ABIDispatcher,
+    ERC20ABIDispatcher,
+    IMockPragmaOracleDispatcher,
+    ClassHash,
+    IReplicatingSolverDispatcher,
+    felt252,
+    Option<ContractAddress>,
+) {
+    // Declare or unwrap classes.
+    let (erc20_class, vault_token_class, solver_class, oracle_class) = if classes.is_some() {
+        classes.unwrap()
+    } else {
+        declare_classes()
+    };
+
     // Get default owner.
     let owner = owner();
 
@@ -131,19 +168,15 @@ fn _before(
     let (_treasury, mut base_token_params, mut quote_token_params) = default_token_params();
     base_token_params.decimals = base_decimals;
     quote_token_params.decimals = quote_decimals;
-    let erc20_class = declare("ERC20");
     let base_token = deploy_token(erc20_class, @base_token_params);
     let quote_token = deploy_token(erc20_class, @quote_token_params);
 
     // Deploy oracle contract.
-    let oracle = deploy_mock_pragma_oracle(owner);
-
-    // Declare vault token class.
-    let vault_token_class = declare("VaultToken");
+    let oracle = deploy_mock_pragma_oracle(oracle_class, owner);
 
     // Deploy replicating solver.
     let solver = deploy_replicating_solver(
-        owner, oracle.contract_address, vault_token_class.class_hash
+        solver_class, owner, oracle.contract_address, vault_token_class.class_hash
     );
 
     // Create market.
@@ -162,8 +195,8 @@ fn _before(
     oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 5); // 10
 
     // Fund owner with initial token balances and approve strategy and market manager as spenders.
-    let base_amount = to_e18(5000000);
-    let quote_amount = to_e18(1000000000000);
+    let base_amount = to_e18(10000000000000000000000);
+    let quote_amount = to_e18(10000000000000000000000);
     fund(base_token, owner(), base_amount);
     fund(quote_token, owner(), quote_amount);
     if approve_solver {

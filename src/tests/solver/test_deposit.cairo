@@ -13,10 +13,10 @@ use haiko_solver_replicating::{
     },
     types::replicating::{MarketInfo, MarketParams},
     tests::{
-        solver::utils::{before, before_custom_decimals, before_skip_approve, snapshot},
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params
+            params::default_market_params,
+            utils::{before, before_custom_decimals, before_skip_approve, snapshot},
         },
     },
 };
@@ -79,10 +79,14 @@ fn test_deposit_public_vault_both_tokens_at_ratio() {
     );
     assert(aft.bid.lower_sqrt_price == bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
     assert(aft.bid.upper_sqrt_price == bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
-    assert(approx_eq(aft.bid.liquidity.into(), bef.bid.liquidity.into() * 2, 1000), 'Bid liquidity');
+    assert(
+        approx_eq(aft.bid.liquidity.into(), bef.bid.liquidity.into() * 2, 1000), 'Bid liquidity'
+    );
     assert(aft.ask.lower_sqrt_price == bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
     assert(aft.ask.upper_sqrt_price == bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
-    assert(approx_eq(aft.ask.liquidity.into(), bef.ask.liquidity.into() * 2, 1000), 'Ask liquidity');
+    assert(
+        approx_eq(aft.ask.liquidity.into(), bef.ask.liquidity.into() * 2, 1000), 'Ask liquidity'
+    );
 }
 
 #[test]
@@ -154,8 +158,7 @@ fn test_deposit_public_vault_both_tokens_above_available() {
 
     // Deposit.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_deposit, quote_deposit, _) = solver
-        .deposit(market_id, base_amount, quote_amount);
+    let (base_deposit, quote_deposit, _) = solver.deposit(market_id, base_amount, quote_amount);
 
     // Run checks.
     let base_exp = to_e18(5000000);
@@ -166,9 +169,7 @@ fn test_deposit_public_vault_both_tokens_above_available() {
 
 #[test]
 fn test_deposit_public_vault_base_token_only() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, vault_token_opt
-    ) =
+    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, vault_token_opt) =
         before(
         true
     );
@@ -178,7 +179,7 @@ fn test_deposit_public_vault_base_token_only() {
     let base_amount = to_e18(100);
     let quote_amount = 0;
     let (_, _, shares_init) = solver.deposit_initial(market_id, base_amount, quote_amount);
-    
+
     // Snapshot before.
     let vault_token = vault_token_opt.unwrap();
     let bef = snapshot(solver, market_id, base_token, quote_token, vault_token, alice());
@@ -213,14 +214,14 @@ fn test_deposit_public_vault_base_token_only() {
     assert(aft.bid.liquidity == bef.bid.liquidity, 'Bid liquidity');
     assert(aft.ask.lower_sqrt_price == bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
     assert(aft.ask.upper_sqrt_price == bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
-    assert(approx_eq(aft.ask.liquidity.into(), bef.ask.liquidity.into() * 2, 1000), 'Ask liquidity');
+    assert(
+        approx_eq(aft.ask.liquidity.into(), bef.ask.liquidity.into() * 2, 1000), 'Ask liquidity'
+    );
 }
 
 #[test]
 fn test_deposit_public_vault_quote_token_only() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, vault_token_opt
-    ) =
+    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, vault_token_opt) =
         before(
         true
     );
@@ -262,7 +263,9 @@ fn test_deposit_public_vault_quote_token_only() {
     );
     assert(aft.bid.lower_sqrt_price == bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
     assert(aft.bid.upper_sqrt_price == bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
-    assert(approx_eq(aft.bid.liquidity.into(), bef.bid.liquidity.into() * 2, 1000), 'Bid liquidity');
+    assert(
+        approx_eq(aft.bid.liquidity.into(), bef.bid.liquidity.into() * 2, 1000), 'Bid liquidity'
+    );
     assert(aft.ask.lower_sqrt_price == bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
     assert(aft.ask.upper_sqrt_price == bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
     assert(aft.ask.liquidity == bef.ask.liquidity, 'Ask liquidity');
@@ -270,7 +273,9 @@ fn test_deposit_public_vault_quote_token_only() {
 
 #[test]
 fn test_deposit_private_vault_both_tokens_at_arbitrary_ratio() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt) =
+    let (
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
         before(
         false
     );
@@ -321,7 +326,9 @@ fn test_deposit_private_vault_both_tokens_at_arbitrary_ratio() {
 
 #[test]
 fn test_deposit_private_vault_base_token_only() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt) =
+    let (
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
         before(
         false
     );
@@ -370,7 +377,9 @@ fn test_deposit_private_vault_base_token_only() {
 
 #[test]
 fn test_deposit_private_vault_quote_token_only() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt) =
+    let (
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
         before(
         false
     );
@@ -438,9 +447,10 @@ fn test_deposit_emits_event() {
 
     // Spy on events.
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
-    
+
     // Deposit.
-    let (base_deposit, quote_deposit, shares) = solver.deposit(market_id, base_amount, quote_amount);
+    let (base_deposit, quote_deposit, shares) = solver
+        .deposit(market_id, base_amount, quote_amount);
 
     // Check events emitted.
     spy
@@ -479,7 +489,7 @@ fn test_deposit_with_referrer_emits_event() {
 
     // Spy on events.
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
-    
+
     // Deposit.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let (base_deposit, quote_deposit, shares) = solver
@@ -564,7 +574,7 @@ fn test_deposit_no_existing_deposits() {
         before(
         true
     );
-    
+
     // Deposit.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
@@ -581,7 +591,7 @@ fn test_deposit_paused() {
         before(
         true
     );
-    
+
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
@@ -605,7 +615,7 @@ fn test_deposit_private_market_for_non_owner_caller() {
         before(
         false
     );
-    
+
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
@@ -654,7 +664,7 @@ fn test_deposit_initial_invalid_oracle_price() {
     // Set oracle price with invalid quorum.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);
     oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 1); // 10
-    
+
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);

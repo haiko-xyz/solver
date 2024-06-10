@@ -13,10 +13,10 @@ use haiko_solver_replicating::{
     },
     types::replicating::{MarketInfo, MarketParams},
     tests::{
-        solver::utils::{before, before_custom_decimals, before_skip_approve, snapshot},
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params
+            params::default_market_params,
+            utils::{before, before_custom_decimals, before_skip_approve, snapshot},
         },
     },
 };
@@ -160,7 +160,9 @@ fn test_deposit_initial_public_quote_token_only() {
 
 #[test]
 fn test_deposit_initial_private_both_tokens() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt) =
+    let (
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
         before(
         false
     );
@@ -199,7 +201,9 @@ fn test_deposit_initial_private_both_tokens() {
 
 #[test]
 fn test_deposit_initial_private_base_token_only() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt) =
+    let (
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
         before(
         false
     );
@@ -238,7 +242,9 @@ fn test_deposit_initial_private_base_token_only() {
 
 #[test]
 fn test_deposit_initial_private_quote_token_only() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt) =
+    let (
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
         before(
         false
     );

@@ -48,10 +48,19 @@ export const sqrtPriceToLimit = (
   return shifted;
 };
 
-export const priceToLimit = (price: Decimal.Value, width: Decimal.Value) => {
-  Decimal.set({ precision: PRECISION, rounding: ROUNDING });
+export const priceToLimit = (
+  price: Decimal.Value,
+  width: Decimal.Value,
+  roundUp?: boolean
+) => {
+  Decimal.set({
+    precision: PRECISION,
+    rounding: roundUp ? Decimal.ROUND_UP : Decimal.ROUND_DOWN,
+  });
   const priceDec = new Decimal(price);
-  const limit = priceDec.log(2).div(Decimal.log2(1.00001)).toDP(0, 1);
+  const limit = priceDec.log(2).div(Decimal.log2(1.00001));
   const shifted = shiftLimit(limit, width);
-  return shifted;
+  // We must round after shifting to prevent inverting the round direction on negative numbers.
+  const rounded = new Decimal(shifted).toDP(0);
+  return rounded;
 };

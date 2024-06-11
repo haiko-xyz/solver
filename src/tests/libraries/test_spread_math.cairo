@@ -401,24 +401,24 @@ fn test_get_delta() {
     // Skewed to base
     base_amount = to_e18(2);
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(666, false), 'Inv delta 2');
+    assert(inv_delta == I32Trait::new(666, true), 'Inv delta 2');
 
     // Skewed to quote
     base_amount = to_e18(1);
     quote_amount = to_e18(3600);
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(571, true), 'Inv delta 3');
+    assert(inv_delta == I32Trait::new(571, false), 'Inv delta 3');
 
     // All base
     quote_amount = 0;
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(2000, false), 'Inv delta 4');
+    assert(inv_delta == I32Trait::new(2000, true), 'Inv delta 4');
 
     // All quote
     quote_amount = to_e18(2000);
     base_amount = 0;
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(2000, true), 'Inv delta 5');
+    assert(inv_delta == I32Trait::new(2000, false), 'Inv delta 5');
 
     // Zero amounts of both
     base_amount = 0;
@@ -431,17 +431,17 @@ fn test_get_delta() {
     quote_amount = 3;
     price = to_e28(2);
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(400, true), 'Inv delta 7');
+    assert(inv_delta == I32Trait::new(400, false), 'Inv delta 7');
 
     // Large token values
     base_amount = to_e28(1000);
     quote_amount = to_e28(20000);
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
-    assert(inv_delta == I32Trait::new(1636, true), 'Inv delta 8');
+    assert(inv_delta == I32Trait::new(1636, false), 'Inv delta 8');
 
     // Near max delta
-    base_amount = to_e18(50);
-    quote_amount = 0;
+    base_amount = 0;
+    quote_amount = to_e18(50);
     max_delta = 7906600;
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
     assert(inv_delta == I32Trait::new(7906600, false), 'Inv delta 9');

@@ -28,7 +28,8 @@ use haiko_lib::helpers::actions::token::{fund, approve};
 
 // External imports.
 use snforge_std::{
-    start_prank, start_warp, declare, spy_events, SpyOn, EventSpy, EventAssertions, CheatTarget
+    start_prank, stop_prank, start_warp, declare, spy_events, SpyOn, EventSpy, EventAssertions,
+    CheatTarget
 };
 use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 
@@ -144,27 +145,40 @@ fn test_deposit_public_vault_both_tokens_above_quote_ratio() {
 #[test]
 fn test_deposit_public_vault_both_tokens_above_available() {
     let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
     ) =
         before(
         true
     );
 
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
+
+    // Transfer excess balances.
+    start_prank(CheatTarget::One(base_token.contract_address), owner());
+    start_prank(CheatTarget::One(quote_token.contract_address), owner());
+    let base_amount = to_e18(100);
+    let quote_amount = to_e18(500);
+    base_token.transfer(alice(), base_token.balanceOf(owner()) - base_amount * 2);
+    quote_token.transfer(alice(), quote_token.balanceOf(owner()) - quote_amount * 2);
+    stop_prank(CheatTarget::One(base_token.contract_address));
+    stop_prank(CheatTarget::One(quote_token.contract_address));
+
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let base_amount = to_e18(10000000);
-    let quote_amount = to_e18(2000000000000);
     solver.deposit_initial(market_id, base_amount, quote_amount);
 
-    // Deposit.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_deposit, quote_deposit, _) = solver.deposit(market_id, base_amount, quote_amount);
+    // Deposit should be capped at available.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let (base_deposit, quote_deposit, _) = solver
+        .deposit(market_id, base_amount * 2, quote_amount * 2);
 
     // Run checks.
-    let base_exp = to_e18(5000000);
-    let quote_exp = to_e18(1000000000000);
-    assert(base_deposit == base_exp, 'Base deposit');
-    assert(quote_deposit == quote_exp, 'Quote deposit');
+    assert(base_deposit == base_amount, 'Base deposit');
+    assert(quote_deposit == quote_amount, 'Quote deposit');
 }
 
 #[test]
@@ -173,6 +187,12 @@ fn test_deposit_public_vault_base_token_only() {
         before(
         true
     );
+
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -225,6 +245,12 @@ fn test_deposit_public_vault_quote_token_only() {
         before(
         true
     );
+
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -316,11 +342,11 @@ fn test_deposit_private_vault_both_tokens_at_arbitrary_ratio() {
         'Quote reserve'
     );
     // Portfolio now more skewed towards quote asset, so we expect a bid skew.
-    assert(aft.bid.lower_sqrt_price < bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
-    assert(aft.bid.upper_sqrt_price < bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
+    assert(aft.bid.lower_sqrt_price > bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
+    assert(aft.bid.upper_sqrt_price > bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
     assert(aft.bid.liquidity > bef.bid.liquidity, 'Bid liquidity');
-    assert(aft.ask.lower_sqrt_price < bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
-    assert(aft.ask.upper_sqrt_price < bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
+    assert(aft.ask.lower_sqrt_price > bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
+    assert(aft.ask.upper_sqrt_price > bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
     assert(aft.ask.liquidity > bef.ask.liquidity, 'Ask liquidity');
 }
 
@@ -369,10 +395,10 @@ fn test_deposit_private_vault_base_token_only() {
         'Quote reserve'
     );
     // Portfolio now more skewed towards base asset, so we expect a ask skew.
-    assert(aft.bid.lower_sqrt_price > bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
-    assert(aft.bid.upper_sqrt_price > bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
-    assert(aft.ask.lower_sqrt_price > bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
-    assert(aft.ask.upper_sqrt_price > bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
+    assert(aft.bid.lower_sqrt_price < bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
+    assert(aft.bid.upper_sqrt_price < bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
+    assert(aft.ask.lower_sqrt_price < bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
+    assert(aft.ask.upper_sqrt_price < bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
 }
 
 #[test]
@@ -420,10 +446,40 @@ fn test_deposit_private_vault_quote_token_only() {
         'Quote reserve'
     );
     // Portfolio now more skewed towards quote asset, so we expect a bid skew.
-    assert(aft.bid.lower_sqrt_price < bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
-    assert(aft.bid.upper_sqrt_price < bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
-    assert(aft.ask.lower_sqrt_price < bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
-    assert(aft.ask.upper_sqrt_price < bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
+    assert(aft.bid.lower_sqrt_price > bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
+    assert(aft.bid.upper_sqrt_price > bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
+    assert(aft.ask.lower_sqrt_price > bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
+    assert(aft.ask.upper_sqrt_price > bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
+}
+
+#[test]
+fn test_deposit_above_max_skew_that_improves_skew_is_allowed() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set oracle price.
+    start_warp(CheatTarget::One(oracle.contract_address), 1000);
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1_00000000, 8, 999, 5);
+
+    // Set params.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 5000;
+    solver.set_params(market_id, market_params);
+
+    // Deposit initial.
+    solver.deposit_initial(market_id, to_e18(75), to_e18(25));
+
+    // Set oracle price to bring portfolio above max skew
+    start_warp(CheatTarget::One(oracle.contract_address), 1000);
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 100_00000000, 8, 999, 5); // 100
+
+    // Deposit.
+    solver.deposit(market_id, 0, to_e18(25));
 }
 
 ////////////////////////////////
@@ -438,6 +494,12 @@ fn test_deposit_emits_event() {
         before(
         true
     );
+
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -480,6 +542,12 @@ fn test_deposit_with_referrer_emits_event() {
         before(
         true
     );
+
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -629,7 +697,7 @@ fn test_deposit_private_market_for_non_owner_caller() {
 
 #[test]
 #[should_panic(expected: ('BaseAllowance',))]
-fn test_deposit_initial_not_approved() {
+fn test_deposit_not_approved() {
     let (
         base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
     ) =
@@ -650,10 +718,9 @@ fn test_deposit_initial_not_approved() {
     solver.deposit(market_id, base_amount, quote_amount);
 }
 
-
 #[test]
 #[should_panic(expected: ('InvalidOraclePrice',))]
-fn test_deposit_initial_invalid_oracle_price() {
+fn test_deposit_invalid_oracle_price() {
     let (
         _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
     ) =
@@ -677,4 +744,32 @@ fn test_deposit_initial_invalid_oracle_price() {
 
     // Deposit.
     solver.deposit(market_id, base_amount, quote_amount);
+}
+
+#[test]
+#[should_panic(expected: ('MaxSkew',))]
+fn test_deposit_violates_max_skew() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set oracle price with invalid quorum.
+    start_warp(CheatTarget::One(oracle.contract_address), 1000);
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 5); // 10
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let base_amount = to_e18(100);
+    let quote_amount = to_e18(500);
+    solver.deposit_initial(market_id, base_amount, quote_amount);
+
+    // Set oracle price with invalid age.
+    start_warp(CheatTarget::One(oracle.contract_address), 1000);
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 0, 3); // 10
+
+    // Deposit.
+    solver.deposit(market_id, 0, to_e18(5000000));
 }

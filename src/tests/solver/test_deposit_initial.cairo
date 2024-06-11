@@ -83,6 +83,12 @@ fn test_deposit_initial_public_base_token_only() {
         true
     );
 
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
+
     // Snapshot before.
     let vault_token = vault_token_opt.unwrap();
     let bef = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
@@ -123,6 +129,12 @@ fn test_deposit_initial_public_quote_token_only() {
         before(
         true
     );
+
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
 
     // Snapshot before.
     let vault_token = vault_token_opt.unwrap();
@@ -208,6 +220,12 @@ fn test_deposit_initial_private_base_token_only() {
         false
     );
 
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
+
     // Snapshot before.
     let vault_token = contract_address_const::<0x0>();
     let bef = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
@@ -248,6 +266,12 @@ fn test_deposit_initial_private_quote_token_only() {
         before(
         false
     );
+
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
 
     // Snapshot before.
     let vault_token = contract_address_const::<0x0>();
@@ -323,6 +347,12 @@ fn test_deposit_initial_emits_event() {
         true
     );
 
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
+
     // Spy on events.
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
 
@@ -361,6 +391,12 @@ fn test_deposit_initial_with_referrer_emits_event() {
         before(
         true
     );
+
+    // Disable max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 0;
+    solver.set_params(market_id, market_params);
 
     // Spy on events.
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
@@ -527,6 +563,28 @@ fn test_deposit_initial_invalid_oracle_price() {
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
+    let quote_amount = to_e18(500);
+    solver.deposit_initial(market_id, base_amount, quote_amount);
+}
+
+#[test]
+#[should_panic(expected: ('MaxSkew',))]
+fn test_deposit_initial_violates_max_skew() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set max skew.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = solver.market_params(market_id);
+    market_params.max_skew = 100;
+    solver.set_params(market_id, market_params);
+
+    // Deposit initial.
+    let base_amount = to_e18(10000);
     let quote_amount = to_e18(500);
     solver.deposit_initial(market_id, base_amount, quote_amount);
 }

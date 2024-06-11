@@ -1113,6 +1113,7 @@ pub mod ReplicatingSolver {
             self.assert_market_owner(market_id);
             let old_params = self.market_params.read(market_id);
             assert(old_params != params, 'ParamsUnchanged');
+            assert(params.range != 0, 'RangeZero');
             assert(params.min_sources != 0, 'MinSourcesZero');
             assert(params.max_age != 0, 'MaxAgeZero');
             assert(params.base_currency_id != 0, 'BaseIdZero');
@@ -1177,6 +1178,7 @@ pub mod ReplicatingSolver {
             self.assert_owner();
             let old_class_hash = self.vault_token_class.read();
             assert(old_class_hash != new_class_hash, 'ClassHashUnchanged');
+            assert(new_class_hash.into() != 0, 'ClassHashZero');
             self.vault_token_class.write(new_class_hash);
             self
                 .emit(

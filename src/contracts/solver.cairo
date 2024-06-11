@@ -303,15 +303,23 @@ pub mod ReplicatingSolver {
             );
             let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
 
-            // Throw if amounts bring portfolio skew above maximum.
+            // Check deposited amounts does not violate max skew, or if it does, that
+            // the deposit reduces the extent of skew.
             let (base_reserves, quote_reserves) = if swap_params.is_buy {
                 (state.base_reserves - amount_out, state.quote_reserves + amount_in)
             } else {
                 (state.base_reserves + amount_in, state.quote_reserves - amount_out)
             };
             if params.max_skew != 0 {
-                let (skew, _) = spread_math::get_skew(base_reserves, quote_reserves, oracle_price);
-                assert(skew <= params.max_skew.into(), 'MaxSkew');
+                let (skew_before, _) = spread_math::get_skew(
+                    state.base_reserves, state.quote_reserves, oracle_price
+                );
+                let (skew_after, _) = spread_math::get_skew(
+                    base_reserves, quote_reserves, oracle_price
+                );
+                if skew_after > params.max_skew.into() {
+                    assert(skew_after < skew_before, 'MaxSkew');
+                }
             }
 
             // Return amounts.
@@ -721,13 +729,24 @@ pub mod ReplicatingSolver {
             let quote_deposit = min(quote_amount, quote_available);
             assert(base_deposit != 0 || quote_deposit != 0, 'AmountsZero');
 
+            // Check deposited amounts do not violate max skew.
+            let params = self.market_params.read(market_id);
+            if params.max_skew != 0 {
+                let (oracle_price, is_valid) = self.get_oracle_price(market_id);
+                assert(is_valid, 'InvalidOraclePrice');
+                let (skew, _) = spread_math::get_skew(base_deposit, quote_deposit, oracle_price);
+                assert(skew <= params.max_skew.into(), 'MaxSkew');
+            }
+
             // Transfer tokens to contract.
             let contract = get_contract_address();
             if base_deposit != 0 {
+                assert(base_token.balanceOf(caller) >= base_deposit, 'BaseBalance');
                 assert(base_token.allowance(caller, contract) >= base_deposit, 'BaseAllowance');
                 base_token.transferFrom(caller, contract, base_deposit);
             }
             if quote_deposit != 0 {
+                assert(quote_token.balanceOf(caller) >= quote_deposit, 'QuoteBalance');
                 assert(quote_token.allowance(caller, contract) >= quote_deposit, 'QuoteAllowance');
                 quote_token.transferFrom(caller, contract, quote_deposit);
             }
@@ -749,7 +768,7 @@ pub mod ReplicatingSolver {
                 token.mint(caller, shares);
             }
 
-            // Emit event
+            // Emit event.
             self
                 .emit(
                     Event::Deposit(
@@ -861,6 +880,25 @@ pub mod ReplicatingSolver {
             }
             assert(base_deposit != 0 || quote_deposit != 0, 'AmountZero');
 
+            // Check deposited amounts does not violate max skew, or if it does, that
+            // the deposit reduces the extent of skew.
+            let params = self.market_params.read(market_id);
+            if params.max_skew != 0 && !market_info.is_public {
+                let (oracle_price, is_valid) = self.get_oracle_price(market_id);
+                assert(is_valid, 'InvalidOraclePrice');
+                let (skew_before, _) = spread_math::get_skew(
+                    state.base_reserves, state.quote_reserves, oracle_price
+                );
+                let (skew_after, _) = spread_math::get_skew(
+                    state.base_reserves + base_deposit,
+                    state.quote_reserves + quote_deposit,
+                    oracle_price
+                );
+                if skew_after > params.max_skew.into() {
+                    assert(skew_after < skew_before, 'MaxSkew');
+                }
+            }
+
             // Transfer tokens into contract.
             let contract = get_contract_address();
             if base_deposit != 0 {
@@ -956,9 +994,9 @@ pub mod ReplicatingSolver {
             let mut state = self.market_state.read(market_id);
 
             // Run checks.
-            assert(market_info.is_public, 'UseWithdraw');
-            assert(shares != 0, 'SharesZero');
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
+            assert(shares != 0, 'SharesZero');
+            assert(market_info.is_public, 'UseWithdraw');
             let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
             let caller = get_caller_address();
             assert(shares <= vault_token.balanceOf(caller), 'InsuffShares');
@@ -998,12 +1036,33 @@ pub mod ReplicatingSolver {
             let mut state = self.market_state.read(market_id);
 
             // Run checks.
-            assert(!market_info.is_public, 'UseWithdrawAtRatio');
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
+            assert(!market_info.is_public, 'UseWithdrawAtRatio');
 
             // Cap withdraw amount at available. Commit state changes.
             let base_withdraw = min(base_amount, state.base_reserves);
             let quote_withdraw = min(quote_amount, state.quote_reserves);
+
+            // Check withdraws do not violate max skew, or if it does, that the withdraw reduces
+            // the extent of skew.
+            let params = self.market_params.read(market_id);
+            if params.max_skew != 0 && !market_info.is_public {
+                let (oracle_price, is_valid) = self.get_oracle_price(market_id);
+                assert(is_valid, 'InvalidOraclePrice');
+                let (skew_before, _) = spread_math::get_skew(
+                    state.base_reserves, state.quote_reserves, oracle_price
+                );
+                let (skew_after, _) = spread_math::get_skew(
+                    state.base_reserves - base_withdraw,
+                    state.quote_reserves - quote_withdraw,
+                    oracle_price
+                );
+                if skew_after > params.max_skew.into() {
+                    assert(skew_after < skew_before, 'MaxSkew');
+                }
+            }
+
+            // Commit state updates.
             state.base_reserves -= base_withdraw;
             state.quote_reserves -= quote_withdraw;
             self.market_state.write(market_id, state);

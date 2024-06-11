@@ -332,7 +332,7 @@ pub mod ReplicatingSolver {
         ) -> (u256, u256) {
             // Get amounts.
             let (amount_in, amount_out) = self.quote(market_id, swap_params);
-            assert(amount_in != 0 && amount_out != 0, 'AmountsZero');
+            assert(amount_in != 0 && amount_out != 0, 'AmountZero');
 
             // Transfer tokens.
             let market_info = self.market_info.read(market_id);

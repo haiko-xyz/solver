@@ -39,7 +39,9 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 
 #[test]
 fn test_set_withdraw_fees() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, vault_token_opt) =
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
         before(
         true
     );
@@ -50,12 +52,42 @@ fn test_set_withdraw_fees() {
     solver.set_withdraw_fee(market_id, new_fee_rate);
 
     // Get withdraw fees.
-    let fee_rate = solver.withdraw_fee(market_id);
+    let fee_rate = solver.withdraw_fee_rate(market_id);
 
     // Run checks.
     assert(fee_rate == new_fee_rate, 'Fee rate');
 }
 
+#[test]
+fn test_collect_withdraw_fees() {
+    let (
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set withdraw fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let new_fee_rate = 100;
+    solver.set_withdraw_fee(market_id, new_fee_rate);
+
+    // Deposit initial.
+    let base_amount = to_e18(100);
+    let quote_amount = to_e18(500);
+    solver.deposit_initial(market_id, base_amount, quote_amount);
+
+    // Withdraw.
+    solver.withdraw(market_id, base_amount, quote_amount);
+
+    // Collect withdraw fees.
+    let base_fees = solver.collect_withdraw_fees(owner(), base_token.contract_address);
+    let quote_fees = solver.collect_withdraw_fees(owner(), quote_token.contract_address);
+
+    // Run checks.
+    assert(base_fees == base_amount / 100, 'Base fees');
+    assert(quote_fees == quote_amount / 100, 'Quote fees');
+}
 
 ////////////////////////////////
 // TESTS - Events
@@ -92,6 +124,79 @@ fn test_set_withdraw_fees_emits_event() {
         );
 }
 
+
+#[test]
+fn test_collect_withdraw_fees_emits_event() {
+    let (
+        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set withdraw fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let new_fee_rate = 100;
+    solver.set_withdraw_fee(market_id, new_fee_rate);
+
+    // Deposit initial.
+    let base_amount = to_e18(100);
+    let quote_amount = to_e18(500);
+    solver.deposit_initial(market_id, base_amount, quote_amount);
+
+    // Spy on events.
+    let mut spy = spy_events(SpyOn::One(solver.contract_address));
+
+    // Withdraw.
+    solver.withdraw(market_id, base_amount, quote_amount);
+
+    // Collect withdraw fees.
+    let base_fees = solver.collect_withdraw_fees(owner(), base_token.contract_address);
+    let quote_fees = solver.collect_withdraw_fees(owner(), quote_token.contract_address);
+
+    // Check events emitted.
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    solver.contract_address,
+                    ReplicatingSolver::Event::WithdrawFeeEarned(
+                        ReplicatingSolver::WithdrawFeeEarned {
+                            market_id, token: base_token.contract_address, amount: base_fees
+                        }
+                    )
+                ),
+                (
+                    solver.contract_address,
+                    ReplicatingSolver::Event::WithdrawFeeEarned(
+                        ReplicatingSolver::WithdrawFeeEarned {
+                            market_id, token: quote_token.contract_address, amount: quote_fees
+                        }
+                    )
+                ),
+                (
+                    solver.contract_address,
+                    ReplicatingSolver::Event::CollectWithdrawFee(
+                        ReplicatingSolver::CollectWithdrawFee {
+                            receiver: owner(), token: base_token.contract_address, amount: base_fees
+                        }
+                    )
+                ),
+                (
+                    solver.contract_address,
+                    ReplicatingSolver::Event::CollectWithdrawFee(
+                        ReplicatingSolver::CollectWithdrawFee {
+                            receiver: owner(),
+                            token: quote_token.contract_address,
+                            amount: quote_fees
+                        }
+                    )
+                )
+            ]
+        );
+}
+
+
 ////////////////////////////////
 // TESTS - Failure cases
 ////////////////////////////////
@@ -109,4 +214,35 @@ fn test_withdraw_fee_overflow() {
     // Set withdraw fees.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     solver.set_withdraw_fee(market_id, 10001);
+}
+
+#[test]
+#[should_panic(expected: ('FeeUnchanged',))]
+fn test_withdraw_fee_unchanged() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        true
+    );
+
+    // Set withdraw fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let fee_rate = solver.withdraw_fee_rate(market_id);
+    solver.set_withdraw_fee(market_id, fee_rate);
+}
+
+#[test]
+#[should_panic(expected: ('OnlyOwner',))]
+fn test_withdraw_fee_not_owner() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        true
+    );
+
+    // Set withdraw fees.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    solver.set_withdraw_fee(market_id, 5000);
 }

@@ -26,6 +26,11 @@ As with Strategies, LPs can deposit to Solvers to have their liquidity automatic
 
 The Replicating Solver currently support two markets types, a private market that offers more granular control, and a public market that is open to multiple 3rd party depositors. Public deposits are tracked using ERC20 vault tokens for composability.
 
+## Docs
+
+1. [Test Cases](./docs/1-test-cases.md)
+2. [Aggregator Integration](./docs/2-aggregator-integration.md)
+
 ## Getting started
 
 ```shell

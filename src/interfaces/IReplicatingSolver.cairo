@@ -21,9 +21,6 @@ pub trait IReplicatingSolver<TContractState> {
     // Market state
     fn market_state(self: @TContractState, market_id: felt252) -> MarketState;
 
-    // Withdraw fee
-    fn withdraw_fee(self: @TContractState, market_id: felt252) -> u16;
-
     // Pragma oracle contract address
     fn oracle(self: @TContractState) -> ContractAddress;
 

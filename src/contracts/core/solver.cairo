@@ -429,7 +429,19 @@ pub mod SolverComponent {
                 contract_address: get_contract_address()
             };
             let (amount_in, amount_out) = solver_quoter.quote(market_id, swap_params);
+
+            // Check amounts non-zero and satisfy threshold amounts.
             assert(amount_in != 0 && amount_out != 0, 'AmountZero');
+            if swap_params.threshold_amount.is_some() {
+                let threshold_amount_val = swap_params.threshold_amount.unwrap();
+                assert(threshold_amount_val != 0, 'ThresholdAmountZero');
+                if swap_params.exact_input && (amount_out < threshold_amount_val) {
+                    panic(array!['ThresholdAmount', amount_out.low.into(), amount_out.high.into()]);
+                }
+                if !swap_params.exact_input && (amount_in > threshold_amount_val) {
+                    panic(array!['ThresholdAmount', amount_in.low.into(), amount_in.high.into()]);
+                }
+            }
 
             // Transfer tokens.
             let market_info: MarketInfo = self.market_info.read(market_id);

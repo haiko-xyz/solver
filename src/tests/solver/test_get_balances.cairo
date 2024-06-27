@@ -3,15 +3,16 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::core::solver::SolverComponent,
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
     },
     interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
+    types::{core::MarketInfo, replicating::MarketParams},
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},

@@ -3,15 +3,16 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::replicating::replicating_solver::ReplicatingSolver,
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
     },
     interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
+    types::{core::MarketInfo, replicating::MarketParams},
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
@@ -47,6 +48,7 @@ fn test_set_market_params() {
     );
 
     // Set market params.
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = MarketParams {
         min_spread: 987,
         range: 12345,
@@ -57,10 +59,10 @@ fn test_set_market_params() {
         min_sources: 10,
         max_age: 200,
     };
-    solver.set_params(market_id, params);
+    repl_solver.set_market_params(market_id, params);
 
     // Get market params.
-    let market_params = solver.market_params(market_id);
+    let market_params = repl_solver.market_params(market_id);
 
     // Run checks.
     assert(market_params.min_spread == params.min_spread, 'Min spread');
@@ -90,6 +92,7 @@ fn test_set_market_params_emits_event() {
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
 
     // Set market params.
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = MarketParams {
         min_spread: 987,
         range: 12345,
@@ -100,7 +103,7 @@ fn test_set_market_params_emits_event() {
         min_sources: 10,
         max_age: 200,
     };
-    solver.set_params(market_id, params);
+    repl_solver.set_market_params(market_id, params);
 
     // Check events emitted.
     spy
@@ -162,8 +165,9 @@ fn test_set_market_params_fails_if_params_unchanged() {
 
     // Set market params.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let params = solver.market_params(market_id);
-    solver.set_params(market_id, params);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let params = repl_solver.market_params(market_id);
+    repl_solver.set_market_params(market_id, params);
 }
 
 #[test]
@@ -178,9 +182,10 @@ fn test_set_market_params_fails_if_range_zero() {
 
     // Set market params.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut params = repl_solver.market_params(market_id);
     params.range = 0;
-    solver.set_params(market_id, params);
+    repl_solver.set_market_params(market_id, params);
 }
 
 #[test]
@@ -195,9 +200,10 @@ fn test_set_market_params_fails_if_min_sources_zero() {
 
     // Set market params.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut params = repl_solver.market_params(market_id);
     params.min_sources = 0;
-    solver.set_params(market_id, params);
+    repl_solver.set_market_params(market_id, params);
 }
 
 #[test]
@@ -212,9 +218,10 @@ fn test_set_market_params_fails_if_max_age_zero() {
 
     // Set market params.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut params = repl_solver.market_params(market_id);
     params.max_age = 0;
-    solver.set_params(market_id, params);
+    repl_solver.set_market_params(market_id, params);
 }
 
 #[test]
@@ -229,9 +236,10 @@ fn test_set_market_params_fails_if_base_currency_id_zero() {
 
     // Set market params.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut params = repl_solver.market_params(market_id);
     params.base_currency_id = 0;
-    solver.set_params(market_id, params);
+    repl_solver.set_market_params(market_id, params);
 }
 
 #[test]
@@ -246,7 +254,8 @@ fn test_set_market_params_fails_if_quote_currency_id_zero() {
 
     // Set market params.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut params = repl_solver.market_params(market_id);
     params.quote_currency_id = 0;
-    solver.set_params(market_id, params);
+    repl_solver.set_market_params(market_id, params);
 }

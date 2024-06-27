@@ -5,7 +5,7 @@ use starknet::class_hash::ClassHash;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::core::solver::SolverComponent,
     contracts::mocks::{
         upgraded_replicating_solver::{
             UpgradedReplicatingSolver, IUpgradedReplicatingSolverDispatcher,
@@ -19,7 +19,7 @@ use haiko_solver_replicating::{
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         pragma::{DataType, PragmaPricesResponse},
     },
-    types::{core::SwapParams, replicating::{MarketInfo, MarketParams, MarketState}},
+    types::{core::{MarketInfo, MarketState, SwapParams}, replicating::MarketParams},
     tests::{
         helpers::{actions::{deploy_replicating_solver, deploy_mock_pragma_oracle}, utils::before,},
     },

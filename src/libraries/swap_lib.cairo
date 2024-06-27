@@ -4,7 +4,7 @@ use core::integer::{u512, u256_wide_mul};
 
 // Local imports.
 use haiko_solver_replicating::types::{
-    replicating::{MarketState, MarketParams, PositionInfo}, core::SwapParams
+    replicating::MarketParams, core::{MarketState, PositionInfo, SwapParams}
 };
 
 // Haiko imports.

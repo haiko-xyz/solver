@@ -3,15 +3,16 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::core::solver::SolverComponent,
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
     },
     interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
+    types::{core::MarketInfo, replicating::MarketParams},
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
@@ -116,8 +117,8 @@ fn test_set_withdraw_fees_emits_event() {
             @array![
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::SetWithdrawFee(
-                        ReplicatingSolver::SetWithdrawFee { market_id, fee_rate: new_fee_rate }
+                    SolverComponent::Event::SetWithdrawFee(
+                        SolverComponent::SetWithdrawFee { market_id, fee_rate: new_fee_rate }
                     )
                 )
             ]
@@ -160,32 +161,32 @@ fn test_collect_withdraw_fees_emits_event() {
             @array![
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::WithdrawFeeEarned(
-                        ReplicatingSolver::WithdrawFeeEarned {
+                    SolverComponent::Event::WithdrawFeeEarned(
+                        SolverComponent::WithdrawFeeEarned {
                             market_id, token: base_token.contract_address, amount: base_fees
                         }
                     )
                 ),
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::WithdrawFeeEarned(
-                        ReplicatingSolver::WithdrawFeeEarned {
+                    SolverComponent::Event::WithdrawFeeEarned(
+                        SolverComponent::WithdrawFeeEarned {
                             market_id, token: quote_token.contract_address, amount: quote_fees
                         }
                     )
                 ),
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::CollectWithdrawFee(
-                        ReplicatingSolver::CollectWithdrawFee {
+                    SolverComponent::Event::CollectWithdrawFee(
+                        SolverComponent::CollectWithdrawFee {
                             receiver: owner(), token: base_token.contract_address, amount: base_fees
                         }
                     )
                 ),
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::CollectWithdrawFee(
-                        ReplicatingSolver::CollectWithdrawFee {
+                    SolverComponent::Event::CollectWithdrawFee(
+                        SolverComponent::CollectWithdrawFee {
                             receiver: owner(),
                             token: quote_token.contract_address,
                             amount: quote_fees

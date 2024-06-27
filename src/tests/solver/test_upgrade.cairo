@@ -3,7 +3,7 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::core::solver::SolverComponent,
     contracts::mocks::{
         mock_pragma_oracle::{IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait},
         upgraded_replicating_solver::{
@@ -11,10 +11,10 @@ use haiko_solver_replicating::{
         },
     },
     interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
-        IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
+    types::{core::MarketInfo, replicating::MarketParams},
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
@@ -65,7 +65,7 @@ fn test_upgrade_replicating_solver() {
             @array![
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::Upgraded(ReplicatingSolver::Upgraded { class_hash })
+                    SolverComponent::Event::Upgraded(SolverComponent::Upgraded { class_hash })
                 )
             ]
         );

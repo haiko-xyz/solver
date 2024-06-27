@@ -6,7 +6,7 @@ use starknet::contract_address::contract_address_const;
 use haiko_solver_replicating::contracts::mocks::store_packing_contract::{
     StorePackingContract, IStorePackingContractDispatcher, IStorePackingContractDispatcherTrait
 };
-use haiko_solver_replicating::types::replicating::{MarketParams, MarketState};
+use haiko_solver_replicating::types::{replicating::MarketParams, core::MarketState};
 
 // External imports.
 use snforge_std::{declare, ContractClass, ContractClassTrait};

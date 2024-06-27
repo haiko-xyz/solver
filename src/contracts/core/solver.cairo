@@ -1,5 +1,5 @@
-#[starknet::contract]
-pub mod ReplicatingSolver {
+#[starknet::component]
+pub mod SolverComponent {
     // Core lib imports.
     use core::integer::BoundedInt;
     use core::poseidon::poseidon_hash_span;
@@ -15,25 +15,22 @@ pub mod ReplicatingSolver {
         swap_lib, spread_math, id, erc20_versioned_call,
         store_packing::{MarketParamsStorePacking, MarketStateStorePacking}
     };
-    use haiko_solver_replicating::interfaces::ISolver::ISolver;
-    use haiko_solver_replicating::interfaces::IReplicatingSolver::IReplicatingSolver;
-    use haiko_solver_replicating::interfaces::IVaultToken::{
-        IVaultTokenDispatcher, IVaultTokenDispatcherTrait
+    use haiko_solver_replicating::interfaces::{
+        ISolver::{ISolver, ISolverQuoterDispatcher, ISolverQuoterDispatcherTrait},
+        IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     };
     use haiko_solver_replicating::interfaces::pragma::{
         AggregationMode, DataType, SimpleDataType, PragmaPricesResponse, IOracleABIDispatcher,
         IOracleABIDispatcherTrait
     };
-    use haiko_solver_replicating::types::core::SwapParams;
-    use haiko_solver_replicating::types::replicating::{
-        MarketInfo, MarketParams, MarketState, PositionInfo
-    };
+    use haiko_solver_replicating::types::core::{MarketInfo, MarketState, PositionInfo, SwapParams};
 
     // Haiko imports.
     use haiko_lib::{math::{math, fee_math}, constants::{ONE, LOG2_1_00001, MAX_FEE_RATE}};
 
     // External imports.
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
+    use alexandria_math::fast_root::fast_sqrt;
 
     ////////////////////////////////
     // STORAGE
@@ -41,27 +38,27 @@ pub mod ReplicatingSolver {
 
     #[storage]
     struct Storage {
+        // IMMUTABLE
+        // solver name
+        name: ByteArray,
+        // solver symbol
+        symbol: ByteArray,
         // OWNABLE
         // contract owner
         owner: ContractAddress,
         // queued contract owner (for ownership transfers)
         queued_owner: ContractAddress,
-        // MUTABLE
-        // oracle for price and volatility feeds
-        oracle: IOracleABIDispatcher,
-        // vault token class hash
-        vault_token_class: ClassHash,
         // SOLVER
         // Indexed by market id
         market_info: LegacyMap::<felt252, MarketInfo>,
-        // Indexed by market id
-        market_params: LegacyMap::<felt252, MarketParams>,
         // Indexed by market id
         market_state: LegacyMap::<felt252, MarketState>,
         // Indexed by market_id
         withdraw_fee_rate: LegacyMap::<felt252, u16>,
         // Indexed by asset
         withdraw_fees: LegacyMap::<ContractAddress, u256>,
+        // vault token class hash
+        vault_token_class: ClassHash,
     }
 
     ////////////////////////////////
@@ -75,12 +72,10 @@ pub mod ReplicatingSolver {
         Deposit: Deposit,
         Withdraw: Withdraw,
         Swap: Swap,
-        SetMarketParams: SetMarketParams,
         CollectWithdrawFee: CollectWithdrawFee,
         SetWithdrawFee: SetWithdrawFee,
         WithdrawFeeEarned: WithdrawFeeEarned,
         ChangeOwner: ChangeOwner,
-        ChangeOracle: ChangeOracle,
         ChangeVaultTokenClass: ChangeVaultTokenClass,
         Pause: Pause,
         Unpause: Unpause,
@@ -132,20 +127,6 @@ pub mod ReplicatingSolver {
     }
 
     #[derive(Drop, starknet::Event)]
-    pub(crate) struct SetMarketParams {
-        #[key]
-        pub market_id: felt252,
-        pub min_spread: u32,
-        pub range: u32,
-        pub max_delta: u32,
-        pub max_skew: u16,
-        pub base_currency_id: felt252,
-        pub quote_currency_id: felt252,
-        pub min_sources: u32,
-        pub max_age: u64,
-    }
-
-    #[derive(Drop, starknet::Event)]
     pub(crate) struct SetWithdrawFee {
         #[key]
         pub market_id: felt252,
@@ -168,11 +149,6 @@ pub mod ReplicatingSolver {
         #[key]
         pub token: ContractAddress,
         pub amount: u256,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    pub(crate) struct ChangeOracle {
-        pub oracle: ContractAddress,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -211,261 +187,82 @@ pub mod ReplicatingSolver {
     }
 
     ////////////////////////////////
-    // CONSTRUCTOR
-    ////////////////////////////////
-
-    #[constructor]
-    fn constructor(
-        ref self: ContractState,
-        owner: ContractAddress,
-        oracle: ContractAddress,
-        vault_token_class: ClassHash,
-    ) {
-        self.owner.write(owner);
-        let oracle_dispatcher = IOracleABIDispatcher { contract_address: oracle };
-        self.oracle.write(oracle_dispatcher);
-        self.vault_token_class.write(vault_token_class);
-    }
-
-    ////////////////////////////////
     // FUNCTIONS
     ////////////////////////////////
 
     #[abi(per_item)]
     #[generate_trait]
-    impl ModifierImpl of ModifierTrait {
-        fn assert_owner(self: @ContractState) {
+    pub impl SolverModifier<
+        TContractState, +HasComponent<TContractState>
+    > of ModifierTrait<TContractState> {
+        fn assert_owner(self: @ComponentState<TContractState>) {
             assert(self.owner.read() == get_caller_address(), 'OnlyOwner');
         }
 
-        fn assert_market_owner(self: @ContractState, market_id: felt252) {
-            let owner = self.market_info.read(market_id).owner;
-            assert(owner == get_caller_address(), 'OnlyMarketOwner');
+        fn assert_market_owner(self: @ComponentState<TContractState>, market_id: felt252) {
+            let market_info: MarketInfo = self.market_info.read(market_id);
+            assert(market_info.owner == get_caller_address(), 'OnlyMarketOwner');
         }
     }
 
-    #[abi(embed_v0)]
-    impl Solver of ISolver<ContractState> {
+    #[embeddable_as(SolverImpl)]
+    pub impl Solver<
+        TContractState, +HasComponent<TContractState>
+    > of ISolver<ComponentState<TContractState>> {
         // Get the name of the solver.
         // 
         // # Returns
         // * `name` - solver name
-        fn name(self: @ContractState) -> ByteArray {
-            "Replicating"
+        fn name(self: @ComponentState<TContractState>) -> ByteArray {
+            self.name.read()
         }
 
         // Get the symbol of the solver.
         // 
         // # Returns
         // * `symbol` - solver symbol
-        fn symbol(self: @ContractState) -> ByteArray {
-            "REPL"
+        fn symbol(self: @ComponentState<TContractState>) -> ByteArray {
+            self.symbol.read()
         }
 
-        // Obtain quote for swap through a market.
-        // 
-        // # Arguments
-        // * `market_id` - market id
-        // * `swap_params` - swap parameters
-        //
-        // # Returns
-        // * `amount_in` - amount in
-        // * `amount_out` - amount out
-        fn quote(
-            self: @ContractState, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256) {
-            // Run validity checks.
-            let state = self.market_state.read(market_id);
-            let market_info = self.market_info.read(market_id);
-            assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
-            assert(!state.is_paused, 'Paused');
-
-            // Fetch oracle price.
-            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-            assert(is_valid, 'InvalidOraclePrice');
-
-            // Calculate swap amounts.
-            let params = self.market_params.read(market_id);
-            let delta = spread_math::get_delta(
-                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
-            );
-            let is_bid = !swap_params.is_buy;
-            let reserves = if is_bid {
-                state.quote_reserves
-            } else {
-                state.base_reserves
-            };
-            let (lower_limit, upper_limit) = spread_math::get_virtual_position_range(
-                is_bid, params.min_spread, delta, params.range, oracle_price
-            );
-            let position = spread_math::get_virtual_position(
-                is_bid, lower_limit, upper_limit, reserves
-            );
-            let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
-
-            // Check deposited amounts does not violate max skew, or if it does, that
-            // the deposit reduces the extent of skew.
-            let (base_reserves, quote_reserves) = if swap_params.is_buy {
-                (state.base_reserves - amount_out, state.quote_reserves + amount_in)
-            } else {
-                (state.base_reserves + amount_in, state.quote_reserves - amount_out)
-            };
-            if params.max_skew != 0 {
-                let (skew_before, _) = spread_math::get_skew(
-                    state.base_reserves, state.quote_reserves, oracle_price
-                );
-                let (skew_after, _) = spread_math::get_skew(
-                    base_reserves, quote_reserves, oracle_price
-                );
-                if skew_after > params.max_skew.into() {
-                    assert(skew_after < skew_before, 'MaxSkew');
-                }
-            }
-
-            // Return amounts.
-            (amount_in, amount_out)
-        }
-
-        // Execute swap through a market.
-        // 
-        // # Arguments
-        // * `market_id` - market id
-        // * `swap_params` - swap parameters
-        //
-        // # Returns
-        // * `amount_in` - amount in
-        // * `amount_out` - amount out
-        fn swap(
-            ref self: ContractState, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256) {
-            // Get amounts.
-            let (amount_in, amount_out) = self.quote(market_id, swap_params);
-            assert(amount_in != 0 && amount_out != 0, 'AmountZero');
-
-            // Transfer tokens.
-            let market_info = self.market_info.read(market_id);
-            let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
-            let quote_token = ERC20ABIDispatcher { contract_address: market_info.quote_token };
-            let caller = get_caller_address();
-            let contract = get_contract_address();
-            if swap_params.is_buy {
-                quote_token.transferFrom(caller, contract, amount_in);
-                base_token.transfer(caller, amount_out);
-            } else {
-                base_token.transferFrom(caller, contract, amount_in);
-                quote_token.transfer(caller, amount_out);
-            }
-
-            // Update reserves.
-            let mut state = self.market_state.read(market_id);
-            if swap_params.is_buy {
-                state.quote_reserves += amount_in;
-                state.base_reserves -= amount_out;
-            } else {
-                state.base_reserves += amount_in;
-                state.quote_reserves -= amount_out;
-            }
-            self.market_state.write(market_id, state);
-
-            // Emit events.
-            self.emit(Event::Swap(Swap { market_id, caller, amount_in, amount_out }));
-
-            (amount_in, amount_out)
-        }
-    }
-
-    #[abi(embed_v0)]
-    impl ReplicatingSolver of IReplicatingSolver<ContractState> {
         // Market id
-        fn market_id(self: @ContractState, market_info: MarketInfo) -> felt252 {
+        fn market_id(self: @ComponentState<TContractState>, market_info: MarketInfo) -> felt252 {
             id::market_id(market_info)
         }
 
         // Immutable market information
-        fn market_info(self: @ContractState, market_id: felt252) -> MarketInfo {
+        fn market_info(self: @ComponentState<TContractState>, market_id: felt252) -> MarketInfo {
             self.market_info.read(market_id)
         }
 
-        // Configurable market parameters
-        fn market_params(self: @ContractState, market_id: felt252) -> MarketParams {
-            self.market_params.read(market_id)
-        }
-
         // Market state
-        fn market_state(self: @ContractState, market_id: felt252) -> MarketState {
+        fn market_state(self: @ComponentState<TContractState>, market_id: felt252) -> MarketState {
             self.market_state.read(market_id)
         }
 
-        // Pragma oracle contract address
-        fn oracle(self: @ContractState) -> ContractAddress {
-            self.oracle.read().contract_address
-        }
-
         // Vault token class hash
-        fn vault_token_class(self: @ContractState) -> ClassHash {
+        fn vault_token_class(self: @ComponentState<TContractState>) -> ClassHash {
             self.vault_token_class.read()
         }
 
         // Contract owner
-        fn owner(self: @ContractState) -> ContractAddress {
+        fn owner(self: @ComponentState<TContractState>) -> ContractAddress {
             self.owner.read()
         }
 
         // Queued contract owner, used for ownership transfers
-        fn queued_owner(self: @ContractState) -> ContractAddress {
+        fn queued_owner(self: @ComponentState<TContractState>) -> ContractAddress {
             self.queued_owner.read()
         }
 
         // Withdraw fee rate for a given market
-        fn withdraw_fee_rate(self: @ContractState, market_id: felt252) -> u16 {
+        fn withdraw_fee_rate(self: @ComponentState<TContractState>, market_id: felt252) -> u16 {
             self.withdraw_fee_rate.read(market_id)
         }
 
         // Accumulated withdraw fee balance for a given asset
-        fn withdraw_fees(self: @ContractState, token: ContractAddress) -> u256 {
+        fn withdraw_fees(self: @ComponentState<TContractState>, token: ContractAddress) -> u256 {
             self.withdraw_fees.read(token)
-        }
-
-        // Get price from oracle feed.
-        // 
-        // # Arguments
-        // * `market_id` - market id
-        //
-        // # Returns
-        // * `price` - oracle price, base 1e28
-        // * `is_valid` - whether oracle price passes validity checks re number of sources and age
-        fn get_oracle_price(self: @ContractState, market_id: felt252) -> (u256, bool) {
-            // Fetch state.
-            let oracle = self.oracle.read();
-            let market_info = self.market_info.read(market_id);
-            let params = self.market_params.read(market_id);
-
-            // Fetch oracle price.
-            let output: PragmaPricesResponse = oracle
-                .get_data_with_USD_hop(
-                    params.base_currency_id,
-                    params.quote_currency_id,
-                    AggregationMode::Median(()),
-                    SimpleDataType::SpotEntry(()),
-                    Option::None(())
-                );
-
-            // Validate number of sources and age of oracle price.
-            let now = get_block_timestamp();
-            let is_valid = (output.num_sources_aggregated >= params.min_sources)
-                && (output.last_updated_timestamp + params.max_age >= now);
-
-            // Calculate and return scaled price. We want to return the price base 1e28,
-            // but we must also scale it by the number of decimals in the oracle price and
-            // the token pair.
-            let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
-            let quote_token = ERC20ABIDispatcher { contract_address: market_info.quote_token };
-            let base_decimals: u256 = base_token.decimals().into();
-            let quote_decimals: u256 = quote_token.decimals().into();
-            assert(28 + quote_decimals >= output.decimals.into() + base_decimals, 'DecimalsUF');
-            let decimals: u256 = 28 + quote_decimals - output.decimals.into() - base_decimals;
-            let scaling_factor = math::pow(10, decimals);
-            (output.price.into() * scaling_factor, is_valid)
         }
 
         // Get token balances held in solver market.
@@ -476,8 +273,8 @@ pub mod ReplicatingSolver {
         // # Returns
         // * `base_amount` - total base tokens owned
         // * `quote_amount` - total quote tokens owned
-        fn get_balances(self: @ContractState, market_id: felt252) -> (u256, u256) {
-            let state = self.market_state.read(market_id);
+        fn get_balances(self: @ComponentState<TContractState>, market_id: felt252) -> (u256, u256) {
+            let state: MarketState = self.market_state.read(market_id);
             (state.base_reserves, state.quote_reserves)
         }
 
@@ -489,7 +286,7 @@ pub mod ReplicatingSolver {
         // # Returns
         // * `balances` - list of base and quote token amounts
         fn get_balances_array(
-            self: @ContractState, market_ids: Span<felt252>
+            self: @ComponentState<TContractState>, market_ids: Span<felt252>
         ) -> Span<(u256, u256)> {
             let mut balances: Array<(u256, u256)> = array![];
             let mut i = 0;
@@ -518,7 +315,9 @@ pub mod ReplicatingSolver {
         // * `user_shares` - user shares
         // * `total_shares` - total shares in market
         fn get_user_balances_array(
-            self: @ContractState, users: Span<ContractAddress>, market_ids: Span<felt252>
+            self: @ComponentState<TContractState>,
+            users: Span<ContractAddress>,
+            market_ids: Span<felt252>
         ) -> Span<(u256, u256, u256, u256)> {
             // Check users and market ids of equal length.
             assert(users.len() == market_ids.len(), 'LengthMismatch');
@@ -556,99 +355,38 @@ pub mod ReplicatingSolver {
             balances.span()
         }
 
-        // Get virtual liquidity positions against which swaps are executed.
-        // 
-        // # Arguments
-        // * `market_id` - market id
-        //
-        // # Returns
-        // * `bid` - bid position
-        // * `ask` - ask position
-        fn get_virtual_positions(
-            self: @ContractState, market_id: felt252
-        ) -> (PositionInfo, PositionInfo) {
-            // Fetch state.
-            let state = self.market_state.read(market_id);
-            let params = self.market_params.read(market_id);
-
-            // Fetch oracle price.
-            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-            assert(is_valid, 'InvalidOraclePrice');
-
-            // Calculate position ranges.
-            let delta = spread_math::get_delta(
-                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
-            );
-            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
-                true, params.min_spread, delta, params.range, oracle_price
-            );
-            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
-                false, params.min_spread, delta, params.range, oracle_price
-            );
-
-            // Calculate and return positions.
-            let mut bid: PositionInfo = Default::default();
-            let mut ask: PositionInfo = Default::default();
-            if state.quote_reserves != 0 {
-                bid =
-                    spread_math::get_virtual_position(
-                        true, bid_lower, bid_upper, state.quote_reserves
-                    );
-            }
-            if state.base_reserves != 0 {
-                ask =
-                    spread_math::get_virtual_position(
-                        false, ask_lower, ask_upper, state.base_reserves
-                    );
-            }
-
-            (bid, ask)
-        }
-
         // Create market for solver.
         // At the moment, only callable by contract owner to prevent unwanted claiming of markets. 
         // Each market must be unique in `market_info`.
         //
         // # Arguments
         // * `market_info` - market info
-        // * `params` - solver params
         //
         // # Returns
         // * `market_id` - market id
         // * `vault_token` (optional) - vault token address (if public market)
         fn create_market(
-            ref self: ContractState, market_info: MarketInfo, params: MarketParams
+            ref self: ComponentState<TContractState>, market_info: MarketInfo
         ) -> (felt252, Option<ContractAddress>) {
             // Only callable by contract owner.
             self.assert_owner();
 
             // Check market is not already initialised.
             let market_id = id::market_id(market_info);
+            let existing_market_info: MarketInfo = self.market_info.read(market_id);
             assert(
-                self.market_info.read(market_id).base_token == contract_address_const::<0x0>(),
-                'MarketExists'
+                existing_market_info.base_token == contract_address_const::<0x0>(), 'MarketExists'
             );
 
-            // Check params.
-            assert(market_info.base_token != contract_address_const::<0x0>(), 'BaseTokenNull');
-            assert(market_info.quote_token != contract_address_const::<0x0>(), 'QuoteTokenNull');
-            assert(params.range != 0, 'RangeZero');
-            assert(params.min_sources != 0, 'MinSourcesZero');
-            assert(params.max_age != 0, 'MaxAgeZero');
-            assert(params.base_currency_id != 0, 'BaseIdNull');
-            assert(params.quote_currency_id != 0, 'QuoteIdNull');
-            assert(market_info.owner != contract_address_const::<0x0>(), 'OwnerNull');
-
-            // Set market info and params.
+            // Set market info.
             self.market_info.write(market_id, market_info);
-            self.market_params.write(market_id, params);
 
             // If vault is public, deploy vault token and update state.
             let mut vault_token: Option<ContractAddress> = Option::None(());
             if market_info.is_public {
                 let vault_token_addr = self._deploy_vault_token(market_info);
                 vault_token = Option::Some(vault_token_addr);
-                let mut state = self.market_state.read(market_id);
+                let mut state: MarketState = self.market_state.read(market_id);
                 state.vault_token = vault_token_addr;
                 self.market_state.write(market_id, state);
             }
@@ -670,25 +408,59 @@ pub mod ReplicatingSolver {
                         }
                     )
                 );
-            self
-                .emit(
-                    Event::SetMarketParams(
-                        SetMarketParams {
-                            market_id,
-                            min_spread: params.min_spread,
-                            range: params.range,
-                            max_delta: params.max_delta,
-                            max_skew: params.max_skew,
-                            base_currency_id: params.base_currency_id,
-                            quote_currency_id: params.quote_currency_id,
-                            min_sources: params.min_sources,
-                            max_age: params.max_age,
-                        }
-                    )
-                );
 
             // Return market id
             (market_id, vault_token)
+        }
+
+        // Execute swap through a market.
+        // 
+        // # Arguments
+        // * `market_id` - market id
+        // * `swap_params` - swap parameters
+        //
+        // # Returns
+        // * `amount_in` - amount in
+        // * `amount_out` - amount out
+        fn swap(
+            ref self: ComponentState<TContractState>, market_id: felt252, swap_params: SwapParams,
+        ) -> (u256, u256) {
+            // Get amounts.
+            let solver_quoter = ISolverQuoterDispatcher {
+                contract_address: get_contract_address()
+            };
+            let (amount_in, amount_out) = solver_quoter.quote(market_id, swap_params);
+            assert(amount_in != 0 && amount_out != 0, 'AmountZero');
+
+            // Transfer tokens.
+            let market_info: MarketInfo = self.market_info.read(market_id);
+            let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
+            let quote_token = ERC20ABIDispatcher { contract_address: market_info.quote_token };
+            let caller = get_caller_address();
+            let contract = get_contract_address();
+            if swap_params.is_buy {
+                quote_token.transferFrom(caller, contract, amount_in);
+                base_token.transfer(caller, amount_out);
+            } else {
+                base_token.transferFrom(caller, contract, amount_in);
+                quote_token.transfer(caller, amount_out);
+            }
+
+            // Update reserves.
+            let mut state: MarketState = self.market_state.read(market_id);
+            if swap_params.is_buy {
+                state.quote_reserves += amount_in;
+                state.base_reserves -= amount_out;
+            } else {
+                state.base_reserves += amount_in;
+                state.quote_reserves -= amount_out;
+            }
+            self.market_state.write(market_id, state);
+
+            // Emit events.
+            self.emit(Event::Swap(Swap { market_id, caller, amount_in, amount_out }));
+
+            (amount_in, amount_out)
         }
 
         // Deposit initial liquidity to market.
@@ -705,11 +477,14 @@ pub mod ReplicatingSolver {
         // * `quote_deposit` - quote asset deposited
         // * `shares` - pool shares minted in the form of liquidity
         fn deposit_initial(
-            ref self: ContractState, market_id: felt252, base_amount: u256, quote_amount: u256
+            ref self: ComponentState<TContractState>,
+            market_id: felt252,
+            base_amount: u256,
+            quote_amount: u256
         ) -> (u256, u256, u256) {
             // Fetch market info and state.
             let market_info = self.market_info.read(market_id);
-            let mut state = self.market_state.read(market_id);
+            let mut state: MarketState = self.market_state.read(market_id);
 
             // Run checks
             assert(!state.is_paused, 'Paused');
@@ -728,15 +503,6 @@ pub mod ReplicatingSolver {
             let base_deposit = min(base_amount, base_available);
             let quote_deposit = min(quote_amount, quote_available);
             assert(base_deposit != 0 || quote_deposit != 0, 'AmountsZero');
-
-            // Check deposited amounts do not violate max skew.
-            let params = self.market_params.read(market_id);
-            if params.max_skew != 0 {
-                let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-                assert(is_valid, 'InvalidOraclePrice');
-                let (skew, _) = spread_math::get_skew(base_deposit, quote_deposit, oracle_price);
-                assert(skew <= params.max_skew.into(), 'MaxSkew');
-            }
 
             // Transfer tokens to contract.
             let contract = get_contract_address();
@@ -757,13 +523,11 @@ pub mod ReplicatingSolver {
             state.quote_reserves += quote_deposit;
             self.market_state.write(market_id, state);
 
-            // Calculate liquidity.
-            let (bid, ask) = self.get_virtual_positions(market_id);
-
             // Mint shares.
+            // Set starting shares to sqrt(base_tokens * quote_tokens) as per Uniswap
             let mut shares: u256 = 0;
             if market_info.is_public {
-                shares = (bid.liquidity + ask.liquidity).into();
+                shares = self._sqrt(base_deposit) * self._sqrt(quote_deposit);
                 let token = IVaultTokenDispatcher { contract_address: state.vault_token };
                 token.mint(caller, shares);
             }
@@ -798,7 +562,7 @@ pub mod ReplicatingSolver {
         // * `quote_deposit` - quote asset deposited
         // * `shares` - pool shares minted in the form of liquidity
         fn deposit_initial_with_referrer(
-            ref self: ContractState,
+            ref self: ComponentState<TContractState>,
             market_id: felt252,
             base_amount: u256,
             quote_amount: u256,
@@ -832,11 +596,14 @@ pub mod ReplicatingSolver {
         // * `quote_deposit` - quote asset deposited
         // * `shares` - pool shares minted
         fn deposit(
-            ref self: ContractState, market_id: felt252, base_amount: u256, quote_amount: u256
+            ref self: ComponentState<TContractState>,
+            market_id: felt252,
+            base_amount: u256,
+            quote_amount: u256
         ) -> (u256, u256, u256) {
             // Fetch market info and state.
             let market_info = self.market_info.read(market_id);
-            let mut state = self.market_state.read(market_id);
+            let mut state: MarketState = self.market_state.read(market_id);
 
             // Run checks.
             assert(!state.is_paused, 'Paused');
@@ -879,25 +646,6 @@ pub mod ReplicatingSolver {
                     };
             }
             assert(base_deposit != 0 || quote_deposit != 0, 'AmountZero');
-
-            // Check deposited amounts does not violate max skew, or if it does, that
-            // the deposit reduces the extent of skew.
-            let params = self.market_params.read(market_id);
-            if params.max_skew != 0 && !market_info.is_public {
-                let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-                assert(is_valid, 'InvalidOraclePrice');
-                let (skew_before, _) = spread_math::get_skew(
-                    state.base_reserves, state.quote_reserves, oracle_price
-                );
-                let (skew_after, _) = spread_math::get_skew(
-                    state.base_reserves + base_deposit,
-                    state.quote_reserves + quote_deposit,
-                    oracle_price
-                );
-                if skew_after > params.max_skew.into() {
-                    assert(skew_after < skew_before, 'MaxSkew');
-                }
-            }
 
             // Transfer tokens into contract.
             let contract = get_contract_address();
@@ -957,7 +705,7 @@ pub mod ReplicatingSolver {
         // * `quote_deposit` - quote asset deposited
         // * `shares` - pool shares minted
         fn deposit_with_referrer(
-            ref self: ContractState,
+            ref self: ComponentState<TContractState>,
             market_id: felt252,
             base_amount: u256,
             quote_amount: u256,
@@ -987,11 +735,11 @@ pub mod ReplicatingSolver {
         // * `base_amount` - base asset withdrawn
         // * `quote_amount` - quote asset withdrawn
         fn withdraw_at_ratio(
-            ref self: ContractState, market_id: felt252, shares: u256
+            ref self: ComponentState<TContractState>, market_id: felt252, shares: u256
         ) -> (u256, u256) {
             // Fetch state.
             let market_info = self.market_info.read(market_id);
-            let mut state = self.market_state.read(market_id);
+            let mut state: MarketState = self.market_state.read(market_id);
 
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
@@ -1029,11 +777,14 @@ pub mod ReplicatingSolver {
         // * `base_amount` - base asset withdrawn
         // * `quote_amount` - quote asset withdrawn
         fn withdraw(
-            ref self: ContractState, market_id: felt252, base_amount: u256, quote_amount: u256
+            ref self: ComponentState<TContractState>,
+            market_id: felt252,
+            base_amount: u256,
+            quote_amount: u256
         ) -> (u256, u256) {
             // Fetch state.
             let market_info = self.market_info.read(market_id);
-            let mut state = self.market_state.read(market_id);
+            let mut state: MarketState = self.market_state.read(market_id);
 
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
@@ -1042,25 +793,6 @@ pub mod ReplicatingSolver {
             // Cap withdraw amount at available. Commit state changes.
             let base_withdraw = min(base_amount, state.base_reserves);
             let quote_withdraw = min(quote_amount, state.quote_reserves);
-
-            // Check withdraws do not violate max skew, or if it does, that the withdraw reduces
-            // the extent of skew.
-            let params = self.market_params.read(market_id);
-            if params.max_skew != 0 && !market_info.is_public {
-                let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-                assert(is_valid, 'InvalidOraclePrice');
-                let (skew_before, _) = spread_math::get_skew(
-                    state.base_reserves, state.quote_reserves, oracle_price
-                );
-                let (skew_after, _) = spread_math::get_skew(
-                    state.base_reserves - base_withdraw,
-                    state.quote_reserves - quote_withdraw,
-                    oracle_price
-                );
-                if skew_after > params.max_skew.into() {
-                    assert(skew_after < skew_before, 'MaxSkew');
-                }
-            }
 
             // Commit state updates.
             state.base_reserves -= base_withdraw;
@@ -1078,7 +810,9 @@ pub mod ReplicatingSolver {
         // * `receiver` - address to receive fees
         // * `token` - token to collect fees for
         fn collect_withdraw_fees(
-            ref self: ContractState, receiver: ContractAddress, token: ContractAddress
+            ref self: ComponentState<TContractState>,
+            receiver: ContractAddress,
+            token: ContractAddress
         ) -> u256 {
             // Run checks.
             self.assert_owner();
@@ -1102,52 +836,15 @@ pub mod ReplicatingSolver {
             fees
         }
 
-        // Change parameters of the solver market.
-        // Only callable by market owner.
-        //
-        // # Params
-        // * `market_id` - market id
-        // * `params` - market params
-        fn set_params(ref self: ContractState, market_id: felt252, params: MarketParams) {
-            // Run checks.
-            self.assert_market_owner(market_id);
-            let old_params = self.market_params.read(market_id);
-            assert(old_params != params, 'ParamsUnchanged');
-            assert(params.range != 0, 'RangeZero');
-            assert(params.min_sources != 0, 'MinSourcesZero');
-            assert(params.max_age != 0, 'MaxAgeZero');
-            assert(params.base_currency_id != 0, 'BaseIdZero');
-            assert(params.quote_currency_id != 0, 'QuoteIdZero');
-
-            // Update state.
-            self.market_params.write(market_id, params);
-
-            // Emit event.
-            self
-                .emit(
-                    Event::SetMarketParams(
-                        SetMarketParams {
-                            market_id,
-                            min_spread: params.min_spread,
-                            range: params.range,
-                            max_delta: params.max_delta,
-                            max_skew: params.max_skew,
-                            base_currency_id: params.base_currency_id,
-                            quote_currency_id: params.quote_currency_id,
-                            min_sources: params.min_sources,
-                            max_age: params.max_age,
-                        }
-                    )
-                );
-        }
-
         // Set withdraw fee for a given market.
         // Only callable by contract owner.
         //
         // # Arguments
         // * `market_id` - market id
         // * `fee_rate` - fee rate
-        fn set_withdraw_fee(ref self: ContractState, market_id: felt252, fee_rate: u16) {
+        fn set_withdraw_fee(
+            ref self: ComponentState<TContractState>, market_id: felt252, fee_rate: u16
+        ) {
             self.assert_owner();
             let old_fee_rate = self.withdraw_fee_rate.read(market_id);
             assert(old_fee_rate != fee_rate, 'FeeUnchanged');
@@ -1156,25 +853,14 @@ pub mod ReplicatingSolver {
             self.emit(Event::SetWithdrawFee(SetWithdrawFee { market_id, fee_rate }));
         }
 
-        // Change the oracle contract address.
-        //
-        // # Arguments
-        // * `oracle` - contract address of oracle feed
-        fn change_oracle(ref self: ContractState, oracle: ContractAddress) {
-            self.assert_owner();
-            let old_oracle = self.oracle.read();
-            assert(oracle != old_oracle.contract_address, 'OracleUnchanged');
-            let oracle_dispatcher = IOracleABIDispatcher { contract_address: oracle };
-            self.oracle.write(oracle_dispatcher);
-            self.emit(Event::ChangeOracle(ChangeOracle { oracle }));
-        }
-
         // Set vault token class hash.
         // Only callable by contract owner.
         // 
         // # Arguments
         // * `new_class_hash` - new class hash of vault token
-        fn change_vault_token_class(ref self: ContractState, new_class_hash: ClassHash) {
+        fn change_vault_token_class(
+            ref self: ComponentState<TContractState>, new_class_hash: ClassHash
+        ) {
             self.assert_owner();
             let old_class_hash = self.vault_token_class.read();
             assert(old_class_hash != new_class_hash, 'ClassHashUnchanged');
@@ -1193,7 +879,7 @@ pub mod ReplicatingSolver {
         //
         // # Arguments
         // * `new_owner` - New owner of the contract
-        fn transfer_owner(ref self: ContractState, new_owner: ContractAddress) {
+        fn transfer_owner(ref self: ComponentState<TContractState>, new_owner: ContractAddress) {
             self.assert_owner();
             let old_owner = self.owner.read();
             assert(new_owner != old_owner, 'SameOwner');
@@ -1202,7 +888,7 @@ pub mod ReplicatingSolver {
 
         // Called by new owner to accept ownership of the contract.
         // Part 2 of 2 step process to transfer ownership.
-        fn accept_owner(ref self: ContractState) {
+        fn accept_owner(ref self: ComponentState<TContractState>) {
             let queued_owner = self.queued_owner.read();
             assert(get_caller_address() == queued_owner, 'OnlyNewOwner');
             let old_owner = self.owner.read();
@@ -1216,9 +902,9 @@ pub mod ReplicatingSolver {
         // 
         // # Arguments
         // * `market_id` - market id
-        fn pause(ref self: ContractState, market_id: felt252) {
+        fn pause(ref self: ComponentState<TContractState>, market_id: felt252) {
             self.assert_market_owner(market_id);
-            let mut state = self.market_state.read(market_id);
+            let mut state: MarketState = self.market_state.read(market_id);
             assert(!state.is_paused, 'AlreadyPaused');
             state.is_paused = true;
             self.market_state.write(market_id, state);
@@ -1230,9 +916,9 @@ pub mod ReplicatingSolver {
         //
         // # Arguments
         // * `market_id` - market id
-        fn unpause(ref self: ContractState, market_id: felt252) {
+        fn unpause(ref self: ComponentState<TContractState>, market_id: felt252) {
             self.assert_market_owner(market_id);
-            let mut state = self.market_state.read(market_id);
+            let mut state: MarketState = self.market_state.read(market_id);
             assert(state.is_paused, 'AlreadyUnpaused');
             state.is_paused = false;
             self.market_state.write(market_id, state);
@@ -1244,7 +930,7 @@ pub mod ReplicatingSolver {
         //
         // # Arguments
         // * `new_class_hash` - new class hash of contract
-        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+        fn upgrade(ref self: ComponentState<TContractState>, new_class_hash: ClassHash) {
             self.assert_owner();
             replace_class_syscall(new_class_hash).unwrap();
             self.emit(Event::Upgraded(Upgraded { class_hash: new_class_hash }));
@@ -1257,13 +943,36 @@ pub mod ReplicatingSolver {
 
     #[abi(per_item)]
     #[generate_trait]
-    impl InternalImpl of InternalTrait {
+    pub impl InternalImpl<
+        TContractState, +HasComponent<TContractState>
+    > of InternalTrait<TContractState> {
+        // Internal function to init the contract by setting the solver name and symbol, contract owner,
+        // and vault token class hash. This function should only be called inside the constructor.
+        //
+        // # Arguments
+        // * `name` - solver name
+        // * `symbol` - solver symbol
+        // * `owner` - contract owner
+        // * `vault_token_class` - vault token class hash
+        fn _initializer(
+            ref self: ComponentState<TContractState>,
+            name: ByteArray,
+            symbol: ByteArray,
+            owner: ContractAddress,
+            vault_token_class: ClassHash
+        ) {
+            self.name.write(name);
+            self.symbol.write(symbol);
+            self.owner.write(owner);
+            self.vault_token_class.write(vault_token_class);
+        }
+
         // Internal function to deploy vault token for a market on initialisation.
         //
         // # Arguments
         // * `market_info` - market info
         fn _deploy_vault_token(
-            ref self: ContractState, market_info: MarketInfo
+            ref self: ComponentState<TContractState>, market_info: MarketInfo
         ) -> ContractAddress {
             // Fetch symbols of base and quote tokens.
             // We use a special versioned call for compatibility with both 
@@ -1299,6 +1008,17 @@ pub mod ReplicatingSolver {
             token
         }
 
+        // Internal function to compute the sqrt of a number.
+        //
+        // # Arguments
+        // * `num` - number to compute sqrt of
+        // 
+        // # Returns
+        // * `sqrt` - sqrt of x
+        fn _sqrt(self: @ComponentState<TContractState>, num: u256) -> u256 {
+            fast_sqrt(num.try_into().expect('sqrt overflow'), 10).into()
+        }
+
         // Internal function to withdraw funds from market.
         // Amounts passed in should be before deducting applicable withdraw fees.
         // 
@@ -1312,7 +1032,7 @@ pub mod ReplicatingSolver {
         // * `base_withdraw` - base assets withdrawn
         // * `quote_withdraw` - quote assets withdrawn
         fn _withdraw(
-            ref self: ContractState,
+            ref self: ComponentState<TContractState>,
             market_id: felt252,
             base_amount: u256,
             quote_amount: u256,
@@ -1336,7 +1056,7 @@ pub mod ReplicatingSolver {
             // Transfer tokens to caller.
             assert(base_withdraw != 0 || quote_withdraw != 0, 'AmountZero');
             let caller = get_caller_address();
-            let market_info = self.market_info.read(market_id);
+            let market_info: MarketInfo = self.market_info.read(market_id);
             if base_withdraw != 0 {
                 let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
                 base_token.transfer(caller, base_withdraw);

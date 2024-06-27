@@ -7,7 +7,7 @@ use starknet::class_hash::ClassHash;
 use haiko_solver_replicating::contracts::mocks::mock_pragma_oracle::{
     IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
 };
-use haiko_solver_replicating::interfaces::IReplicatingSolver::IReplicatingSolverDispatcher;
+use haiko_solver_replicating::interfaces::ISolver::ISolverDispatcher;
 
 // External imports.
 use snforge_std::{declare, ContractClass, ContractClassTrait, start_prank, stop_prank};
@@ -17,10 +17,10 @@ pub fn deploy_replicating_solver(
     owner: ContractAddress,
     oracle: ContractAddress,
     vault_token_class: ClassHash,
-) -> IReplicatingSolverDispatcher {
+) -> ISolverDispatcher {
     let calldata = array![owner.into(), oracle.into(), vault_token_class.into()];
     let contract_address = solver_class.deploy(@calldata).unwrap();
-    IReplicatingSolverDispatcher { contract_address }
+    ISolverDispatcher { contract_address }
 }
 
 pub fn deploy_mock_pragma_oracle(

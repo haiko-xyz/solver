@@ -1,4 +1,5 @@
-use haiko_solver_replicating::types::replicating::{MarketParams, MarketState};
+use haiko_solver_replicating::types::core::MarketState;
+use haiko_solver_replicating::types::replicating::MarketParams;
 
 #[starknet::interface]
 pub trait IStorePackingContract<TContractState> {
@@ -11,7 +12,8 @@ pub trait IStorePackingContract<TContractState> {
 
 #[starknet::contract]
 pub mod StorePackingContract {
-    use haiko_solver_replicating::types::replicating::{MarketParams, MarketState};
+    use haiko_solver_replicating::types::core::MarketState;
+    use haiko_solver_replicating::types::replicating::MarketParams;
     use haiko_solver_replicating::libraries::store_packing::{
         MarketParamsStorePacking, MarketStateStorePacking,
     };

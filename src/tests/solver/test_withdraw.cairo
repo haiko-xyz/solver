@@ -3,15 +3,16 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::core::solver::SolverComponent,
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
     },
     interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
+    types::{core::MarketInfo, replicating::MarketParams},
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
@@ -186,9 +187,10 @@ fn test_withdraw_private_base_only() {
 
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut market_params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut market_params = repl_solver.market_params(market_id);
     market_params.max_skew = 0;
-    solver.set_params(market_id, market_params);
+    repl_solver.set_market_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -227,9 +229,10 @@ fn test_withdraw_private_quote_only() {
 
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut market_params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut market_params = repl_solver.market_params(market_id);
     market_params.max_skew = 0;
-    solver.set_params(market_id, market_params);
+    repl_solver.set_market_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -400,9 +403,10 @@ fn test_withdraw_public_emits_event() {
 
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut market_params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut market_params = repl_solver.market_params(market_id);
     market_params.max_skew = 0;
-    solver.set_params(market_id, market_params);
+    repl_solver.set_market_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -422,8 +426,8 @@ fn test_withdraw_public_emits_event() {
             @array![
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::Withdraw(
-                        ReplicatingSolver::Withdraw {
+                    SolverComponent::Event::Withdraw(
+                        SolverComponent::Withdraw {
                             market_id,
                             caller: owner(),
                             base_amount: base_withdraw,
@@ -447,9 +451,10 @@ fn test_withdraw_private_emits_event() {
 
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let mut market_params = solver.market_params(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let mut market_params = repl_solver.market_params(market_id);
     market_params.max_skew = 0;
-    solver.set_params(market_id, market_params);
+    repl_solver.set_market_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -469,8 +474,8 @@ fn test_withdraw_private_emits_event() {
             @array![
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::Withdraw(
-                        ReplicatingSolver::Withdraw {
+                    SolverComponent::Event::Withdraw(
+                        SolverComponent::Withdraw {
                             market_id,
                             caller: owner(),
                             base_amount: base_withdraw,

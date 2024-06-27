@@ -3,12 +3,12 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::{core::solver::SolverComponent, replicating::replicating_solver::ReplicatingSolver,},
     interfaces::{
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
-        IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
+    types::core::MarketInfo,
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
@@ -46,13 +46,11 @@ fn test_create_public_market_initialises_immutables_and_deploys_vault_token() {
         owner: alice(),
         is_public: true,
     };
-    let market_params = default_market_params();
-    let (market_id, vault_token_opt) = solver.create_market(market_info, market_params);
+    let (market_id, vault_token_opt) = solver.create_market(market_info);
     let vault_token = vault_token_opt.unwrap();
 
     // Fetch market.
     let market_info_ret = solver.market_info(market_id);
-    let market_params_ret = solver.market_params(market_id);
     let market_state_ret = solver.market_state(market_id);
 
     // Check market info.
@@ -60,20 +58,6 @@ fn test_create_public_market_initialises_immutables_and_deploys_vault_token() {
     assert(market_info_ret.quote_token == market_info.quote_token, 'Quote token');
     assert(market_info_ret.owner == market_info.owner, 'Owner');
     assert(market_info_ret.is_public == market_info.is_public, 'Is public');
-
-    // Check market params.
-    assert(market_params_ret.min_spread == market_params.min_spread, 'Min spread');
-    assert(market_params_ret.range == market_params.range, 'Range');
-    assert(market_params_ret.max_delta == market_params.max_delta, 'Max delta');
-    assert(market_params_ret.max_skew == market_params.max_skew, 'Max skew');
-    assert(
-        market_params_ret.base_currency_id == market_params.base_currency_id, 'Base currency id'
-    );
-    assert(
-        market_params_ret.quote_currency_id == market_params.quote_currency_id, 'Quote currency id'
-    );
-    assert(market_params_ret.min_sources == market_params.min_sources, 'Min sources');
-    assert(market_params_ret.max_age == market_params.max_age, 'Max age');
 
     // Check market state.
     assert(market_state_ret.base_reserves == 0, 'Base reserves');
@@ -107,12 +91,10 @@ fn test_create_private_market_initialises_immutables() {
         owner: alice(),
         is_public: false,
     };
-    let market_params = default_market_params();
-    let (market_id, _) = solver.create_market(market_info, market_params);
+    let (market_id, _) = solver.create_market(market_info);
 
     // Fetch market.
     let market_info_ret = solver.market_info(market_id);
-    let market_params_ret = solver.market_params(market_id);
     let market_state_ret = solver.market_state(market_id);
 
     // Run checks.
@@ -120,19 +102,6 @@ fn test_create_private_market_initialises_immutables() {
     assert(market_info_ret.quote_token == market_info.quote_token, 'Quote token');
     assert(market_info_ret.owner == market_info.owner, 'Owner');
     assert(market_info_ret.is_public == market_info.is_public, 'Is public');
-
-    assert(market_params_ret.min_spread == market_params.min_spread, 'Min spread');
-    assert(market_params_ret.range == market_params.range, 'Range');
-    assert(market_params_ret.max_delta == market_params.max_delta, 'Max delta');
-    assert(market_params_ret.max_skew == market_params.max_skew, 'Max skew');
-    assert(
-        market_params_ret.base_currency_id == market_params.base_currency_id, 'Base currency id'
-    );
-    assert(
-        market_params_ret.quote_currency_id == market_params.quote_currency_id, 'Quote currency id'
-    );
-    assert(market_params_ret.min_sources == market_params.min_sources, 'Min sources');
-    assert(market_params_ret.max_age == market_params.max_age, 'Max age');
 
     assert(market_state_ret.base_reserves == 0, 'Base reserves');
     assert(market_state_ret.quote_reserves == 0, 'Quote reserves');
@@ -164,8 +133,7 @@ fn test_create_market_emits_events() {
         owner: alice(),
         is_public: true,
     };
-    let market_params = default_market_params();
-    let (market_id, vault_token_opt) = solver.create_market(market_info, market_params);
+    let (market_id, vault_token_opt) = solver.create_market(market_info);
 
     // Check events emitted.
     spy
@@ -173,30 +141,14 @@ fn test_create_market_emits_events() {
             @array![
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::CreateMarket(
-                        ReplicatingSolver::CreateMarket {
+                    SolverComponent::Event::CreateMarket(
+                        SolverComponent::CreateMarket {
                             market_id,
                             base_token: market_info.base_token,
                             quote_token: market_info.quote_token,
                             owner: market_info.owner,
                             is_public: market_info.is_public,
                             vault_token: vault_token_opt.unwrap(),
-                        }
-                    )
-                ),
-                (
-                    solver.contract_address,
-                    ReplicatingSolver::Event::SetMarketParams(
-                        ReplicatingSolver::SetMarketParams {
-                            market_id,
-                            min_spread: market_params.min_spread,
-                            range: market_params.range,
-                            max_delta: market_params.max_delta,
-                            max_skew: market_params.max_skew,
-                            base_currency_id: market_params.base_currency_id,
-                            quote_currency_id: market_params.quote_currency_id,
-                            min_sources: market_params.min_sources,
-                            max_age: market_params.max_age,
                         }
                     )
                 )
@@ -226,8 +178,7 @@ fn test_create_market_with_null_base_token_fails() {
         owner: alice(),
         is_public: true,
     };
-    let market_params = default_market_params();
-    solver.create_market(market_info, market_params);
+    solver.create_market(market_info);
 }
 
 #[test]
@@ -248,8 +199,7 @@ fn test_create_market_with_null_quote_token_fails() {
         owner: alice(),
         is_public: true,
     };
-    let market_params = default_market_params();
-    solver.create_market(market_info, market_params);
+    solver.create_market(market_info);
 }
 
 #[test]
@@ -270,123 +220,7 @@ fn test_create_market_with_null_owner_fails() {
         owner: contract_address_const::<0x0>(),
         is_public: true,
     };
-    let market_params = default_market_params();
-    solver.create_market(market_info, market_params);
-}
-
-#[test]
-#[should_panic(expected: ('BaseIdNull',))]
-fn test_create_market_with_null_base_currency_id_fails() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
-        before(
-        true
-    );
-
-    // Create market.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let market_info = MarketInfo {
-        base_token: base_token.contract_address,
-        quote_token: quote_token.contract_address,
-        owner: alice(),
-        is_public: true,
-    };
-    let mut market_params = default_market_params();
-    market_params.base_currency_id = 0;
-    solver.create_market(market_info, market_params);
-}
-
-#[test]
-#[should_panic(expected: ('QuoteIdNull',))]
-fn test_create_market_with_null_quote_currency_id_fails() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
-        before(
-        true
-    );
-
-    // Create market.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let market_info = MarketInfo {
-        base_token: base_token.contract_address,
-        quote_token: quote_token.contract_address,
-        owner: alice(),
-        is_public: true,
-    };
-    let mut market_params = default_market_params();
-    market_params.quote_currency_id = 0;
-    solver.create_market(market_info, market_params);
-}
-
-#[test]
-#[should_panic(expected: ('MinSourcesZero',))]
-fn test_create_market_with_zero_min_sources_fails() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
-        before(
-        true
-    );
-
-    // Create market.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let market_info = MarketInfo {
-        base_token: base_token.contract_address,
-        quote_token: quote_token.contract_address,
-        owner: alice(),
-        is_public: true,
-    };
-    let mut market_params = default_market_params();
-    market_params.min_sources = 0;
-    solver.create_market(market_info, market_params);
-}
-
-#[test]
-#[should_panic(expected: ('MaxAgeZero',))]
-fn test_create_market_with_zero_max_age_fails() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
-        before(
-        true
-    );
-
-    // Create market.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let market_info = MarketInfo {
-        base_token: base_token.contract_address,
-        quote_token: quote_token.contract_address,
-        owner: alice(),
-        is_public: true,
-    };
-    let mut market_params = default_market_params();
-    market_params.max_age = 0;
-    solver.create_market(market_info, market_params);
-}
-
-#[test]
-#[should_panic(expected: ('RangeZero',))]
-fn test_create_market_with_zero_range_fails() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
-        before(
-        true
-    );
-
-    // Create market.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let market_info = MarketInfo {
-        base_token: base_token.contract_address,
-        quote_token: quote_token.contract_address,
-        owner: alice(),
-        is_public: true,
-    };
-    let mut market_params = default_market_params();
-    market_params.range = 0;
-    solver.create_market(market_info, market_params);
+    solver.create_market(market_info);
 }
 
 #[test]
@@ -407,6 +241,5 @@ fn test_create_duplicate_market_fails() {
         owner: owner(),
         is_public: true,
     };
-    let market_params = default_market_params();
-    solver.create_market(market_info, market_params);
+    solver.create_market(market_info);
 }

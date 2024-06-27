@@ -3,15 +3,16 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::core::solver::SolverComponent,
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
     },
     interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
+    types::{core::MarketInfo, replicating::MarketParams},
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
@@ -78,8 +79,8 @@ fn test_change_vault_token_class_emits_event() {
             @array![
                 (
                     solver.contract_address,
-                    ReplicatingSolver::Event::ChangeVaultTokenClass(
-                        ReplicatingSolver::ChangeVaultTokenClass { class_hash }
+                    SolverComponent::Event::ChangeVaultTokenClass(
+                        SolverComponent::ChangeVaultTokenClass { class_hash }
                     )
                 )
             ]

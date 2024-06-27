@@ -805,7 +805,7 @@ fn test_swap_that_improves_skew_is_allowed() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 ////////////////////////////////
@@ -841,8 +841,7 @@ fn test_swap_should_emit_event() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    let (amount_in, amount_out) = ISolverDispatcher { contract_address: solver.contract_address }
-        .swap(market_id, params);
+    let (amount_in, amount_out) = solver.swap(market_id, params);
 
     // Check events emitted.
     spy
@@ -881,7 +880,7 @@ fn test_swap_fails_if_market_uninitialised() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(1, params);
+    solver.swap(1, params);
 }
 
 #[test]
@@ -910,7 +909,7 @@ fn test_swap_fails_if_market_paused() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -940,7 +939,7 @@ fn test_swap_fails_if_not_approved() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -971,7 +970,7 @@ fn test_swap_fails_if_invalid_oracle_price() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -997,7 +996,7 @@ fn test_swap_fails_if_amount_zero() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1023,7 +1022,7 @@ fn test_swap_fails_if_min_amount_out_zero() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::Some(0),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1055,7 +1054,7 @@ fn test_swap_fails_if_swap_buy_with_zero_liquidity() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1087,7 +1086,7 @@ fn test_swap_fails_if_swap_sell_with_zero_liquidity() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1120,7 +1119,7 @@ fn test_swap_fails_if_swap_buy_below_threshold_amount() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::Some(to_e18(2)),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1152,7 +1151,7 @@ fn test_swap_fails_if_swap_sell_below_threshold_amount() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::Some(to_e18(100)),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1185,7 +1184,7 @@ fn test_swap_fails_if_limit_overflows() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1222,7 +1221,7 @@ fn test_swap_fails_if_limit_underflows() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1258,7 +1257,7 @@ fn test_swap_buy_above_max_skew_is_disallowed() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1294,7 +1293,7 @@ fn test_swap_sell_above_max_skew_is_disallowed() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }
 
 #[test]
@@ -1334,5 +1333,5 @@ fn test_change_in_oracle_price_above_max_skew_prevents_swap() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    ISolverDispatcher { contract_address: solver.contract_address }.swap(market_id, params);
+    solver.swap(market_id, params);
 }

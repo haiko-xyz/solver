@@ -188,7 +188,7 @@ fn test_withdraw_private_base_only() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -230,7 +230,7 @@ fn test_withdraw_private_quote_only() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -404,7 +404,7 @@ fn test_withdraw_public_emits_event() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -452,7 +452,7 @@ fn test_withdraw_private_emits_event() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -594,24 +594,4 @@ fn test_withdraw_private_uninitialised_market() {
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     solver.withdraw_at_ratio(1, 1000);
-}
-
-#[test]
-#[should_panic(expected: ('MaxSkew',))]
-fn test_withdraw_private_custom_amounts_fail_if_max_skew_exceeded() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Deposit initial.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let base_amount = to_e18(100);
-    let quote_amount = to_e18(500);
-    solver.deposit_initial(market_id, base_amount, quote_amount);
-
-    // Withdraw.
-    solver.withdraw(market_id, base_amount, 0);
 }

@@ -14,9 +14,12 @@ use haiko_solver_replicating::{
         mock_pragma_oracle::{IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait},
     },
     interfaces::{
-        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
-        IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
+        ISolver::{
+            ISolverDispatcher, ISolverDispatcherTrait, ISolverQuoterDispatcher,
+            ISolverQuoterDispatcherTrait
+        },
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
+        IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
         pragma::{DataType, PragmaPricesResponse},
     },
     types::{core::{MarketInfo, MarketState, PositionInfo, SwapParams}, replicating::MarketParams},
@@ -189,6 +192,10 @@ fn _before(
     };
     let (market_id, vault_token_opt) = solver.create_market(market_info);
 
+    // Set params.
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    repl_solver.set_market_params(market_id, default_market_params());
+
     // Set oracle price.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);
     oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 5); // 10
@@ -242,8 +249,8 @@ pub fn snapshot(
     let solver_base_bal = base_token.balanceOf(solver.contract_address);
     let solver_quote_bal = quote_token.balanceOf(solver.contract_address);
     let market_state = solver.market_state(market_id);
-    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let (bid, ask) = repl_solver.get_virtual_positions(market_id);
+    let solver_quoter = ISolverQuoterDispatcher { contract_address: solver.contract_address };
+    let (bid, ask) = solver_quoter.get_virtual_positions(market_id);
 
     Snapshot {
         lp_base_bal,

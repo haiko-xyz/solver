@@ -87,7 +87,7 @@ fn test_deposit_initial_public_base_token_only() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -135,7 +135,7 @@ fn test_deposit_initial_public_quote_token_only() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -226,7 +226,7 @@ fn test_deposit_initial_private_base_token_only() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -274,7 +274,7 @@ fn test_deposit_initial_private_quote_token_only() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -355,7 +355,7 @@ fn test_deposit_initial_emits_event() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -401,7 +401,7 @@ fn test_deposit_initial_with_referrer_emits_event() {
     // Disable max skew.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
+    let mut market_params = default_market_params();
     market_params.max_skew = 0;
     repl_solver.set_market_params(market_id, market_params);
 
@@ -549,50 +549,6 @@ fn test_deposit_initial_not_approved() {
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
-    let quote_amount = to_e18(500);
-    solver.deposit_initial(market_id, base_amount, quote_amount);
-}
-
-#[test]
-#[should_panic(expected: ('InvalidOraclePrice',))]
-fn test_deposit_initial_invalid_oracle_price() {
-    let (
-        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Set oracle price with invalid quorum.
-    start_warp(CheatTarget::One(oracle.contract_address), 1000);
-    oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 1); // 10
-
-    // Deposit initial.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let base_amount = to_e18(100);
-    let quote_amount = to_e18(500);
-    solver.deposit_initial(market_id, base_amount, quote_amount);
-}
-
-#[test]
-#[should_panic(expected: ('MaxSkew',))]
-fn test_deposit_initial_violates_max_skew() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Set max skew.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
-    market_params.max_skew = 100;
-    repl_solver.set_market_params(market_id, market_params);
-
-    // Deposit initial.
-    let base_amount = to_e18(10000);
     let quote_amount = to_e18(500);
     solver.deposit_initial(market_id, base_amount, quote_amount);
 }

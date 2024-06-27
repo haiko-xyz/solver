@@ -30,7 +30,6 @@ pub mod SolverComponent {
 
     // External imports.
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
-    use alexandria_math::fast_root::fast_sqrt;
 
     ////////////////////////////////
     // STORAGE
@@ -523,11 +522,14 @@ pub mod SolverComponent {
             state.quote_reserves += quote_deposit;
             self.market_state.write(market_id, state);
 
-            // Mint shares.
-            // Set starting shares to sqrt(base_tokens * quote_tokens) as per Uniswap
+            // Mint starting shares based on liquidity of virtual positions.
             let mut shares: u256 = 0;
             if market_info.is_public {
-                shares = self._sqrt(base_deposit) * self._sqrt(quote_deposit);
+                let solver_quoter = ISolverQuoterDispatcher {
+                    contract_address: get_contract_address()
+                };
+                let (bid, ask) = solver_quoter.get_virtual_positions(market_id);
+                shares = (bid.liquidity + ask.liquidity).into();
                 let token = IVaultTokenDispatcher { contract_address: state.vault_token };
                 token.mint(caller, shares);
             }
@@ -1006,17 +1008,6 @@ pub mod SolverComponent {
 
             // Return vault token address.
             token
-        }
-
-        // Internal function to compute the sqrt of a number.
-        //
-        // # Arguments
-        // * `num` - number to compute sqrt of
-        // 
-        // # Returns
-        // * `sqrt` - sqrt of x
-        fn _sqrt(self: @ComponentState<TContractState>, num: u256) -> u256 {
-            fast_sqrt(num.try_into().expect('sqrt overflow'), 10).into()
         }
 
         // Internal function to withdraw funds from market.

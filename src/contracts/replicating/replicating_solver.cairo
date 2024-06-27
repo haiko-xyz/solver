@@ -171,6 +171,55 @@ pub mod ReplicatingSolver {
             // Return amounts.
             (amount_in, amount_out)
         }
+
+        // Get virtual liquidity positions against which swaps are executed.
+        // 
+        // # Arguments
+        // * `market_id` - market id
+        //
+        // # Returns
+        // * `bid` - bid position
+        // * `ask` - ask position
+        fn get_virtual_positions(
+            self: @ContractState, market_id: felt252
+        ) -> (PositionInfo, PositionInfo) {
+            // Fetch state.
+            let state: MarketState = self.solver.market_state.read(market_id);
+            let params: MarketParams = self.market_params.read(market_id);
+
+            // Fetch oracle price.
+            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
+            assert(is_valid, 'InvalidOraclePrice');
+
+            // Calculate position ranges.
+            let delta = spread_math::get_delta(
+                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
+            );
+            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
+                true, params.min_spread, delta, params.range, oracle_price
+            );
+            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
+                false, params.min_spread, delta, params.range, oracle_price
+            );
+
+            // Calculate and return positions.
+            let mut bid: PositionInfo = Default::default();
+            let mut ask: PositionInfo = Default::default();
+            if state.quote_reserves != 0 {
+                bid =
+                    spread_math::get_virtual_position(
+                        true, bid_lower, bid_upper, state.quote_reserves
+                    );
+            }
+            if state.base_reserves != 0 {
+                ask =
+                    spread_math::get_virtual_position(
+                        false, ask_lower, ask_upper, state.base_reserves
+                    );
+            }
+
+            (bid, ask)
+        }
     }
 
     #[abi(embed_v0)]
@@ -225,55 +274,6 @@ pub mod ReplicatingSolver {
             let decimals: u256 = 28 + quote_decimals - output.decimals.into() - base_decimals;
             let scaling_factor = math::pow(10, decimals);
             (output.price.into() * scaling_factor, is_valid)
-        }
-
-        // Get virtual liquidity positions against which swaps are executed.
-        // 
-        // # Arguments
-        // * `market_id` - market id
-        //
-        // # Returns
-        // * `bid` - bid position
-        // * `ask` - ask position
-        fn get_virtual_positions(
-            self: @ContractState, market_id: felt252
-        ) -> (PositionInfo, PositionInfo) {
-            // Fetch state.
-            let state: MarketState = self.solver.market_state.read(market_id);
-            let params: MarketParams = self.market_params.read(market_id);
-
-            // Fetch oracle price.
-            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-            assert(is_valid, 'InvalidOraclePrice');
-
-            // Calculate position ranges.
-            let delta = spread_math::get_delta(
-                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
-            );
-            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
-                true, params.min_spread, delta, params.range, oracle_price
-            );
-            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
-                false, params.min_spread, delta, params.range, oracle_price
-            );
-
-            // Calculate and return positions.
-            let mut bid: PositionInfo = Default::default();
-            let mut ask: PositionInfo = Default::default();
-            if state.quote_reserves != 0 {
-                bid =
-                    spread_math::get_virtual_position(
-                        true, bid_lower, bid_upper, state.quote_reserves
-                    );
-            }
-            if state.base_reserves != 0 {
-                ask =
-                    spread_math::get_virtual_position(
-                        false, ask_lower, ask_upper, state.base_reserves
-                    );
-            }
-
-            (bid, ask)
         }
 
         // Change parameters of the solver market.

@@ -21,18 +21,6 @@ pub trait IReplicatingSolver<TContractState> {
     // * `is_valid` - whether oracle price passes validity checks re number of sources and age
     fn get_oracle_price(self: @TContractState, market_id: felt252) -> (u256, bool);
 
-    // Virtual liquidity positions against which swaps are executed.
-    // 
-    // # Arguments
-    // * `market_id` - market id
-    //
-    // # Returns
-    // * `bid` - bid position
-    // * `ask` - ask position
-    fn get_virtual_positions(
-        self: @TContractState, market_id: felt252
-    ) -> (PositionInfo, PositionInfo);
-
     // Change parameters of the solver market.
     // Only callable by market owner.
     //

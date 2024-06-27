@@ -276,4 +276,16 @@ pub trait ISolverQuoter<TContractState> {
     // * `amount_in` - amount in
     // * `amount_out` - amount out
     fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
+
+    // Query virtual liquidity positions against which swaps are executed.
+    // 
+    // # Arguments
+    // * `market_id` - market id
+    //
+    // # Returns
+    // * `bid` - bid position
+    // * `ask` - ask position
+    fn get_virtual_positions(
+        self: @TContractState, market_id: felt252
+    ) -> (PositionInfo, PositionInfo);
 }

@@ -12,16 +12,11 @@ pub mod SolverComponent {
 
     // Local imports.
     use haiko_solver_replicating::libraries::{
-        swap_lib, spread_math, id, erc20_versioned_call,
-        store_packing::{MarketParamsStorePacking, MarketStateStorePacking}
+        id, erc20_versioned_call, store_packing::MarketStateStorePacking
     };
     use haiko_solver_replicating::interfaces::{
         ISolver::{ISolver, ISolverQuoterDispatcher, ISolverQuoterDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
-    };
-    use haiko_solver_replicating::interfaces::pragma::{
-        AggregationMode, DataType, SimpleDataType, PragmaPricesResponse, IOracleABIDispatcher,
-        IOracleABIDispatcherTrait
     };
     use haiko_solver_replicating::types::core::{MarketInfo, MarketState, PositionInfo, SwapParams};
 

@@ -3,7 +3,7 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::replicating::replicating_solver::ReplicatingSolver,
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
     },
@@ -11,7 +11,6 @@ use haiko_solver_replicating::{
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
@@ -46,13 +45,15 @@ fn test_change_oracle() {
         true
     );
 
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+
     // Change oracle.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let new_oracle = contract_address_const::<0x123>();
-    solver.change_oracle(new_oracle);
+    repl_solver.change_oracle(new_oracle);
 
     // Get oracle and run check.
-    let oracle = solver.oracle();
+    let oracle = repl_solver.oracle();
     assert(new_oracle == oracle, 'Oracle');
 }
 
@@ -69,13 +70,15 @@ fn test_change_oracle_emits_event() {
         true
     );
 
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+
     // Spy on events.
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
 
     // Change oracle.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let new_oracle = contract_address_const::<0x123>();
-    solver.change_oracle(new_oracle);
+    repl_solver.change_oracle(new_oracle);
 
     // Check events emitted.
     spy
@@ -105,10 +108,12 @@ fn test_change_oracle_not_owner() {
         true
     );
 
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+
     // Change oracle.
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let new_oracle = contract_address_const::<0x123>();
-    solver.change_oracle(new_oracle);
+    repl_solver.change_oracle(new_oracle);
 }
 
 #[test]
@@ -121,8 +126,10 @@ fn test_change_oracle_unchanged() {
         true
     );
 
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+
     // Change oracle.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let oracle = solver.oracle();
-    solver.change_oracle(oracle);
+    let oracle = repl_solver.oracle();
+    repl_solver.change_oracle(oracle);
 }

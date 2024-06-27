@@ -5,7 +5,7 @@ use starknet::class_hash::ClassHash;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::replicating::replicating_solver::ReplicatingSolver,
     contracts::mocks::{
         upgraded_replicating_solver::{
             UpgradedReplicatingSolver, IUpgradedReplicatingSolverDispatcher,
@@ -14,12 +14,15 @@ use haiko_solver_replicating::{
         mock_pragma_oracle::{IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait},
     },
     interfaces::{
-        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
-        IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
+        ISolver::{
+            ISolverDispatcher, ISolverDispatcherTrait, ISolverQuoterDispatcher,
+            ISolverQuoterDispatcherTrait
+        },
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
+        IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
         pragma::{DataType, PragmaPricesResponse},
     },
-    types::{core::SwapParams, replicating::{MarketInfo, MarketParams, MarketState, PositionInfo}},
+    types::{core::{MarketInfo, MarketState, PositionInfo, SwapParams}, replicating::MarketParams},
     tests::helpers::{
         actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
         params::default_market_params,
@@ -87,7 +90,7 @@ pub fn before(
     ERC20ABIDispatcher,
     IMockPragmaOracleDispatcher,
     ClassHash,
-    IReplicatingSolverDispatcher,
+    ISolverDispatcher,
     felt252,
     Option<ContractAddress>,
 ) {
@@ -101,7 +104,7 @@ pub fn before_custom_decimals(
     ERC20ABIDispatcher,
     IMockPragmaOracleDispatcher,
     ClassHash,
-    IReplicatingSolverDispatcher,
+    ISolverDispatcher,
     felt252,
     Option<ContractAddress>,
 ) {
@@ -115,7 +118,7 @@ pub fn before_skip_approve(
     ERC20ABIDispatcher,
     IMockPragmaOracleDispatcher,
     ClassHash,
-    IReplicatingSolverDispatcher,
+    ISolverDispatcher,
     felt252,
     Option<ContractAddress>,
 ) {
@@ -131,7 +134,7 @@ pub fn before_with_salt(
     ERC20ABIDispatcher,
     IMockPragmaOracleDispatcher,
     ClassHash,
-    IReplicatingSolverDispatcher,
+    ISolverDispatcher,
     felt252,
     Option<ContractAddress>,
 ) {
@@ -150,7 +153,7 @@ fn _before(
     ERC20ABIDispatcher,
     IMockPragmaOracleDispatcher,
     ClassHash,
-    IReplicatingSolverDispatcher,
+    ISolverDispatcher,
     felt252,
     Option<ContractAddress>,
 ) {
@@ -187,8 +190,11 @@ fn _before(
         owner,
         is_public: is_market_public,
     };
-    let market_params = default_market_params();
-    let (market_id, vault_token_opt) = solver.create_market(market_info, market_params);
+    let (market_id, vault_token_opt) = solver.create_market(market_info);
+
+    // Set params.
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    repl_solver.set_market_params(market_id, default_market_params());
 
     // Set oracle price.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);
@@ -224,7 +230,7 @@ fn _before(
 }
 
 pub fn snapshot(
-    solver: IReplicatingSolverDispatcher,
+    solver: ISolverDispatcher,
     market_id: felt252,
     base_token: ERC20ABIDispatcher,
     quote_token: ERC20ABIDispatcher,
@@ -243,7 +249,8 @@ pub fn snapshot(
     let solver_base_bal = base_token.balanceOf(solver.contract_address);
     let solver_quote_bal = quote_token.balanceOf(solver.contract_address);
     let market_state = solver.market_state(market_id);
-    let (bid, ask) = solver.get_virtual_positions(market_id);
+    let solver_quoter = ISolverQuoterDispatcher { contract_address: solver.contract_address };
+    let (bid, ask) = solver_quoter.get_virtual_positions(market_id);
 
     Snapshot {
         lp_base_bal,

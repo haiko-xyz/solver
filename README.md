@@ -1,20 +1,31 @@
 # Haiko Replicating Solver
 
-The Replicating Solver is a market making strategy that creates a market for any token pair based on a Pragma oracle price feed. It allows users to provide liquidity without having to actively manage their positions.
+The Replicating Solver creates a market for any token pair by providing bid and ask quotes based on a Pragma oracle price feed. It allows liquidity providers to provide liquidity programmatically, without having to actively manage their positions.
 
 ## Solvers vs Strategies
 
-Solvers are a new product from Haiko that takes the best parts of Strategies and makes them simpler and more gas efficient.
+Solvers are a new product from Haiko. They are similar to strategies, but are simpler and significantly more gas efficient.
 
-Unlike Strategies, Solvers are standalone smart contracts that generate quotes and execute swaps on demand, without ever depositing to or interacting with an underlying AMM. Rather than executing position updates before swaps, solvers directly compute and quote swap amounts.
+Unlike Strategies, Solvers are standalone smart contracts that generate quotes and execute swaps on demand, without ever depositing to or interacting with an underlying AMM. Rather than executing position updates before swaps, solvers directly compute and quote swap amounts, and execute trades atomatically against the depositors' positions.
 
 By using a stateless architecture, Solvers are significantly more gas efficient compared to strategies.
 
 ## Architecture
 
-The Replicating Solver accepts deposits and executes swap orders based on the the virtual bid and ask positions placed by each market (these positions are 'virtual' in that they are calculated on the fly and never stored in state).
+### Solvers
 
-It is designed as a singleton contract supporting multiple markets, each with their own configuration and owners:
+The `SolverComponent` is a implements most of the base functionality of a Solver contract. To create a new Solver, a smart contract must:
+
+1. Use `SolverComponent` to inherit the base functionality
+2. Implement `SolverQuoter` which contains methods for generating quotes and constructing the virtual positions over which swaps are executed
+
+The core `SolverComponent` contract will later be moved to its own package to be reused across multiple Solvers.
+
+### Replicating Solver
+
+The Replicating Solver accepts deposits and executes swap orders based on the the virtual bid and ask positions placed by each market. These positions are 'virtual' in that they are calculated on the fly and never stored in state.
+
+It is designed as a singleton contract supporting multiple markets, each with their own configuration and (optionally) owners, which can perform operations such as setting market parameters and pausing / unpausing the contract:
 
 1. Owner: address that controls market configurations, pausing, and ownership transfers
 2. Min spread: spread applied to the oracle price to calculate the bid and ask prices

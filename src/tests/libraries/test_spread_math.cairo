@@ -450,9 +450,4 @@ fn test_get_delta() {
     max_delta = 0;
     inv_delta = get_delta(max_delta, base_amount, quote_amount, price);
     assert(inv_delta == I32Trait::new(0, false), 'Inv delta 10');
-// TODO: price 0
-
-// TODO: very small price
-
-// TODO: very large price
 }

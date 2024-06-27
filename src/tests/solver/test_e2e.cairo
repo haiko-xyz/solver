@@ -5,7 +5,7 @@ use starknet::class_hash::ClassHash;
 
 // Local imports.
 use haiko_solver_replicating::{
-    contracts::solver::ReplicatingSolver,
+    contracts::core::solver::SolverComponent,
     contracts::mocks::{
         upgraded_replicating_solver::{
             UpgradedReplicatingSolver, IUpgradedReplicatingSolverDispatcher,
@@ -19,7 +19,7 @@ use haiko_solver_replicating::{
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         pragma::{DataType, PragmaPricesResponse},
     },
-    types::{core::SwapParams, replicating::{MarketInfo, MarketParams, MarketState}},
+    types::{core::{MarketInfo, MarketState, SwapParams}, replicating::MarketParams},
     tests::{
         helpers::{actions::{deploy_replicating_solver, deploy_mock_pragma_oracle}, utils::before,},
     },
@@ -75,8 +75,7 @@ fn test_solver_e2e_private_market() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    let (amount_in, amount_out) = ISolverDispatcher { contract_address: solver.contract_address }
-        .swap(market_id, params);
+    let (amount_in, amount_out) = solver.swap(market_id, params);
 
     // Withdraw.
     let (base_withdraw, quote_withdraw) = solver.withdraw(market_id, to_e18(50), to_e18(300));
@@ -137,8 +136,7 @@ fn test_solver_e2e_public_market() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    let (amount_in, amount_out) = ISolverDispatcher { contract_address: solver.contract_address }
-        .swap(market_id, params);
+    let (amount_in, amount_out) = solver.swap(market_id, params);
     println!("amount_in: {}, amount_out: {}", amount_in, amount_out);
 
     // Withdraw.

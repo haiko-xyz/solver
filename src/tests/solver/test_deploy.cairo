@@ -4,10 +4,11 @@ use starknet::contract_address_const;
 // Local imports.
 use haiko_solver_replicating::{
     interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
     },
-    types::replicating::{MarketInfo, MarketParams},
+    types::{core::MarketInfo, replicating::MarketParams},
     tests::{
         helpers::{actions::{deploy_replicating_solver, deploy_mock_pragma_oracle}, utils::before,},
     },
@@ -33,10 +34,12 @@ fn test_deploy_solver_and_vault_token_initialises_immutables() {
         true
     );
 
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+
     assert(solver.owner() == owner(), 'Solver: owner');
     assert(solver.queued_owner() == contract_address_const::<0x0>(), 'Solver: queued owner');
-    assert(solver.oracle() == oracle.contract_address, 'Solver: oracle');
     assert(solver.vault_token_class() == vault_token_class, 'Solver: vault token class');
+    assert(repl_solver.oracle() == oracle.contract_address, 'Solver: oracle');
 }
 
 #[test]

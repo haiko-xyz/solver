@@ -1,6 +1,36 @@
 use starknet::ContractAddress;
 
-// TODO: move this to a central repo
+////////////////////////////////
+// TYPES
+////////////////////////////////
+
+// Identifying market information.
+//
+// * `base_token` - base token address
+// * `quote_token` - quote token address
+// * `owner` - solver market owner address
+// * `is_public` - whether market is open to public deposits
+#[derive(Copy, Drop, Serde, starknet::Store)]
+pub struct MarketInfo {
+    pub base_token: ContractAddress,
+    pub quote_token: ContractAddress,
+    pub owner: ContractAddress,
+    pub is_public: bool,
+}
+
+// Solver market state.
+//
+// * `base_reserves` - base reserves
+// * `quote_reserves` - quote reserves
+// * `is_paused` - whether market is paused
+// * `vault_token` - vault token (or 0 if unset)
+#[derive(Drop, Copy, Serde)]
+pub struct MarketState {
+    pub base_reserves: u256,
+    pub quote_reserves: u256,
+    pub is_paused: bool,
+    pub vault_token: ContractAddress,
+}
 
 // Information about a swap.
 //
@@ -14,4 +44,34 @@ pub struct SwapParams {
     pub exact_input: bool,
     pub threshold_sqrt_price: Option<u256>,
     pub threshold_amount: Option<u256>,
+}
+
+// Virtual liquidity position.
+//
+// * `lower_sqrt_price` - lower limit of position
+// * `upper_sqrt_price` - upper limit of position
+// * `liquidity` - liquidity of position
+#[derive(Drop, Copy, Serde, Default, PartialEq)]
+pub struct PositionInfo {
+    pub lower_sqrt_price: u256,
+    pub upper_sqrt_price: u256,
+    pub liquidity: u128,
+}
+
+////////////////////////////////
+// PACKED TYPES
+////////////////////////////////
+
+// Packed market state.
+//
+// * `slab0` - base reserves (coerced to felt252)
+// * `slab1` - quote reserves (coerced to felt252)
+// * `slab2` - vault_token
+// * `slab3` - is_paused
+#[derive(starknet::Store)]
+pub struct PackedMarketState {
+    pub slab0: felt252,
+    pub slab1: felt252,
+    pub slab2: felt252,
+    pub slab3: felt252
 }

@@ -1,3 +1,3 @@
 pub mod helpers;
-pub mod solver;
+pub mod replicating;
 pub mod libraries;

@@ -11,14 +11,12 @@ pub mod SolverComponent {
     use starknet::syscalls::{replace_class_syscall, deploy_syscall};
 
     // Local imports.
-    use haiko_solver_replicating::libraries::{
-        id, erc20_versioned_call, store_packing::MarketStateStorePacking
-    };
-    use haiko_solver_replicating::interfaces::{
+    use haiko_solver::libraries::{id, erc20_versioned_call, store_packing::MarketStateStorePacking};
+    use haiko_solver::interfaces::{
         ISolver::{ISolver, ISolverQuoterDispatcher, ISolverQuoterDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     };
-    use haiko_solver_replicating::types::core::{MarketInfo, MarketState, PositionInfo, SwapParams};
+    use haiko_solver::types::core::{MarketInfo, MarketState, PositionInfo, SwapParams};
 
     // Haiko imports.
     use haiko_lib::{math::{math, fee_math}, constants::{ONE, LOG2_1_00001, MAX_FEE_RATE}};

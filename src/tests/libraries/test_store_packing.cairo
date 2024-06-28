@@ -3,10 +3,10 @@ use starknet::syscalls::deploy_syscall;
 use starknet::contract_address::contract_address_const;
 
 // Local imports.
-use haiko_solver_replicating::contracts::mocks::store_packing_contract::{
+use haiko_solver::contracts::mocks::store_packing_contract::{
     StorePackingContract, IStorePackingContractDispatcher, IStorePackingContractDispatcherTrait
 };
-use haiko_solver_replicating::types::{replicating::MarketParams, core::MarketState};
+use haiko_solver::types::{replicating::MarketParams, core::MarketState};
 
 // External imports.
 use snforge_std::{declare, ContractClass, ContractClassTrait};

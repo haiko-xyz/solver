@@ -2,7 +2,7 @@
 use core::integer::{BoundedInt, u256_wide_mul, u512};
 
 // Local imports.
-use haiko_solver_replicating::libraries::swap_lib::{
+use haiko_solver::libraries::swap_lib::{
     compute_swap_amounts, next_sqrt_price_input, next_sqrt_price_output
 };
 

@@ -1,4 +1,4 @@
-use haiko_solver_replicating::interfaces::pragma::{
+use haiko_solver::interfaces::pragma::{
     PragmaPricesResponse, DataType, AggregationMode, SimpleDataType
 };
 
@@ -45,7 +45,7 @@ pub trait IMockPragmaOracle<TContractState> {
 pub mod MockPragmaOracle {
     use super::IMockPragmaOracle;
 
-    use haiko_solver_replicating::interfaces::pragma::{
+    use haiko_solver::interfaces::pragma::{
         PragmaPricesResponse, DataType, AggregationMode, SimpleDataType
     };
 

@@ -2,7 +2,7 @@
 use core::poseidon::poseidon_hash_span;
 
 // Local imports.
-use haiko_solver_replicating::types::core::MarketInfo;
+use haiko_solver::types::core::MarketInfo;
 
 // Compute market id.
 //   Poseidon(base_token, quote_token, owner, is_public)

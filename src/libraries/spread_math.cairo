@@ -2,10 +2,8 @@
 use core::cmp::{min, max};
 
 // Local imports.
-use haiko_solver_replicating::libraries::swap_lib;
-use haiko_solver_replicating::types::{
-    replicating::MarketParams, core::{MarketState, PositionInfo, SwapParams}
-};
+use haiko_solver::libraries::swap_lib;
+use haiko_solver::types::{replicating::MarketParams, core::{MarketState, PositionInfo, SwapParams}};
 
 // Haiko imports.
 use haiko_lib::math::{price_math, liquidity_math, math};

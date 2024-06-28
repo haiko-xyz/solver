@@ -1,5 +1,5 @@
 // Local imports.
-use haiko_solver_replicating::types::replicating::MarketParams;
+use haiko_solver::types::replicating::MarketParams;
 
 pub fn default_market_params() -> MarketParams {
     MarketParams {

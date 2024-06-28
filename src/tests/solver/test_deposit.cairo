@@ -2,7 +2,7 @@
 use starknet::contract_address_const;
 
 // Local imports.
-use haiko_solver_replicating::{
+use haiko_solver::{
     contracts::core::solver::SolverComponent,
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait

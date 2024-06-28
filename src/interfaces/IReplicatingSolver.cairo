@@ -3,8 +3,8 @@ use starknet::ContractAddress;
 use starknet::class_hash::ClassHash;
 
 // Local imports.
-use haiko_solver_replicating::types::core::{SwapParams, PositionInfo};
-use haiko_solver_replicating::types::replicating::MarketParams;
+use haiko_solver::types::core::{SwapParams, PositionInfo};
+use haiko_solver::types::replicating::MarketParams;
 
 #[starknet::interface]
 pub trait IReplicatingSolver<TContractState> {

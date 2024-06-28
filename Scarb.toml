@@ -1,7 +1,7 @@
 [package]
 cairo-version = "2.6.3"
-description = "Replicating Solver contracts for Haiko protocol"
-name = "haiko_solver_replicating"
+description = "Solver contracts for Haiko protocol"
+name = "haiko_solver"
 version = "1.0.0"
 edition = "2023_11"
 

@@ -2,7 +2,7 @@
 use core::integer::BoundedInt;
 
 // Local imports.
-use haiko_solver_replicating::libraries::{
+use haiko_solver::libraries::{
     spread_math::{get_virtual_position, get_virtual_position_range, get_delta, get_skew},
     swap_lib::get_swap_amounts
 };

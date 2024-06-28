@@ -4,10 +4,10 @@ use starknet::ContractAddress;
 use starknet::class_hash::ClassHash;
 
 // Local imports.
-use haiko_solver_replicating::contracts::mocks::mock_pragma_oracle::{
+use haiko_solver::contracts::mocks::mock_pragma_oracle::{
     IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
 };
-use haiko_solver_replicating::interfaces::ISolver::ISolverDispatcher;
+use haiko_solver::interfaces::ISolver::ISolverDispatcher;
 
 // External imports.
 use snforge_std::{declare, ContractClass, ContractClassTrait, start_prank, stop_prank};

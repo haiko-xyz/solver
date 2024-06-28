@@ -2,7 +2,7 @@
 use starknet::storage_access::StorePacking;
 
 // Local imports.
-use haiko_solver_replicating::types::{
+use haiko_solver::types::{
     core::{MarketState, PackedMarketState}, replicating::{MarketParams, PackedMarketParams}
 };
 

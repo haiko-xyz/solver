@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "haiko_solver_replicating"
+name = "haiko_solver"
 version = "1.0.0"
 dependencies = [
  "haiko_lib",

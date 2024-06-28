@@ -2,8 +2,8 @@
 use core::integer::BoundedInt;
 
 // Local imports.
-use haiko_solver_replicating::types::core::{SwapParams, PositionInfo};
-use haiko_solver_replicating::libraries::swap_lib::{
+use haiko_solver::types::core::{SwapParams, PositionInfo};
+use haiko_solver::libraries::swap_lib::{
     get_swap_amounts, compute_swap_amounts, next_sqrt_price_input, next_sqrt_price_output
 };
 

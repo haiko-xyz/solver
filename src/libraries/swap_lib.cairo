@@ -3,9 +3,7 @@ use core::cmp::{min, max};
 use core::integer::{u512, u256_wide_mul};
 
 // Local imports.
-use haiko_solver_replicating::types::{
-    replicating::MarketParams, core::{MarketState, PositionInfo, SwapParams}
-};
+use haiko_solver::types::{replicating::MarketParams, core::{MarketState, PositionInfo, SwapParams}};
 
 // Haiko imports.
 use haiko_lib::math::{math, liquidity_math};

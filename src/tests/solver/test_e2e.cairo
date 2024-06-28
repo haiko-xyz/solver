@@ -4,7 +4,7 @@ use starknet::contract_address_const;
 use starknet::class_hash::ClassHash;
 
 // Local imports.
-use haiko_solver_replicating::{
+use haiko_solver::{
     contracts::core::solver::SolverComponent,
     contracts::mocks::{
         upgraded_replicating_solver::{

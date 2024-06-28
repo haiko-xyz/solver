@@ -7,18 +7,18 @@ pub mod ReplicatingSolver {
     use starknet::class_hash::ClassHash;
 
     // Local imports.
-    use haiko_solver_replicating::contracts::core::solver::SolverComponent;
-    use haiko_solver_replicating::libraries::{
+    use haiko_solver::contracts::core::solver::SolverComponent;
+    use haiko_solver::libraries::{
         swap_lib, spread_math, id, store_packing::MarketParamsStorePacking
     };
-    use haiko_solver_replicating::interfaces::{
+    use haiko_solver::interfaces::{
         ISolver::ISolverQuoter, IReplicatingSolver::IReplicatingSolver,
         pragma::{
             AggregationMode, DataType, SimpleDataType, PragmaPricesResponse, IOracleABIDispatcher,
             IOracleABIDispatcherTrait
         },
     };
-    use haiko_solver_replicating::types::{
+    use haiko_solver::types::{
         core::{PositionInfo, MarketState, MarketInfo, SwapParams}, replicating::MarketParams
     };
 

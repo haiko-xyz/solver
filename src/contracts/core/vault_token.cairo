@@ -5,7 +5,7 @@ pub mod VaultToken {
     use starknet::get_caller_address;
 
     // Local imports.
-    use haiko_solver_replicating::interfaces::IVaultToken::IVaultToken;
+    use haiko_solver::interfaces::IVaultToken::IVaultToken;
 
     // External imports.
     use openzeppelin::token::erc20::ERC20Component;

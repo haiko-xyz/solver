@@ -14,10 +14,7 @@ use haiko_solver::{
         mock_pragma_oracle::{IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait},
     },
     interfaces::{
-        ISolver::{
-            ISolverDispatcher, ISolverDispatcherTrait, ISolverQuoterDispatcher,
-            ISolverQuoterDispatcherTrait
-        },
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
         pragma::{DataType, PragmaPricesResponse},
@@ -249,8 +246,8 @@ pub fn snapshot(
     let solver_base_bal = base_token.balanceOf(solver.contract_address);
     let solver_quote_bal = quote_token.balanceOf(solver.contract_address);
     let market_state = solver.market_state(market_id);
-    let solver_quoter = ISolverQuoterDispatcher { contract_address: solver.contract_address };
-    let (bid, ask) = solver_quoter.get_virtual_positions(market_id);
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let (bid, ask) = repl_solver.get_virtual_positions(market_id);
 
     Snapshot {
         lp_base_bal,

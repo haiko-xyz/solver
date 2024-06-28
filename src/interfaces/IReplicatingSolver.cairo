@@ -34,4 +34,16 @@ pub trait IReplicatingSolver<TContractState> {
     // # Arguments
     // * `oracle` - contract address of oracle feed
     fn change_oracle(ref self: TContractState, oracle: ContractAddress);
+
+    // Query virtual liquidity positions against which swaps are executed.
+    // 
+    // # Arguments
+    // * `market_id` - market id
+    //
+    // # Returns
+    // * `bid` - bid position
+    // * `ask` - ask position
+    fn get_virtual_positions(
+        self: @TContractState, market_id: felt252
+    ) -> (PositionInfo, PositionInfo);
 }

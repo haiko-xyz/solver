@@ -172,53 +172,22 @@ pub mod ReplicatingSolver {
             (amount_in, amount_out)
         }
 
-        // Get virtual liquidity positions against which swaps are executed.
-        // 
+        // Get the initial token supply to mint when first depositing to a market.
+        //
         // # Arguments
         // * `market_id` - market id
+        // * `base_amount` - base amount deposited
+        // * `quote_amount` - quote amount deposited
         //
         // # Returns
-        // * `bid` - bid position
-        // * `ask` - ask position
-        fn get_virtual_positions(
-            self: @ContractState, market_id: felt252
-        ) -> (PositionInfo, PositionInfo) {
-            // Fetch state.
-            let state: MarketState = self.solver.market_state.read(market_id);
-            let params: MarketParams = self.market_params.read(market_id);
+        // * `initial_supply` - initial supply
+        fn initial_supply(self: @ContractState, market_id: felt252) -> u256 {
+            // Query virtual positions. State should already be committed when this is called so 
+            // it will reflect the amounts deposited as part of this call.
+            let (bid, ask) = self.get_virtual_positions(market_id);
 
-            // Fetch oracle price.
-            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-            assert(is_valid, 'InvalidOraclePrice');
-
-            // Calculate position ranges.
-            let delta = spread_math::get_delta(
-                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
-            );
-            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
-                true, params.min_spread, delta, params.range, oracle_price
-            );
-            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
-                false, params.min_spread, delta, params.range, oracle_price
-            );
-
-            // Calculate and return positions.
-            let mut bid: PositionInfo = Default::default();
-            let mut ask: PositionInfo = Default::default();
-            if state.quote_reserves != 0 {
-                bid =
-                    spread_math::get_virtual_position(
-                        true, bid_lower, bid_upper, state.quote_reserves
-                    );
-            }
-            if state.base_reserves != 0 {
-                ask =
-                    spread_math::get_virtual_position(
-                        false, ask_lower, ask_upper, state.base_reserves
-                    );
-            }
-
-            (bid, ask)
+            // Calculate initial supply.            
+            (bid.liquidity + ask.liquidity).into()
         }
     }
 
@@ -326,6 +295,55 @@ pub mod ReplicatingSolver {
             let oracle_dispatcher = IOracleABIDispatcher { contract_address: oracle };
             self.oracle.write(oracle_dispatcher);
             self.emit(Event::ChangeOracle(ChangeOracle { oracle }));
+        }
+
+        // Get virtual liquidity positions against which swaps are executed.
+        // 
+        // # Arguments
+        // * `market_id` - market id
+        //
+        // # Returns
+        // * `bid` - bid position
+        // * `ask` - ask position
+        fn get_virtual_positions(
+            self: @ContractState, market_id: felt252
+        ) -> (PositionInfo, PositionInfo) {
+            // Fetch state.
+            let state: MarketState = self.solver.market_state.read(market_id);
+            let params: MarketParams = self.market_params.read(market_id);
+
+            // Fetch oracle price.
+            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
+            assert(is_valid, 'InvalidOraclePrice');
+
+            // Calculate position ranges.
+            let delta = spread_math::get_delta(
+                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
+            );
+            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
+                true, params.min_spread, delta, params.range, oracle_price
+            );
+            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
+                false, params.min_spread, delta, params.range, oracle_price
+            );
+
+            // Calculate and return positions.
+            let mut bid: PositionInfo = Default::default();
+            let mut ask: PositionInfo = Default::default();
+            if state.quote_reserves != 0 {
+                bid =
+                    spread_math::get_virtual_position(
+                        true, bid_lower, bid_upper, state.quote_reserves
+                    );
+            }
+            if state.base_reserves != 0 {
+                ask =
+                    spread_math::get_virtual_position(
+                        false, ask_lower, ask_upper, state.base_reserves
+                    );
+            }
+
+            (bid, ask)
         }
     }
 }

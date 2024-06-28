@@ -277,15 +277,12 @@ pub trait ISolverQuoter<TContractState> {
     // * `amount_out` - amount out
     fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
 
-    // Query virtual liquidity positions against which swaps are executed.
-    // 
+    // Get the initial token supply to mint when first depositing to a market.
+    //
     // # Arguments
     // * `market_id` - market id
     //
     // # Returns
-    // * `bid` - bid position
-    // * `ask` - ask position
-    fn get_virtual_positions(
-        self: @TContractState, market_id: felt252
-    ) -> (PositionInfo, PositionInfo);
+    // * `initial_supply` - initial supply
+    fn initial_supply(self: @TContractState, market_id: felt252) -> u256;
 }

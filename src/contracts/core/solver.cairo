@@ -538,8 +538,7 @@ pub mod SolverComponent {
                 let solver_quoter = ISolverQuoterDispatcher {
                     contract_address: get_contract_address()
                 };
-                let (bid, ask) = solver_quoter.get_virtual_positions(market_id);
-                shares = (bid.liquidity + ask.liquidity).into();
+                shares = solver_quoter.initial_supply(market_id);
                 assert(shares != 0, 'SharesZero');
                 let token = IVaultTokenDispatcher { contract_address: state.vault_token };
                 token.mint(caller, shares);

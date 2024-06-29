@@ -1,0 +1,14 @@
+pub mod test_e2e;
+pub mod test_deploy;
+pub mod test_deposit_initial;
+pub mod test_deposit;
+pub mod test_swap;
+pub mod test_withdraw;
+pub mod test_set_market_params;
+pub mod test_oracle;
+pub mod test_vault_token;
+pub mod test_withdraw_fees;
+pub mod test_pause;
+pub mod test_ownership;
+pub mod test_get_balances;
+pub mod test_upgrade;

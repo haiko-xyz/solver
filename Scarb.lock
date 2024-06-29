@@ -2,6 +2,58 @@
 version = 1
 
 [[package]]
+name = "alexandria_bytes"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#0aa7cca8a1acb1f35cff32420614f7f58e38de5e"
+dependencies = [
+ "alexandria_data_structures",
+ "alexandria_math",
+]
+
+[[package]]
+name = "alexandria_data_structures"
+version = "0.2.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#0aa7cca8a1acb1f35cff32420614f7f58e38de5e"
+dependencies = [
+ "alexandria_encoding",
+]
+
+[[package]]
+name = "alexandria_encoding"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#0aa7cca8a1acb1f35cff32420614f7f58e38de5e"
+dependencies = [
+ "alexandria_bytes",
+ "alexandria_math",
+ "alexandria_numeric",
+]
+
+[[package]]
+name = "alexandria_math"
+version = "0.2.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#0aa7cca8a1acb1f35cff32420614f7f58e38de5e"
+dependencies = [
+ "alexandria_data_structures",
+]
+
+[[package]]
+name = "alexandria_numeric"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#0aa7cca8a1acb1f35cff32420614f7f58e38de5e"
+dependencies = [
+ "alexandria_math",
+ "alexandria_searching",
+]
+
+[[package]]
+name = "alexandria_searching"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria.git#0aa7cca8a1acb1f35cff32420614f7f58e38de5e"
+dependencies = [
+ "alexandria_data_structures",
+]
+
+[[package]]
 name = "haiko_lib"
 version = "2.0.0"
 source = "git+https://github.com/haiko-xyz/library.git?branch=v2.0.0#86ed23e5f92c13a5608c8508a6efa64ad873ab31"
@@ -13,8 +65,23 @@ dependencies = [
 [[package]]
 name = "haiko_solver"
 version = "1.0.0"
+
+[[package]]
+name = "haiko_solver_core"
+version = "1.0.0"
+dependencies = [
+ "alexandria_math",
+ "haiko_lib",
+ "openzeppelin",
+ "snforge_std",
+]
+
+[[package]]
+name = "haiko_solver_replicating"
+version = "1.0.0"
 dependencies = [
  "haiko_lib",
+ "haiko_solver_core",
  "openzeppelin",
  "snforge_std",
 ]

@@ -390,10 +390,10 @@ fn test_swap_fails_if_swap_buy_below_threshold_amount() {
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let params = SwapParams {
         is_buy: true,
-        amount: to_e18(1),
+        amount: to_e18(10),
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::Some(to_e18(2)),
+        threshold_amount: Option::Some(to_e18(20)),
     };
     solver.swap(market_id, params);
 }

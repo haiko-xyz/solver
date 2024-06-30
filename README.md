@@ -1,6 +1,4 @@
-# Haiko Replicating Solver
-
-The Replicating Solver creates a market for any token pair by providing bid and ask quotes based on a Pragma oracle price feed. It allows liquidity providers to provide liquidity programmatically, without having to actively manage their positions.
+# Haiko Solver
 
 ## Solvers vs Strategies
 
@@ -23,11 +21,13 @@ The core `SolverComponent` component will eventually be moved to its own repo to
 
 ### Replicating Solver
 
-The Replicating Solver, under the `replicating` package, is the first Solver in development. It accepts deposits and executes swap orders based on the the virtual bid and ask positions placed by each market. These positions are 'virtual' in that they are calculated on the fly and never stored in state.
+The Replicating Solver, under the `replicating` package, is the first Solver in development. It creates a market for any token pair by providing bid and ask quotes based on a Pragma oracle price feed. It allows liquidity providers to provide liquidity programmatically, without having to actively manage their positions.
+
+The Solver executes swap orders based on the the virtual bid and ask positions placed by each market. These positions are 'virtual' in that they are calculated on the fly and never stored in state.
 
 It is designed as a singleton contract supporting multiple solver markets, each with their own configuration. Solver markets can also be optionally owned. Market owners gain access to enhanced functionality, such as setting market parameters and pausing / unpausing the contract.
 
-The market configs are as follows:
+The solver market configs are as follows:
 
 1. Owner: address that controls market configurations, pausing, and ownership transfers
 2. Min spread: spread applied to the oracle price to calculate the bid and ask prices
@@ -48,8 +48,7 @@ Solvers currently support two market types: (1) Private Markets, which offer mor
 
 ```shell
 # Build contracts
-scarb build --package haiko_solver_core
-scarb build --package haiko_solver_replicating
+scarb build
 
 # Run the tests
 snforge test

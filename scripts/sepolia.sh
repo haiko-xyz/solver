@@ -9,9 +9,9 @@ export ORACLE_SUMMARY=0x54563a0537b3ae0ba91032d674a6d468f30a59dc4deb8f0dce4e642b
 
 # Declare contract class
 # Vault token
-starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STARKNET_KEYSTORE '/Users/parkyeung/dev/solver-replicating/target/dev/haiko_solver_VaultToken.contract_class.json'
+starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STARKNET_KEYSTORE '/Users/parkyeung/dev/solver/target/dev/haiko_solver_replicating_VaultToken.contract_class.json'
 # Solver
-starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STARKNET_KEYSTORE '/Users/parkyeung/dev/solver-replicating/target/dev/haiko_solver_ReplicatingSolver.contract_class.json'
+starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STARKNET_KEYSTORE '/Users/parkyeung/dev/solver/target/dev/haiko_solver_replicating_ReplicatingSolver.contract_class.json'
 
 # Deploy contract
 # Vault token

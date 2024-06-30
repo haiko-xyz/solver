@@ -4,7 +4,7 @@ use starknet::ContractAddress;
 // TYPES
 ////////////////////////////////
 
-// Identifying market information.
+// Identifying information for a solver market.
 //
 // * `base_token` - base token address
 // * `quote_token` - quote token address

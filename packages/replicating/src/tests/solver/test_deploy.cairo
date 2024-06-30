@@ -2,13 +2,7 @@
 use starknet::contract_address_const;
 
 // Local imports.
-use haiko_solver_core::{
-    interfaces::{
-        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
-        IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
-    },
-    types::MarketInfo,
-};
+use haiko_solver_core::interfaces::ISolver::{ISolverDispatcher, ISolverDispatcherTrait};
 use haiko_solver_replicating::{
     interfaces::{
         IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},

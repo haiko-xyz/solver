@@ -4,27 +4,14 @@ use starknet::contract_address_const;
 // Local imports.
 use haiko_solver_core::{
     contracts::solver::SolverComponent,
+    contracts::mocks::upgraded_mock_solver::{
+        IUpgradedMockSolverDispatcher, IUpgradedMockSolverDispatcherTrait
+    },
     interfaces::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    types::MarketInfo,
-};
-use haiko_solver_replicating::{
-    contracts::mocks::{
-        mock_pragma_oracle::{IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait},
-        upgraded_replicating_solver::{
-            IUpgradedReplicatingSolverDispatcher, IUpgradedReplicatingSolverDispatcherTrait
-        },
-    },
-    types::MarketParams,
-    tests::{
-        helpers::{
-            actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params,
-            utils::{before, before_custom_decimals, before_skip_approve, snapshot},
-        },
-    },
+    types::MarketInfo, tests::helpers::{actions::deploy_mock_solver, utils::{before, snapshot},}
 };
 
 // Haiko imports.
@@ -44,10 +31,8 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 ////////////////////////////////
 
 #[test]
-fn test_upgrade_replicating_solver() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+fn test_upgrade_solver() {
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         true
     );
@@ -56,11 +41,11 @@ fn test_upgrade_replicating_solver() {
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
 
     // Upgrade solver.
-    let class_hash = declare("UpgradedReplicatingSolver").class_hash;
+    let class_hash = declare("UpgradedMockSolver").class_hash;
     start_prank(CheatTarget::One(solver.contract_address), owner());
     solver.upgrade(class_hash);
     // Should be able to call new entrypoint
-    IUpgradedReplicatingSolverDispatcher { contract_address: solver.contract_address }.foo();
+    IUpgradedMockSolverDispatcher { contract_address: solver.contract_address }.foo();
 
     // Check event emitted.
     spy
@@ -77,15 +62,13 @@ fn test_upgrade_replicating_solver() {
 
 #[test]
 #[should_panic(expected: ('OnlyOwner',))]
-fn test_upgrade_replicating_solver_not_owner() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+fn test_upgrade_solver_not_owner() {
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         true
     );
 
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let class_hash = declare("UpgradedReplicatingSolver").class_hash;
+    let class_hash = declare("UpgradedMockSolver").class_hash;
     solver.upgrade(class_hash);
 }

@@ -4,14 +4,11 @@ use starknet::contract_address_const;
 // Local imports.
 use haiko_solver_core::{
     contracts::solver::SolverComponent,
-    interfaces::{
-        ISolver::{
-            ISolverDispatcher, ISolverDispatcherTrait, ISolverQuoterDispatcher,
-            ISolverQuoterDispatcherTrait
-        },
-        IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
+    interfaces::ISolver::{
+        ISolverDispatcher, ISolverDispatcherTrait, ISolverQuoterDispatcher,
+        ISolverQuoterDispatcherTrait
     },
-    types::{SwapParams, MarketInfo},
+    types::SwapParams,
 };
 use haiko_solver_replicating::{
     contracts::mocks::mock_pragma_oracle::{
@@ -867,87 +864,6 @@ fn test_swap_should_emit_event() {
 ////////////////////////////////
 
 #[test]
-#[should_panic(expected: ('MarketNull',))]
-fn test_swap_fails_if_market_uninitialised() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Swap.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: true,
-        amount: to_e18(10),
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(()),
-    };
-    solver.swap(1, params);
-}
-
-#[test]
-#[should_panic(expected: ('Paused',))]
-fn test_swap_fails_if_market_paused() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Deposit initial.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
-
-    // Pause.
-    solver.pause(market_id);
-
-    // Swap.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: true,
-        amount: to_e18(10),
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(()),
-    };
-    solver.swap(market_id, params);
-}
-
-#[test]
-#[should_panic(expected: ('BaseAllowance',))]
-fn test_swap_fails_if_not_approved() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before_skip_approve(
-        false
-    );
-
-    // Deposit initial.
-    let base_amount = to_e18(100);
-    let quote_amount = to_e18(500);
-    approve(base_token, alice(), solver.contract_address, base_amount);
-    approve(quote_token, alice(), solver.contract_address, quote_amount);
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.deposit_initial(market_id, base_amount, quote_amount);
-
-    // Swap without approval.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: true,
-        amount: to_e18(10),
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(()),
-    };
-    solver.swap(market_id, params);
-}
-
-#[test]
 #[should_panic(expected: ('InvalidOraclePrice',))]
 fn test_swap_fails_if_invalid_oracle_price() {
     let (
@@ -970,122 +886,6 @@ fn test_swap_fails_if_invalid_oracle_price() {
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let params = SwapParams {
         is_buy: true,
-        amount: to_e18(10),
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(()),
-    };
-    solver.swap(market_id, params);
-}
-
-#[test]
-#[should_panic(expected: ('AmountZero',))]
-fn test_swap_fails_if_amount_zero() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Deposit initial.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
-
-    // Swap.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: true,
-        amount: 0,
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(()),
-    };
-    solver.swap(market_id, params);
-}
-
-#[test]
-#[should_panic(expected: ('ThresholdAmountZero',))]
-fn test_swap_fails_if_min_amount_out_zero() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Deposit initial.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
-
-    // Swap.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: true,
-        amount: to_e18(10),
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::Some(0),
-    };
-    solver.swap(market_id, params);
-}
-
-#[test]
-#[should_panic(expected: ('AmountZero',))]
-fn test_swap_fails_if_swap_buy_with_zero_liquidity() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Set params to remove max skew.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
-    market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
-
-    // Deposit initial.
-    solver.deposit_initial(market_id, 0, to_e18(1000));
-
-    // Swap.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: true,
-        amount: to_e18(10),
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(()),
-    };
-    solver.swap(market_id, params);
-}
-
-#[test]
-#[should_panic(expected: ('AmountZero',))]
-fn test_swap_fails_if_swap_sell_with_zero_liquidity() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Set params to remove max skew.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = repl_solver.market_params(market_id);
-    market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
-
-    // Deposit initial.
-    solver.deposit_initial(market_id, to_e18(1000), 0);
-
-    // Swap.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: false,
         amount: to_e18(10),
         exact_input: true,
         threshold_sqrt_price: Option::None(()),

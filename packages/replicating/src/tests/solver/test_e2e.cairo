@@ -5,12 +5,7 @@ use starknet::class_hash::ClassHash;
 
 // Local imports.
 use haiko_solver_core::{
-    contracts::solver::SolverComponent,
-    interfaces::{
-        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
-        IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
-    },
-    types::{MarketInfo, MarketState, SwapParams},
+    interfaces::ISolver::{ISolverDispatcher, ISolverDispatcherTrait}, types::SwapParams,
 };
 use haiko_solver_replicating::{
     contracts::mocks::{

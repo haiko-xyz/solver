@@ -8,28 +8,12 @@ use haiko_solver_core::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    types::MarketInfo,
-};
-use haiko_solver_replicating::{
-    contracts::mocks::mock_pragma_oracle::{
-        IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
-    },
-    interfaces::IReplicatingSolver::{
-        IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait
-    },
-    types::MarketParams,
-    tests::{
-        helpers::{
-            actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params,
-            utils::{before, before_custom_decimals, before_skip_approve, snapshot},
-        },
-    },
+    types::MarketInfo, tests::helpers::{actions::deploy_mock_solver, utils::before,},
 };
 
 // Haiko imports.
 use haiko_lib::helpers::params::{owner, alice};
-use haiko_lib::helpers::utils::{to_e18, approx_eq, approx_eq_pct};
+use haiko_lib::helpers::utils::{to_e18, approx_eq};
 use haiko_lib::helpers::actions::token::{fund, approve};
 
 // External imports.
@@ -45,9 +29,7 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 
 #[test]
 fn test_change_vault_token_class_works() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         true
     );
@@ -63,9 +45,7 @@ fn test_change_vault_token_class_works() {
 
 #[test]
 fn test_change_vault_token_class_emits_event() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         true
     );
@@ -99,9 +79,7 @@ fn test_change_vault_token_class_emits_event() {
 #[test]
 #[should_panic(expected: ('OnlyOwner',))]
 fn test_change_vault_token_class_fails_if_not_owner() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         true
     );
@@ -115,9 +93,7 @@ fn test_change_vault_token_class_fails_if_not_owner() {
 #[test]
 #[should_panic(expected: ('ClassHashUnchanged',))]
 fn test_change_vault_token_class_fails_if_unchanged() {
-    let (
-        _base_token, _quote_token, _oracle, vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         true
     );
@@ -130,9 +106,7 @@ fn test_change_vault_token_class_fails_if_unchanged() {
 #[test]
 #[should_panic(expected: ('ClassHashZero',))]
 fn test_change_vault_token_class_fails_if_zero_address() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         true
     );
@@ -145,9 +119,7 @@ fn test_change_vault_token_class_fails_if_zero_address() {
 #[test]
 #[should_panic(expected: ('OnlyOwner',))]
 fn test_mint_vault_token_fails_for_non_owner() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, vault_token_opt) =
         before(
         true
     );
@@ -161,9 +133,7 @@ fn test_mint_vault_token_fails_for_non_owner() {
 #[test]
 #[should_panic(expected: ('OnlyOwner',))]
 fn test_burn_vault_token_fails_for_non_owner() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, vault_token_opt) =
         before(
         true
     );

@@ -16,7 +16,8 @@ sierra = true
 casm = true
 allowed-libfuncs-list.name = "experimental"
 build-external-contracts = [
-  'haiko_lib::mocks::erc20::ERC20'
+  'haiko_lib::mocks::erc20::ERC20',
+  'haiko_solver_core::contracts::vault_token::VaultToken',
 ]
 
 [[tool.snforge.fork]]

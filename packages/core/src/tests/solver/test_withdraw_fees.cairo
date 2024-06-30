@@ -8,28 +8,12 @@ use haiko_solver_core::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    types::MarketInfo,
-};
-use haiko_solver_replicating::{
-    contracts::mocks::mock_pragma_oracle::{
-        IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
-    },
-    interfaces::IReplicatingSolver::{
-        IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait
-    },
-    types::MarketParams,
-    tests::{
-        helpers::{
-            actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params,
-            utils::{before, before_custom_decimals, before_skip_approve, snapshot},
-        },
-    },
+    types::MarketInfo, tests::helpers::{actions::deploy_mock_solver, utils::before,},
 };
 
 // Haiko imports.
 use haiko_lib::helpers::params::{owner, alice};
-use haiko_lib::helpers::utils::{to_e18, approx_eq, approx_eq_pct};
+use haiko_lib::helpers::utils::to_e18;
 use haiko_lib::helpers::actions::token::{fund, approve};
 
 // External imports.
@@ -45,9 +29,7 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 
 #[test]
 fn test_set_withdraw_fees() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -66,10 +48,7 @@ fn test_set_withdraw_fees() {
 
 #[test]
 fn test_collect_withdraw_fees() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
+    let (base_token, quote_token, _vault_token_class, solver, market_id, _vault_token_opt) = before(
         false
     );
 
@@ -101,9 +80,7 @@ fn test_collect_withdraw_fees() {
 
 #[test]
 fn test_set_withdraw_fees_emits_event() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -133,10 +110,7 @@ fn test_set_withdraw_fees_emits_event() {
 
 #[test]
 fn test_collect_withdraw_fees_emits_event() {
-    let (
-        base_token, quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
+    let (base_token, quote_token, _vault_token_class, solver, market_id, _vault_token_opt) = before(
         false
     );
 
@@ -210,9 +184,7 @@ fn test_collect_withdraw_fees_emits_event() {
 #[test]
 #[should_panic(expected: ('FeeOF',))]
 fn test_withdraw_fee_overflow() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -225,9 +197,7 @@ fn test_withdraw_fee_overflow() {
 #[test]
 #[should_panic(expected: ('FeeUnchanged',))]
 fn test_withdraw_fee_unchanged() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -241,9 +211,7 @@ fn test_withdraw_fee_unchanged() {
 #[test]
 #[should_panic(expected: ('OnlyOwner',))]
 fn test_withdraw_fee_not_owner() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );

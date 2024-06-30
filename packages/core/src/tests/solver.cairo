@@ -1,2 +1,12 @@
 pub mod test_create_market;
 pub mod test_deploy;
+pub mod test_deposit_initial;
+pub mod test_deposit;
+pub mod test_get_balances;
+pub mod test_ownership;
+pub mod test_pause;
+pub mod test_swap;
+pub mod test_upgrade;
+pub mod test_vault_token;
+pub mod test_withdraw_fees;
+pub mod test_withdraw;

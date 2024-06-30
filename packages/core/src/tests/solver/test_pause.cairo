@@ -8,28 +8,12 @@ use haiko_solver_core::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    types::MarketInfo,
-};
-use haiko_solver_replicating::{
-    contracts::mocks::mock_pragma_oracle::{
-        IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
-    },
-    interfaces::IReplicatingSolver::{
-        IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait
-    },
-    types::MarketParams,
-    tests::{
-        helpers::{
-            actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params,
-            utils::{before, before_custom_decimals, before_skip_approve, snapshot},
-        },
-    },
+    tests::helpers::{actions::deploy_mock_solver, utils::before,},
 };
 
 // Haiko imports.
 use haiko_lib::helpers::params::{owner, alice};
-use haiko_lib::helpers::utils::{to_e18, approx_eq, approx_eq_pct};
+use haiko_lib::helpers::utils::{to_e18, approx_eq};
 use haiko_lib::helpers::actions::token::{fund, approve};
 
 // External imports.
@@ -45,9 +29,7 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 
 #[test]
 fn test_pause_allows_withdraws() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -71,9 +53,7 @@ fn test_pause_allows_withdraws() {
 
 #[test]
 fn test_unpause_after_pause_reenables_deposits() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -95,9 +75,7 @@ fn test_unpause_after_pause_reenables_deposits() {
 
 #[test]
 fn test_pause_emits_event() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -123,9 +101,7 @@ fn test_pause_emits_event() {
 
 #[test]
 fn test_unpause_emits_event() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -159,9 +135,7 @@ fn test_unpause_emits_event() {
 #[test]
 #[should_panic(expected: ('Paused',))]
 fn test_pause_prevents_non_owner_deposits() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -181,9 +155,7 @@ fn test_pause_prevents_non_owner_deposits() {
 #[test]
 #[should_panic(expected: ('Paused',))]
 fn test_pause_prevents_owner_deposits() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -199,9 +171,7 @@ fn test_pause_prevents_owner_deposits() {
 #[test]
 #[should_panic(expected: ('AlreadyPaused',))]
 fn test_pause_fails_if_already_paused() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -217,9 +187,7 @@ fn test_pause_fails_if_already_paused() {
 #[test]
 #[should_panic(expected: ('AlreadyUnpaused',))]
 fn test_pause_fails_if_already_unpaused() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );

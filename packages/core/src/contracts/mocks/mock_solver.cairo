@@ -25,6 +25,7 @@ pub mod MockSolver {
     // Local imports.
     use super::IMockSolver;
     use haiko_solver_core::contracts::solver::SolverComponent;
+    use haiko_solver_core::libraries::math::fast_sqrt;
     use haiko_solver_core::interfaces::ISolver::ISolverQuoter;
     use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
 
@@ -34,7 +35,6 @@ pub mod MockSolver {
 
     // External imports.
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
-    use alexandria_math::fast_root::fast_sqrt;
 
     ////////////////////////////////
     // COMPONENTS
@@ -104,21 +104,46 @@ pub mod MockSolver {
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(!state.is_paused, 'Paused');
 
+            // Scale price by decimals.
+            let unscaled_price = self.price(market_id);
+            let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
+            let quote_token = ERC20ABIDispatcher { contract_address: market_info.quote_token };
+            let base_decimals: u256 = base_token.decimals().into();
+            let quote_decimals: u256 = quote_token.decimals().into();
+            let base_scale = math::pow(10, base_decimals);
+            let quote_scale = math::pow(10, quote_decimals);
+            let price = math::mul_div(unscaled_price, quote_scale, base_scale, false);
+
             // Calculate and return swap amounts.
-            let price = self.price(market_id);
             let amount_calc = if swap_params.is_buy == swap_params.exact_input {
                 math::mul_div(swap_params.amount, ONE, price, false)
             } else {
                 math::mul_div(swap_params.amount, price, ONE, false)
             };
-            if swap_params.exact_input {
+            let (amount_in, amount_out) = if swap_params.exact_input {
                 (swap_params.amount, amount_calc)
             } else {
                 (amount_calc, swap_params.amount)
+            };
+
+            // Cap at available amount.
+            let (max_amount_in, max_amount_out) = if swap_params.is_buy {
+                let amount_in = math::mul_div(state.base_reserves, price, ONE, false);
+                (amount_in, state.base_reserves)
+            } else {
+                let amount_out = math::mul_div(state.quote_reserves, ONE, price, false);
+                (state.quote_reserves, amount_out)
+            };
+
+            // Return capped amounts.
+            if amount_in > max_amount_in || amount_out > max_amount_out {
+                (max_amount_in, max_amount_out)
+            } else {
+                (amount_in, amount_out)
             }
         }
 
-        // Get the initial token supply to mint when first depositing to a market.
+        // Initial token supply to mint when first depositing to a market.
         //
         // # Arguments
         // * `market_id` - market id
@@ -126,12 +151,23 @@ pub mod MockSolver {
         // # Returns
         // * `initial_supply` - initial supply
         fn initial_supply(self: @ContractState, market_id: felt252) -> u256 {
-            // We use the Uniswap formula to calculate initial liquidity
-            // L = sqrt(xy)
             let state: MarketState = self.solver.market_state.read(market_id);
-            let sqrt_base_reserves = fast_sqrt(state.base_reserves.try_into().unwrap(), 10);
-            let sqrt_quote_reserves = fast_sqrt(state.quote_reserves.try_into().unwrap(), 10);
-            (sqrt_base_reserves * sqrt_quote_reserves).into()
+            // We use the Uniswap formula to calculate initial liquidity: L = sqrt(xy)
+            if state.base_reserves != 0 && state.quote_reserves != 0 {
+                let sqrt_base_reserves = fast_sqrt(state.base_reserves.try_into().unwrap(), 10);
+                let sqrt_quote_reserves = fast_sqrt(state.quote_reserves.try_into().unwrap(), 10);
+                (sqrt_base_reserves * sqrt_quote_reserves).into()
+            } 
+            // If one of the reserves is 0, we return the other reserve.
+            else if state.base_reserves != 0 {
+                state.base_reserves
+            } else if state.quote_reserves != 0 {
+                state.quote_reserves
+            }
+            // If both reserves are 0, we return 0. 
+            else {
+                0
+            }
         }
     }
 

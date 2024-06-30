@@ -4,23 +4,11 @@ use starknet::contract_address_const;
 // Local imports.
 use haiko_solver_core::{
     contracts::solver::SolverComponent,
-    interfaces::ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
-};
-use haiko_solver_replicating::{
-    contracts::mocks::mock_pragma_oracle::{
-        IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
+    interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
+        IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    interfaces::IReplicatingSolver::{
-        IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait
-    },
-    types::MarketParams,
-    tests::{
-        helpers::{
-            actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params,
-            utils::{before, before_custom_decimals, before_skip_approve, snapshot},
-        },
-    },
+    types::MarketInfo, tests::helpers::{actions::deploy_mock_solver, utils::{before, snapshot},},
 };
 
 // Haiko imports.
@@ -41,8 +29,7 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 
 #[test]
 fn test_withdraw_partial_shares_from_public_vault() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, vault_token_opt) =
-        before(
+    let (base_token, quote_token, _vault_token_class, solver, market_id, vault_token_opt) = before(
         true
     );
 
@@ -82,22 +69,11 @@ fn test_withdraw_partial_shares_from_public_vault() {
         aft.market_state.quote_reserves == bef.market_state.quote_reserves - quote_withdraw,
         'Quote reserve'
     );
-    assert(aft.bid.lower_sqrt_price == bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
-    assert(aft.bid.upper_sqrt_price == bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
-    assert(
-        approx_eq(aft.bid.liquidity.into(), bef.bid.liquidity.into() * 3 / 4, 1000), 'Bid liquidity'
-    );
-    assert(aft.ask.lower_sqrt_price == bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
-    assert(aft.ask.upper_sqrt_price == bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
-    assert(
-        approx_eq(aft.ask.liquidity.into(), bef.ask.liquidity.into() * 3 / 4, 1000), 'Ask liquidity'
-    );
 }
 
 #[test]
 fn test_withdraw_remaining_shares_from_public_vault() {
-    let (base_token, quote_token, _oracle, _vault_token_class, solver, market_id, vault_token_opt) =
-        before(
+    let (base_token, quote_token, _vault_token_class, solver, market_id, vault_token_opt) = before(
         true
     );
 
@@ -141,19 +117,11 @@ fn test_withdraw_remaining_shares_from_public_vault() {
         aft.market_state.quote_reserves == bef.market_state.quote_reserves - quote_withdraw,
         'Quote reserve'
     );
-    assert(aft.bid.lower_sqrt_price == 0, 'Bid lower sqrt price');
-    assert(aft.bid.upper_sqrt_price == 0, 'Bid upper sqrt price');
-    assert(aft.bid.liquidity == 0, 'Bid liquidity');
-    assert(aft.ask.lower_sqrt_price == 0, 'Ask lower sqrt price');
-    assert(aft.ask.upper_sqrt_price == 0, 'Ask upper sqrt price');
-    assert(aft.ask.liquidity == 0, 'Ask liquidity');
 }
 
 #[test]
 fn test_withdraw_allowed_even_if_paused() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -179,19 +147,10 @@ fn test_withdraw_allowed_even_if_paused() {
 
 #[test]
 fn test_withdraw_private_base_only() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         false
     );
-
-    // Disable max skew.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = default_market_params();
-    market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -221,19 +180,10 @@ fn test_withdraw_private_base_only() {
 
 #[test]
 fn test_withdraw_private_quote_only() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         false
     );
-
-    // Disable max skew.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = default_market_params();
-    market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -263,9 +213,7 @@ fn test_withdraw_private_quote_only() {
 
 #[test]
 fn test_withdraw_private_partial_amounts() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         false
     );
@@ -303,23 +251,11 @@ fn test_withdraw_private_partial_amounts() {
         aft.market_state.quote_reserves == bef.market_state.quote_reserves - quote_withdraw,
         'Quote reserve'
     );
-    assert(aft.bid.lower_sqrt_price == bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
-    assert(aft.bid.upper_sqrt_price == bef.bid.upper_sqrt_price, 'Bid upper sqrt price');
-    assert(
-        approx_eq(aft.bid.liquidity.into(), bef.bid.liquidity.into() / 2, 1000), 'Bid liquidity'
-    );
-    assert(aft.ask.lower_sqrt_price == bef.ask.lower_sqrt_price, 'Ask lower sqrt price');
-    assert(aft.ask.upper_sqrt_price == bef.ask.upper_sqrt_price, 'Ask upper sqrt price');
-    assert(
-        approx_eq(aft.ask.liquidity.into(), bef.ask.liquidity.into() / 2, 1000), 'Ask liquidity'
-    );
 }
 
 #[test]
 fn test_withdraw_all_remaining_balances_from_private_vault() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         false
     );
@@ -356,19 +292,11 @@ fn test_withdraw_all_remaining_balances_from_private_vault() {
         aft.market_state.quote_reserves == bef.market_state.quote_reserves - quote_withdraw,
         'Quote reserve'
     );
-    assert(aft.bid.lower_sqrt_price == 0, 'Bid lower sqrt price');
-    assert(aft.bid.upper_sqrt_price == 0, 'Bid upper sqrt price');
-    assert(aft.bid.liquidity == 0, 'Bid liquidity');
-    assert(aft.ask.lower_sqrt_price == 0, 'Ask lower sqrt price');
-    assert(aft.ask.upper_sqrt_price == 0, 'Ask upper sqrt price');
-    assert(aft.ask.liquidity == 0, 'Ask liquidity');
 }
 
 #[test]
 fn test_withdraw_more_than_available_correctly_caps_amount_for_private_vault() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         false
     );
@@ -395,19 +323,10 @@ fn test_withdraw_more_than_available_correctly_caps_amount_for_private_vault() {
 
 #[test]
 fn test_withdraw_public_emits_event() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
-
-    // Disable max skew.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = default_market_params();
-    market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -443,19 +362,10 @@ fn test_withdraw_public_emits_event() {
 
 #[test]
 fn test_withdraw_private_emits_event() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         false
     );
-
-    // Disable max skew.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = default_market_params();
-    market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -496,9 +406,7 @@ fn test_withdraw_private_emits_event() {
 #[test]
 #[should_panic(expected: ('SharesZero',))]
 fn test_withdraw_public_zero_shares() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -514,9 +422,7 @@ fn test_withdraw_public_zero_shares() {
 #[test]
 #[should_panic(expected: ('InsuffShares',))]
 fn test_withdraw_public_more_shares_than_available() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -532,9 +438,7 @@ fn test_withdraw_public_more_shares_than_available() {
 #[test]
 #[should_panic(expected: ('MarketNull',))]
 fn test_withdraw_public_uninitialised_market() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         true
     );
@@ -546,9 +450,7 @@ fn test_withdraw_public_uninitialised_market() {
 #[test]
 #[should_panic(expected: ('UseWithdrawAtRatio',))]
 fn test_withdraw_custom_amounts_fail_for_public_vault() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -567,9 +469,7 @@ fn test_withdraw_custom_amounts_fail_for_public_vault() {
 #[test]
 #[should_panic(expected: ('AmountZero',))]
 fn test_withdraw_private_zero_amounts() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         false
     );
@@ -585,9 +485,7 @@ fn test_withdraw_private_zero_amounts() {
 #[test]
 #[should_panic(expected: ('MarketNull',))]
 fn test_withdraw_private_uninitialised_market() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
         before(
         false
     );

@@ -6,6 +6,7 @@ use starknet::class_hash::ClassHash;
 // Local imports.
 use haiko_solver_core::{
     contracts::mocks::{
+        mock_solver::{IMockSolverDispatcher, IMockSolverDispatcherTrait},
         upgraded_mock_solver::{
             UpgradedMockSolver, IUpgradedMockSolverDispatcher, IUpgradedMockSolverDispatcherTrait
         },
@@ -19,6 +20,7 @@ use haiko_solver_core::{
 };
 
 // Haiko imports.
+use haiko_lib::constants::ONE;
 use haiko_lib::helpers::{
     params::{owner, alice, bob, treasury, default_token_params},
     actions::token::{deploy_token, fund, approve}, utils::{to_e18, approx_eq},
@@ -78,49 +80,44 @@ pub fn before(
     _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, 0, Option::None(()))
 }
 
-// pub fn before_custom_decimals(
-//     is_market_public: bool, base_decimals: u8, quote_decimals: u8,
-// ) -> (
-//     ERC20ABIDispatcher,
-//     ERC20ABIDispatcher,
-//     IMockPragmaOracleDispatcher,
-//     ClassHash,
-//     ISolverDispatcher,
-//     felt252,
-//     Option<ContractAddress>,
-// ) {
-//     _before(is_market_public, base_decimals, quote_decimals, true, 0, Option::None(()))
-// }
+pub fn before_custom_decimals(
+    is_market_public: bool, base_decimals: u8, quote_decimals: u8,
+) -> (
+    ERC20ABIDispatcher,
+    ERC20ABIDispatcher,
+    ClassHash,
+    ISolverDispatcher,
+    felt252,
+    Option<ContractAddress>,
+) {
+    _before(is_market_public, base_decimals, quote_decimals, true, 0, Option::None(()))
+}
 
-// pub fn before_skip_approve(
-//     is_market_public: bool,
-// ) -> (
-//     ERC20ABIDispatcher,
-//     ERC20ABIDispatcher,
-//     IMockPragmaOracleDispatcher,
-//     ClassHash,
-//     ISolverDispatcher,
-//     felt252,
-//     Option<ContractAddress>,
-// ) {
-//     _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, false, 0, Option::None(()))
-// }
+pub fn before_skip_approve(
+    is_market_public: bool,
+) -> (
+    ERC20ABIDispatcher,
+    ERC20ABIDispatcher,
+    ClassHash,
+    ISolverDispatcher,
+    felt252,
+    Option<ContractAddress>,
+) {
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, false, 0, Option::None(()))
+}
 
-// pub fn before_with_salt(
-//     is_market_public: bool,
-//     salt: felt252,
-//     classes: (ContractClass, ContractClass, ContractClass, ContractClass),
-// ) -> (
-//     ERC20ABIDispatcher,
-//     ERC20ABIDispatcher,
-//     IMockPragmaOracleDispatcher,
-//     ClassHash,
-//     ISolverDispatcher,
-//     felt252,
-//     Option<ContractAddress>,
-// ) {
-//     _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, salt, Option::Some(classes))
-// }
+pub fn before_with_salt(
+    is_market_public: bool, salt: felt252, classes: (ContractClass, ContractClass, ContractClass),
+) -> (
+    ERC20ABIDispatcher,
+    ERC20ABIDispatcher,
+    ClassHash,
+    ISolverDispatcher,
+    felt252,
+    Option<ContractAddress>,
+) {
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, salt, Option::Some(classes))
+}
 
 fn _before(
     is_market_public: bool,
@@ -167,7 +164,9 @@ fn _before(
     };
     let (market_id, vault_token_opt) = solver.create_market(market_info);
 
-    // TODO: set price
+    // Set price.
+    let mock_solver = IMockSolverDispatcher { contract_address: solver.contract_address };
+    mock_solver.set_price(market_id, ONE);
 
     // Fund owner with initial token balances and approve strategy and market manager as spenders.
     let base_amount = to_e18(10000000000000000000000);

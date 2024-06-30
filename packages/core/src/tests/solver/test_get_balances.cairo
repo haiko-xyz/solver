@@ -3,34 +3,16 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_core::{
-    contracts::solver::SolverComponent,
     interfaces::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    types::MarketInfo,
-};
-use haiko_solver_replicating::{
-    contracts::mocks::mock_pragma_oracle::{
-        IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
-    },
-    interfaces::IReplicatingSolver::{
-        IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait
-    },
-    types::MarketParams,
-    tests::{
-        helpers::{
-            actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params,
-            utils::{before, before_custom_decimals, before_skip_approve, snapshot},
-        },
-    },
+    tests::helpers::utils::before,
 };
 
 // Haiko imports.
 use haiko_lib::helpers::params::{owner, alice, bob};
-use haiko_lib::helpers::utils::{to_e18, approx_eq, approx_eq_pct};
-use haiko_lib::helpers::actions::token::{fund, approve};
+use haiko_lib::helpers::utils::{to_e18, approx_eq};
 
 // External imports.
 use snforge_std::{
@@ -45,9 +27,7 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 
 #[test]
 fn test_get_balances() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -66,9 +46,7 @@ fn test_get_balances() {
 
 #[test]
 fn test_get_balances_array() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -88,9 +66,7 @@ fn test_get_balances_array() {
 
 #[test]
 fn test_get_user_balances_array() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );
@@ -133,9 +109,7 @@ fn test_get_user_balances_array() {
 #[test]
 #[should_panic(expected: ('LengthMismatch',))]
 fn test_get_user_balances_array_length_mismatch() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
     );

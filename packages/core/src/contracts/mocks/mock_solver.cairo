@@ -157,14 +157,12 @@ pub mod MockSolver {
                 let sqrt_base_reserves = fast_sqrt(state.base_reserves.try_into().unwrap(), 10);
                 let sqrt_quote_reserves = fast_sqrt(state.quote_reserves.try_into().unwrap(), 10);
                 (sqrt_base_reserves * sqrt_quote_reserves).into()
-            } 
-            // If one of the reserves is 0, we return the other reserve.
+            }// If one of the reserves is 0, we return the other reserve.
             else if state.base_reserves != 0 {
                 state.base_reserves
             } else if state.quote_reserves != 0 {
                 state.quote_reserves
-            }
-            // If both reserves are 0, we return 0. 
+            }// If both reserves are 0, we return 0. 
             else {
                 0
             }

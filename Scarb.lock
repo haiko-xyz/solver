@@ -11,10 +11,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "haiko_solver"
+name = "haiko_solver_core"
 version = "1.0.0"
 dependencies = [
  "haiko_lib",
+ "openzeppelin",
+ "snforge_std",
+]
+
+[[package]]
+name = "haiko_solver_replicating"
+version = "1.0.0"
+dependencies = [
+ "haiko_lib",
+ "haiko_solver_core",
  "openzeppelin",
  "snforge_std",
 ]

@@ -14,16 +14,16 @@ By using a stateless architecture, Solvers are significantly more gas efficient 
 
 ### Solvers
 
-The `SolverComponent` implements most of the core functionality of the `Solver` contract. To create a new Solver, a smart contract must:
+The `SolverComponent` in the `core` package implements most of the core functionality of a `Solver` contract. A Solver implementation must:
 
 1. Inherit the base functionality of `SolverComponent`
 2. Implement `SolverQuoter` which contains methods for generating quotes and constructing the virtual positions over which swaps are executed
 
-The core `SolverComponent` contract will eventually be moved to its own package to be reused across multiple Solvers.
+The core `SolverComponent` component will eventually be moved to its own repo to be reused across multiple Solvers. We currently store it as a package under a single monorepo for ease of development.
 
 ### Replicating Solver
 
-The Replicating Solver is the first Solver built by the Haiko team. It accepts deposits and executes swap orders based on the the virtual bid and ask positions placed by each market. These positions are 'virtual' in that they are calculated on the fly and never stored in state.
+The Replicating Solver, under the `replicating` package, is the first Solver in development. It accepts deposits and executes swap orders based on the the virtual bid and ask positions placed by each market. These positions are 'virtual' in that they are calculated on the fly and never stored in state.
 
 It is designed as a singleton contract supporting multiple solver markets, each with their own configuration. Solver markets can also be optionally owned. Market owners gain access to enhanced functionality, such as setting market parameters and pausing / unpausing the contract.
 

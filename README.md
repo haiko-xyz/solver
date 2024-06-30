@@ -47,11 +47,12 @@ Solvers currently support two market types: (1) Private Markets, which offer mor
 ## Getting started
 
 ```shell
+# Build contracts
+scarb build --package haiko_solver_core
+scarb build --package haiko_solver_replicating
+
 # Run the tests
 snforge test
-
-# Build contracts
-scarb build
 ```
 
 ## Version control
@@ -60,3 +61,4 @@ scarb build
 - [Cairo](https://github.com/starkware-libs/cairo) 2.6.3
 - [Starknet Foundry](https://github.com/foundry-rs/starknet-foundry) 0.21.0
 - [OpenZeppelin Contracts](https://github.com/OpenZeppelin/cairo-contracts/) 0.11.0
+- [Alexandria](https://github.com/keep-starknet-strange/alexandria) cairo-v2.6.0

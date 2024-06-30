@@ -15,7 +15,9 @@ use haiko_solver_replicating::{
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
     },
-    interfaces::IReplicatingSolver::{IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait},
+    interfaces::IReplicatingSolver::{
+        IReplicatingSolverDispatcher, IReplicatingSolverDispatcherTrait
+    },
     types::MarketParams,
     tests::{
         helpers::{

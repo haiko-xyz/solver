@@ -3,10 +3,3 @@ members = [
   "packages/core",
   "packages/replicating",
 ]
-
-[package]
-name = "haiko_solver"
-version = "1.0.0"
-description = "Solver contracts for Haiko protocol"
-homepage = "https://github.com/haiko-xyz/solver"
-cairo-version = "2.6.3"

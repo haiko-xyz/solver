@@ -94,6 +94,8 @@ pub mod SolverComponent {
         pub market_id: felt252,
         #[key]
         pub caller: ContractAddress,
+        pub is_buy: bool,
+        pub exact_input: bool,
         pub amount_in: u256,
         pub amount_out: u256,
     }
@@ -469,7 +471,19 @@ pub mod SolverComponent {
             self.market_state.write(market_id, state);
 
             // Emit events.
-            self.emit(Event::Swap(Swap { market_id, caller, amount_in, amount_out }));
+            self
+                .emit(
+                    Event::Swap(
+                        Swap {
+                            market_id,
+                            caller,
+                            is_buy: swap_params.is_buy,
+                            exact_input: swap_params.exact_input,
+                            amount_in,
+                            amount_out
+                        }
+                    )
+                );
 
             (amount_in, amount_out)
         }

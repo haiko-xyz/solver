@@ -811,55 +811,6 @@ fn test_swap_that_improves_skew_is_allowed() {
 }
 
 ////////////////////////////////
-// TESTS - Events
-////////////////////////////////
-
-#[test]
-fn test_swap_should_emit_event() {
-    let (
-        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        false
-    );
-
-    // Set oracle price.
-    start_warp(CheatTarget::One(oracle.contract_address), 1000);
-    oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 5); // 10
-
-    // Deposit initial.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
-
-    // Spy on events.
-    let mut spy = spy_events(SpyOn::One(solver.contract_address));
-
-    // Swap.
-    start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: true,
-        amount: to_e18(10),
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(()),
-    };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
-
-    // Check events emitted.
-    spy
-        .assert_emitted(
-            @array![
-                (
-                    solver.contract_address,
-                    SolverComponent::Event::Swap(
-                        SolverComponent::Swap { market_id, caller: alice(), amount_in, amount_out, }
-                    )
-                )
-            ]
-        );
-}
-
-////////////////////////////////
 // TESTS - Fail cases
 ////////////////////////////////
 

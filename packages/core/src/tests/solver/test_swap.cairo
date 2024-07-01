@@ -192,7 +192,7 @@ fn test_swap_should_emit_event() {
                 (
                     solver.contract_address,
                     SolverComponent::Event::Swap(
-                        SolverComponent::Swap { market_id, caller: alice(), amount_in, amount_out, }
+                        SolverComponent::Swap { market_id, caller: alice(), amount_in, amount_out, is_buy: params.is_buy, exact_input: params.exact_input }
                     )
                 )
             ]

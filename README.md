@@ -8,18 +8,32 @@ Unlike Strategies, Solvers are standalone smart contracts that generate quotes a
 
 By using a stateless architecture, Solvers are significantly more gas efficient as compared to strategies.
 
-## Architecture
+AMM liquidity positions earn fees by charging a swap fee rate on swaps. Solvers earn fees by adding a spread to the amount quoted for swaps. Given the same spread and swap fee rate, the two approaches are approximately equivalent.
 
-### Solvers
+## Contracts
 
-The `SolverComponent` in the `core` package implements most of the core functionality of a `Solver` contract. A Solver implementation must:
+This monorepo contains both the core solver libraries and contracts (in package `core`) and individual solver implementations (in remaining packages).
+
+### Solver Core ([`core`](./packages/core/))
+
+The `SolverComponent` in the `core` package implements most of the core functionality of a `Solver` contract, including:
+
+1. Creating and managing new solver markets (which comprise of a `base_token` and `quote_token` pair and an `owner`)
+2. Managing deposits and withdrawals from solver markets, which are tracked using ERC20 vault tokens for
+3. Swapping assets through a solver market
+4. Managing and collecting withdraw fees (if enabled)
+5. Admin actions such as pausing and unpausing, upgrading and transferring ownership of the contract
+
+Solvers currently support two market types: (1) Private Markets, which offer more granular control, and (2) Public Markets, which are open to 3rd party depositors and track ERC20 vault tokens for composability.
+
+A Solver implementation must:
 
 1. Inherit the base functionality of `SolverComponent`
-2. Implement `SolverHooks` which contains methods for generating quotes and minting initial vault liquidity tokens
+2. Implement `SolverQuoter` which contains methods for generating quotes and minting initial vault liquidity tokens
 
 The core `SolverComponent` component will eventually be moved to its own repo to be reused across multiple Solvers. We currently store it as a package under a single monorepo for ease of development.
 
-### Replicating Solver
+### Replicating Solver ([`replicating`](./packages/replicating/))
 
 The Replicating Solver, under the `replicating` package, is the first Solver in development. It creates a market for any token pair by providing bid and ask quotes based on a Pragma oracle price feed. It allows liquidity providers to provide liquidity programmatically, without having to actively manage their positions.
 
@@ -38,6 +52,16 @@ The solver market configs are as follows:
 As with strategies, LPs can deposit to Solvers to have their liquidity automatically managed.
 
 Solvers currently support two market types: (1) Private Markets, which offer more granular control, and (2) Public Markets, which are open to 3rd party depositors and track ERC20 vault tokens for composability.
+
+### Reversion Solver ([`reversion`](./packages/reversion/))
+
+The Reversion Solver, under the `reversion` package, is the second Solver in development. It operates on a trend classification model (`Up`, `Down` or `Ranging`) to provide liquidity against the trend, capturing fees on trend reversion.
+
+Positions automatically follow the price of an asset, updated on either single or double-sided price action, depending on the prevailing trend. It is inspired by [Maverick Protocol](https://www.mav.xyz/)'s Left and Right modes and enables liquidity provision in both volatile and stable market conditions.
+
+The trend classification is determined by an off-chain zkML model executed trustlessly and brough on-chain via [Giza](https://www.gizatech.xyz/) Agents.
+
+Like the Replicating Solver, the Reversion solver can create a market for any token pair by providing bid and ask quotes based on a Pragma oracle price feed. It is designed as a singleton contract, and allows liquidity providers to provide liquidity programmatically, without having to actively manage their positions.
 
 ## Docs
 

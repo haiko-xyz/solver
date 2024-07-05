@@ -26,7 +26,7 @@ pub mod MockSolver {
     use super::IMockSolver;
     use haiko_solver_core::contracts::solver::SolverComponent;
     use haiko_solver_core::libraries::math::fast_sqrt;
-    use haiko_solver_core::interfaces::ISolver::ISolverQuoter;
+    use haiko_solver_core::interfaces::ISolver::ISolverHooks;
     use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
 
     // Haiko imports.
@@ -85,7 +85,7 @@ pub mod MockSolver {
     ////////////////////////////////
 
     #[abi(embed_v0)]
-    impl SolverQuoter of ISolverQuoter<ContractState> {
+    impl SolverHooks of ISolverHooks<ContractState> {
         // Obtain quote for swap through a solver market.
         // 
         // # Arguments
@@ -167,6 +167,13 @@ pub mod MockSolver {
                 0
             }
         }
+
+        // Callback function to execute any state updates after a swap is completed.
+        //
+        // # Arguments
+        // * `market_id` - market id
+        // * `swap_params` - swap parameters
+        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {}
     }
 
     #[abi(embed_v0)]

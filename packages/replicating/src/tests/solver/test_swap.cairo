@@ -5,8 +5,8 @@ use starknet::contract_address_const;
 use haiko_solver_core::{
     contracts::solver::SolverComponent,
     interfaces::ISolver::{
-        ISolverDispatcher, ISolverDispatcherTrait, ISolverQuoterDispatcher,
-        ISolverQuoterDispatcherTrait
+        ISolverDispatcher, ISolverDispatcherTrait, ISolverHooksDispatcher,
+        ISolverHooksDispatcherTrait
     },
     types::SwapParams,
 };
@@ -703,10 +703,8 @@ fn run_swap_cases(cases: Span<TestCase>) {
 
             // Obtain quotes and execute swaps.
             start_prank(CheatTarget::One(solver.contract_address), alice());
-            let solver_quoter = ISolverQuoterDispatcher {
-                contract_address: solver.contract_address
-            };
-            let (quote_in, quote_out) = solver_quoter
+            let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+            let (quote_in, quote_out) = solver_hooks
                 .quote(
                     market_id,
                     SwapParams {

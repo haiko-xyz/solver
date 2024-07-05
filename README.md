@@ -15,7 +15,7 @@ By using a stateless architecture, Solvers are significantly more gas efficient 
 The `SolverComponent` in the `core` package implements most of the core functionality of a `Solver` contract. A Solver implementation must:
 
 1. Inherit the base functionality of `SolverComponent`
-2. Implement `SolverQuoter` which contains methods for generating quotes and minting initial vault liquidity tokens
+2. Implement `SolverHooks` which contains methods for generating quotes and minting initial vault liquidity tokens
 
 The core `SolverComponent` component will eventually be moved to its own repo to be reused across multiple Solvers. We currently store it as a package under a single monorepo for ease of development.
 

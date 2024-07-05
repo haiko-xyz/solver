@@ -8,7 +8,7 @@ pub mod ReplicatingSolver {
 
     // Local imports.
     use haiko_solver_core::contracts::solver::SolverComponent;
-    use haiko_solver_core::interfaces::ISolver::ISolverQuoter;
+    use haiko_solver_core::interfaces::ISolver::ISolverHooks;
     use haiko_solver_replicating::libraries::{
         swap_lib, spread_math, store_packing::MarketParamsStorePacking
     };
@@ -107,7 +107,7 @@ pub mod ReplicatingSolver {
     ////////////////////////////////
 
     #[abi(embed_v0)]
-    impl SolverQuoter of ISolverQuoter<ContractState> {
+    impl SolverHooks of ISolverHooks<ContractState> {
         // Obtain quote for swap through a solver market.
         // 
         // # Arguments
@@ -126,28 +126,20 @@ pub mod ReplicatingSolver {
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(!state.is_paused, 'Paused');
 
+            // Get virtual position.
+            let (bid, ask) = self.get_virtual_positions(market_id);
+            let position = if swap_params.is_buy {
+                ask
+            } else {
+                bid
+            };
+
+            // Calculate swap amount. 
+            let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
+
             // Fetch oracle price.
             let (oracle_price, is_valid) = self.get_oracle_price(market_id);
             assert(is_valid, 'InvalidOraclePrice');
-
-            // Calculate swap amounts.
-            let params = self.market_params.read(market_id);
-            let delta = spread_math::get_delta(
-                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
-            );
-            let is_bid = !swap_params.is_buy;
-            let reserves = if is_bid {
-                state.quote_reserves
-            } else {
-                state.base_reserves
-            };
-            let (lower_limit, upper_limit) = spread_math::get_virtual_position_range(
-                is_bid, params.min_spread, delta, params.range, oracle_price
-            );
-            let position = spread_math::get_virtual_position(
-                is_bid, lower_limit, upper_limit, reserves
-            );
-            let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
 
             // Check deposited amounts does not violate max skew, or if it does, that
             // the deposit reduces the extent of skew.
@@ -156,6 +148,7 @@ pub mod ReplicatingSolver {
             } else {
                 (state.base_reserves + amount_in, state.quote_reserves - amount_out)
             };
+            let params = self.market_params.read(market_id);
             if params.max_skew != 0 {
                 let (skew_before, _) = spread_math::get_skew(
                     state.base_reserves, state.quote_reserves, oracle_price
@@ -171,6 +164,13 @@ pub mod ReplicatingSolver {
             // Return amounts.
             (amount_in, amount_out)
         }
+
+        // Callback function to execute any state updates after a swap is completed.
+        //
+        // # Arguments
+        // * `market_id` - market id
+        // * `swap_params` - swap parameters
+        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {}
 
         // Get the initial token supply to mint when first depositing to a market.
         //

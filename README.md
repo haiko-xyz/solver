@@ -10,6 +10,8 @@ By using a stateless architecture, Solvers are significantly more gas efficient 
 
 ## Architecture
 
+This monorepo contains both the core solver libraries and contracts (in package `core`) and individual solver implementations (in remaining packages).
+
 ### Solvers
 
 The `SolverComponent` in the `core` package implements most of the core functionality of a `Solver` contract. A Solver implementation must:

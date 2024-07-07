@@ -262,12 +262,13 @@ fn test_deposit_public_vault_multiple_lps_capped_at_available() {
 
     // Spy on events.
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
-    
+
     // Deposit.
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let base_deposit = to_e18(40000);
     let quote_deposit = to_e18(20);
-    let (base_amount, quote_amount, shares) = solver.deposit(market_id, base_deposit, quote_deposit);
+    let (base_amount, quote_amount, shares) = solver
+        .deposit(market_id, base_deposit, quote_deposit);
     assert(base_amount == base_available, 'Base deposit');
     assert(quote_amount == quote_available, 'Quote deposit');
 
@@ -276,7 +277,9 @@ fn test_deposit_public_vault_multiple_lps_capped_at_available() {
     let vault_token = ERC20ABIDispatcher { contract_address: vault_token_addr };
     let owner_vault_bal = vault_token.balanceOf(owner());
     let lp_vault_bal = vault_token.balanceOf(alice());
-    assert(approx_eq(lp_vault_bal, math::mul_div(owner_vault_bal, 3, 2, false), 1000), 'Vault shares');
+    assert(
+        approx_eq(lp_vault_bal, math::mul_div(owner_vault_bal, 3, 2, false), 1000), 'Vault shares'
+    );
 
     // Check events emitted with correct amounts
     spy
@@ -286,11 +289,7 @@ fn test_deposit_public_vault_multiple_lps_capped_at_available() {
                     solver.contract_address,
                     SolverComponent::Event::Deposit(
                         SolverComponent::Deposit {
-                            market_id,
-                            caller: alice(),
-                            base_amount,
-                            quote_amount,
-                            shares
+                            market_id, caller: alice(), base_amount, quote_amount, shares
                         }
                     )
                 )

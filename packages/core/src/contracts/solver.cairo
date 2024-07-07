@@ -1009,7 +1009,9 @@ pub mod SolverComponent {
             let base_symbol = erc20_versioned_call::get_symbol(market_info.base_token);
             let quote_symbol = erc20_versioned_call::get_symbol(market_info.quote_token);
             let name: ByteArray = format!("Haiko {} {}-{}", self.name(), base_symbol, quote_symbol);
-            let symbol: ByteArray = format!("HAIKO-{}-{}-{}", self.symbol(), base_symbol, quote_symbol);
+            let symbol: ByteArray = format!(
+                "HAIKO-{}-{}-{}", self.symbol(), base_symbol, quote_symbol
+            );
             let decimals: u8 = 18;
             let owner = get_contract_address();
 

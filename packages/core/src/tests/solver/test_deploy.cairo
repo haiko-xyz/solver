@@ -46,7 +46,7 @@ fn test_deploy_vault_token_initialises_immutables() {
     let vault_token_alt = IVaultTokenDispatcher { contract_address: vault_token_opt.unwrap() };
 
     assert(vault_token.name() == "Haiko Mock ETH-USDC", 'Vault token: name');
-    assert(vault_token.symbol() == "MOCK-ETH-USDC", 'Vault token: name');
+    assert(vault_token.symbol() == "HAIKO-MOCK-ETH-USDC", 'Vault token: name');
     assert(vault_token.decimals() == 18, 'Vault token: decimal');
     assert(vault_token_alt.owner() == solver.contract_address, 'Vault token: owner');
 }

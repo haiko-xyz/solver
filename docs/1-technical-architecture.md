@@ -25,11 +25,11 @@ The `SolverComponent` contract is a Cairo component that implements the core fun
 To be a valid implementation, a Solver contract must:
 
 1. Inherit the base functionality of `SolverComponent`
-2. Implement `SolverQuoter` which contains methods for generating quotes and over which swaps are executed
+2. Implement `SolverHooks` which contains methods for generating quotes and over which swaps are executed
 
 ```rust
 #[starknet::interface]
-pub trait ISolverQuoter<TContractState> {
+pub trait ISolverHooks<TContractState> {
   // Obtain quote for swap through a market.
   //
   // # Arguments
@@ -181,7 +181,7 @@ fn withdraw(
 
 A swap is executed when a swapper calls `swap()` in the `MarketManager` contract. Under the hood, this will call `quote()` to obtain a quote for the swap, and then execute the swap.
 
-The `quote()` function is part of the `SolverQuoter` interface and should be implemented by each `Solver` contract based on its desried quoting logic and strategy. The `quote()` function returns the amount of input and output tokens for a given swap, which will be fulfilled by the `swap()` function, applying checks for available token amounts.
+The `quote()` function is part of the `SolverHooks` interface and should be implemented by each `Solver` contract based on its desried quoting logic and strategy. The `quote()` function returns the amount of input and output tokens for a given swap, which will be fulfilled by the `swap()` function, applying checks for available token amounts.
 
 ```rust
 // Obtain quote for swap through a market.

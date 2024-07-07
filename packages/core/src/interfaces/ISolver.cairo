@@ -263,9 +263,9 @@ pub trait ISolver<TContractState> {
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
 }
 
-// Solvers must implement the `ISolverQuoter` interface, which returns the quote for a swap.
+// Solvers must implement the `ISolverHooks` interface, which returns the quote for a swap.
 #[starknet::interface]
-pub trait ISolverQuoter<TContractState> {
+pub trait ISolverHooks<TContractState> {
     // Obtain quote for swap through a market.
     // 
     // # Arguments
@@ -285,4 +285,11 @@ pub trait ISolverQuoter<TContractState> {
     // # Returns
     // * `initial_supply` - initial supply
     fn initial_supply(self: @TContractState, market_id: felt252) -> u256;
+
+    // Callback function to execute any state updates after a swap is completed.
+    //
+    // # Arguments
+    // * `market_id` - market id
+    // * `swap_params` - swap parameters
+    fn after_swap(ref self: TContractState, market_id: felt252, swap_params: SwapParams);
 }

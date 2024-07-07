@@ -15,7 +15,7 @@ pub mod SolverComponent {
         id, erc20_versioned_call, store_packing::MarketStateStorePacking
     };
     use haiko_solver_core::interfaces::{
-        ISolver::{ISolver, ISolverQuoterDispatcher, ISolverQuoterDispatcherTrait},
+        ISolver::{ISolver, ISolverHooksDispatcher, ISolverHooksDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     };
     use haiko_solver_core::types::{MarketInfo, MarketState, PositionInfo, SwapParams};
@@ -427,10 +427,8 @@ pub mod SolverComponent {
             ref self: ComponentState<TContractState>, market_id: felt252, swap_params: SwapParams,
         ) -> (u256, u256) {
             // Get amounts.
-            let solver_quoter = ISolverQuoterDispatcher {
-                contract_address: get_contract_address()
-            };
-            let (amount_in, amount_out) = solver_quoter.quote(market_id, swap_params);
+            let solver_hooks = ISolverHooksDispatcher { contract_address: get_contract_address() };
+            let (amount_in, amount_out) = solver_hooks.quote(market_id, swap_params);
 
             // Check amounts non-zero and satisfy threshold amounts.
             assert(amount_in != 0 && amount_out != 0, 'AmountZero');
@@ -469,6 +467,9 @@ pub mod SolverComponent {
                 state.quote_reserves -= amount_out;
             }
             self.market_state.write(market_id, state);
+
+            // Execute after swap hook.
+            solver_hooks.after_swap(market_id, swap_params);
 
             // Emit events.
             self
@@ -551,10 +552,10 @@ pub mod SolverComponent {
             // Mint starting shares based on liquidity of virtual positions.
             let mut shares: u256 = 0;
             if market_info.is_public {
-                let solver_quoter = ISolverQuoterDispatcher {
+                let solver_hooks = ISolverHooksDispatcher {
                     contract_address: get_contract_address()
                 };
-                shares = solver_quoter.initial_supply(market_id);
+                shares = solver_hooks.initial_supply(market_id);
                 assert(shares != 0, 'SharesZero');
                 let token = IVaultTokenDispatcher { contract_address: state.vault_token };
                 token.mint(caller, shares);
@@ -1008,7 +1009,7 @@ pub mod SolverComponent {
             let base_symbol = erc20_versioned_call::get_symbol(market_info.base_token);
             let quote_symbol = erc20_versioned_call::get_symbol(market_info.quote_token);
             let name: ByteArray = format!("Haiko {} {}-{}", self.name(), base_symbol, quote_symbol);
-            let symbol: ByteArray = format!("{}-{}-{}", self.symbol(), base_symbol, quote_symbol);
+            let symbol: ByteArray = format!("HAIKO-{}-{}-{}", self.symbol(), base_symbol, quote_symbol);
             let decimals: u8 = 18;
             let owner = get_contract_address();
 

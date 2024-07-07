@@ -6,8 +6,8 @@ use haiko_solver_core::{
     contracts::solver::SolverComponent,
     contracts::mocks::mock_solver::{IMockSolverDispatcher, IMockSolverDispatcherTrait},
     interfaces::ISolver::{
-        ISolverDispatcher, ISolverDispatcherTrait, ISolverQuoterDispatcher,
-        ISolverQuoterDispatcherTrait
+        ISolverDispatcher, ISolverDispatcherTrait, ISolverHooksDispatcher,
+        ISolverHooksDispatcherTrait
     },
     types::SwapParams,
     tests::helpers::{actions::deploy_mock_solver, utils::{before, before_skip_approve, snapshot},},
@@ -192,7 +192,14 @@ fn test_swap_should_emit_event() {
                 (
                     solver.contract_address,
                     SolverComponent::Event::Swap(
-                        SolverComponent::Swap { market_id, caller: alice(), amount_in, amount_out, is_buy: params.is_buy, exact_input: params.exact_input }
+                        SolverComponent::Swap {
+                            market_id,
+                            caller: alice(),
+                            amount_in,
+                            amount_out,
+                            is_buy: params.is_buy,
+                            exact_input: params.exact_input
+                        }
                     )
                 )
             ]

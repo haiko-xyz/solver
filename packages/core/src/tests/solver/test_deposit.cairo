@@ -18,7 +18,8 @@ use haiko_solver_core::{
 };
 
 // Haiko imports.
-use haiko_lib::helpers::params::{owner, alice};
+use haiko_lib::math::math;
+use haiko_lib::helpers::params::{owner, alice, bob};
 use haiko_lib::helpers::utils::{to_e18, approx_eq, approx_eq_pct};
 use haiko_lib::helpers::actions::token::{fund, approve};
 
@@ -237,6 +238,64 @@ fn test_deposit_public_vault_quote_token_only() {
         aft.market_state.quote_reserves == bef.market_state.quote_reserves + quote_amount,
         'Quote reserve'
     );
+}
+
+#[test]
+fn test_deposit_public_vault_multiple_lps_capped_at_available() {
+    let (base_token, _quote_token, _vault_token_class, solver, market_id, vault_token_opt) = before(
+        true
+    );
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let base_deposit_init = to_e18(20000);
+    let quote_deposit_init = to_e18(10);
+    solver.deposit_initial(market_id, base_deposit_init, quote_deposit_init);
+
+    // For LP deposit, transfer out excess balance such that only 15k base tokens available.
+    start_prank(CheatTarget::One(base_token.contract_address), alice());
+    let lp_base_balance = base_token.balanceOf(alice());
+    let base_available = to_e18(30000);
+    let quote_available = to_e18(15);
+    base_token.transfer(bob(), lp_base_balance - base_available);
+    stop_prank(CheatTarget::One(base_token.contract_address));
+
+    // Spy on events.
+    let mut spy = spy_events(SpyOn::One(solver.contract_address));
+    
+    // Deposit.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let base_deposit = to_e18(40000);
+    let quote_deposit = to_e18(20);
+    let (base_amount, quote_amount, shares) = solver.deposit(market_id, base_deposit, quote_deposit);
+    assert(base_amount == base_available, 'Base deposit');
+    assert(quote_amount == quote_available, 'Quote deposit');
+
+    // Check vault balances.
+    let vault_token_addr = vault_token_opt.unwrap();
+    let vault_token = ERC20ABIDispatcher { contract_address: vault_token_addr };
+    let owner_vault_bal = vault_token.balanceOf(owner());
+    let lp_vault_bal = vault_token.balanceOf(alice());
+    assert(approx_eq(lp_vault_bal, math::mul_div(owner_vault_bal, 3, 2, false), 1000), 'Vault shares');
+
+    // Check events emitted with correct amounts
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    solver.contract_address,
+                    SolverComponent::Event::Deposit(
+                        SolverComponent::Deposit {
+                            market_id,
+                            caller: alice(),
+                            base_amount,
+                            quote_amount,
+                            shares
+                        }
+                    )
+                )
+            ]
+        );
 }
 
 #[test]

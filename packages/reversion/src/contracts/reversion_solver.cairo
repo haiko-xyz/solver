@@ -1,5 +1,5 @@
 #[starknet::contract]
-pub mod ReplicatingSolver {
+pub mod ReversionSolver {
     // Core lib imports.
     use starknet::ContractAddress;
     use starknet::contract_address::contract_address_const;
@@ -9,18 +9,18 @@ pub mod ReplicatingSolver {
     // Local imports.
     use haiko_solver_core::contracts::solver::SolverComponent;
     use haiko_solver_core::interfaces::ISolver::ISolverHooks;
-    use haiko_solver_replicating::libraries::{
-        swap_lib, spread_math, store_packing::MarketParamsStorePacking
+    use haiko_solver_reversion::libraries::{
+        swap_lib, spread_math, store_packing::{MarketParamsStorePacking, TrendStateStorePacking}
     };
-    use haiko_solver_replicating::interfaces::{
-        IReplicatingSolver::IReplicatingSolver,
+    use haiko_solver_reversion::interfaces::{
+        IReversionSolver::IReversionSolver,
         pragma::{
             AggregationMode, DataType, SimpleDataType, PragmaPricesResponse, IOracleABIDispatcher,
             IOracleABIDispatcherTrait
         },
     };
     use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
-    use haiko_solver_replicating::types::MarketParams;
+    use haiko_solver_reversion::types::{MarketParams, TrendState, Trend};
 
     // Haiko imports.
     use haiko_lib::math::math;
@@ -52,6 +52,8 @@ pub mod ReplicatingSolver {
         oracle: IOracleABIDispatcher,
         // Indexed by market id
         market_params: LegacyMap::<felt252, MarketParams>,
+        // Indexed by market id
+        trend_state: LegacyMap::<felt252, TrendState>,
     }
 
     ////////////////////////////////
@@ -61,6 +63,7 @@ pub mod ReplicatingSolver {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub(crate) enum Event {
+        SetTrend: SetTrend,
         SetMarketParams: SetMarketParams,
         ChangeOracle: ChangeOracle,
         #[flat]
@@ -68,13 +71,18 @@ pub mod ReplicatingSolver {
     }
 
     #[derive(Drop, starknet::Event)]
+    pub(crate) struct SetTrend {
+        #[key]
+        pub market_id: felt252,
+        pub trend: Trend,
+    }
+
+    #[derive(Drop, starknet::Event)]
     pub(crate) struct SetMarketParams {
         #[key]
         pub market_id: felt252,
-        pub min_spread: u32,
+        pub spread: u32,
         pub range: u32,
-        pub max_delta: u32,
-        pub max_skew: u16,
         pub base_currency_id: felt252,
         pub quote_currency_id: felt252,
         pub min_sources: u32,
@@ -97,7 +105,7 @@ pub mod ReplicatingSolver {
         oracle: ContractAddress,
         vault_token_class: ClassHash,
     ) {
-        self.solver._initializer("Replicating", "REPL", owner, vault_token_class);
+        self.solver._initializer("Reversion", "RVRS", owner, vault_token_class);
         let oracle_dispatcher = IOracleABIDispatcher { contract_address: oracle };
         self.oracle.write(oracle_dispatcher);
     }
@@ -126,51 +134,13 @@ pub mod ReplicatingSolver {
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(!state.is_paused, 'Paused');
 
-            // Get virtual position.
+            // Get virtual positions.
             let (bid, ask) = self.get_virtual_positions(market_id);
-            let position = if swap_params.is_buy {
-                ask
-            } else {
-                bid
-            };
+            let position = if swap_params.is_buy { ask } else { bid };
 
-            // Calculate swap amount. 
-            let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
-
-            // Fetch oracle price.
-            let (oracle_price, is_valid) = self.get_oracle_price(market_id);
-            assert(is_valid, 'InvalidOraclePrice');
-
-            // Check deposited amounts does not violate max skew, or if it does, that
-            // the deposit reduces the extent of skew.
-            let (base_reserves, quote_reserves) = if swap_params.is_buy {
-                (state.base_reserves - amount_out, state.quote_reserves + amount_in)
-            } else {
-                (state.base_reserves + amount_in, state.quote_reserves - amount_out)
-            };
-            let params = self.market_params.read(market_id);
-            if params.max_skew != 0 {
-                let (skew_before, _) = spread_math::get_skew(
-                    state.base_reserves, state.quote_reserves, oracle_price
-                );
-                let (skew_after, _) = spread_math::get_skew(
-                    base_reserves, quote_reserves, oracle_price
-                );
-                if skew_after > params.max_skew.into() {
-                    assert(skew_after < skew_before, 'MaxSkew');
-                }
-            }
-
-            // Return amounts.
-            (amount_in, amount_out)
+            // Calculate and return swap amounts.
+            swap_lib::get_swap_amounts(swap_params, position)
         }
-
-        // Callback function to execute any state updates after a swap is completed.
-        //
-        // # Arguments
-        // * `market_id` - market id
-        // * `swap_params` - swap parameters
-        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {}
 
         // Get the initial token supply to mint when first depositing to a market.
         //
@@ -189,10 +159,35 @@ pub mod ReplicatingSolver {
             // Calculate initial supply.            
             (bid.liquidity + ask.liquidity).into()
         }
+
+        // Callback function to execute any state updates after a swap is completed.
+        //
+        // # Arguments
+        // * `market_id` - market id
+        // * `swap_params` - swap parameters
+        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {
+            // Fetch state.
+            let mut trend_state: TrendState = self.trend_state.read(market_id);
+            let oracle_output = self.get_unscaled_oracle_price(market_id);
+            
+            // Calculate conditions for updating cached price.
+            //  1. if price trends up and price > cached price, update cached price
+            //  2. if price trends down and price < cached price, update cached price
+            //  3. otherwise, don't update
+            if trend_state.trend == Trend::Up && oracle_output.price > trend_state.cached_price ||
+                trend_state.trend == Trend::Down && oracle_output.price < trend_state.cached_price {
+                trend_state.cached_price = oracle_output.price;
+                trend_state.cached_decimals = oracle_output.decimals;
+                self.trend_state.write(market_id, trend_state);
+            };
+
+            // Commit state.
+            self.trend_state.write(market_id, trend_state);
+        }
     }
 
     #[abi(embed_v0)]
-    impl ReplicatingSolver of IReplicatingSolver<ContractState> {
+    impl ReversionSolver of IReversionSolver<ContractState> {
         // Market parameters
         fn market_params(self: @ContractState, market_id: felt252) -> MarketParams {
             self.market_params.read(market_id)
@@ -201,6 +196,28 @@ pub mod ReplicatingSolver {
         // Pragma oracle contract address
         fn oracle(self: @ContractState) -> ContractAddress {
             self.oracle.read().contract_address
+        }
+
+        // Get unscaled oracle price from oracle feed.
+        // 
+        // # Arguments
+        // * `market_id` - market id
+        //
+        // # Returns
+        // * `output` - Pragma oracle price response
+        fn get_unscaled_oracle_price(self: @ContractState, market_id: felt252) -> PragmaPricesResponse {
+            // Fetch state.
+            let oracle = self.oracle.read();
+            let params = self.market_params.read(market_id);
+
+            // Fetch oracle price.
+            oracle.get_data_with_USD_hop(
+                params.base_currency_id,
+                params.quote_currency_id,
+                AggregationMode::Median(()),
+                SimpleDataType::SpotEntry(()),
+                Option::None(())
+            )
         }
 
         // Get price from oracle feed.
@@ -213,36 +230,48 @@ pub mod ReplicatingSolver {
         // * `is_valid` - whether oracle price passes validity checks re number of sources and age
         fn get_oracle_price(self: @ContractState, market_id: felt252) -> (u256, bool) {
             // Fetch state.
-            let oracle = self.oracle.read();
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
             let params = self.market_params.read(market_id);
 
             // Fetch oracle price.
-            let output: PragmaPricesResponse = oracle
-                .get_data_with_USD_hop(
-                    params.base_currency_id,
-                    params.quote_currency_id,
-                    AggregationMode::Median(()),
-                    SimpleDataType::SpotEntry(()),
-                    Option::None(())
-                );
+            let output = self.get_unscaled_oracle_price(market_id);
 
             // Validate number of sources and age of oracle price.
             let now = get_block_timestamp();
             let is_valid = (output.num_sources_aggregated >= params.min_sources)
                 && (output.last_updated_timestamp + params.max_age >= now);
 
-            // Calculate and return scaled price. We want to return the price base 1e28,
-            // but we must also scale it by the number of decimals in the oracle price and
-            // the token pair.
-            let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
-            let quote_token = ERC20ABIDispatcher { contract_address: market_info.quote_token };
-            let base_decimals: u256 = base_token.decimals().into();
-            let quote_decimals: u256 = quote_token.decimals().into();
-            assert(28 + quote_decimals >= output.decimals.into() + base_decimals, 'DecimalsUF');
-            let decimals: u256 = 28 + quote_decimals - output.decimals.into() - base_decimals;
-            let scaling_factor = math::pow(10, decimals);
-            (output.price.into() * scaling_factor, is_valid)
+            // Calculate and return scaled price.
+            let oracle_price = self.scale_oracle_price(@market_info, output.price, output.decimals);
+            (oracle_price, is_valid)
+        }
+
+        // Change trend of the solver market.
+        // Only callable by market owner.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `trend - market trend
+        fn set_trend(ref self: ContractState, market_id: felt252, trend: Trend) {
+            // Run checks.
+            self.solver.assert_market_owner(market_id);
+            let mut trend_state = self.trend_state.read(market_id);
+            assert(trend_state.trend != trend, 'TrendUnchanged');
+
+            // Update state.
+            trend_state.trend = trend;
+            self.trend_state.write(market_id, trend_state);
+
+            // Emit event.
+            self
+                .emit(
+                    Event::SetTrend(
+                        SetTrend {
+                            market_id,
+                            trend,
+                        }
+                    )
+                );
         }
 
         // Change parameters of the solver market.
@@ -271,10 +300,8 @@ pub mod ReplicatingSolver {
                     Event::SetMarketParams(
                         SetMarketParams {
                             market_id,
-                            min_spread: params.min_spread,
+                            spread: params.spread,
                             range: params.range,
-                            max_delta: params.max_delta,
-                            max_skew: params.max_skew,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
                             min_sources: params.min_sources,
@@ -309,34 +336,53 @@ pub mod ReplicatingSolver {
             self: @ContractState, market_id: felt252
         ) -> (PositionInfo, PositionInfo) {
             // Fetch state.
+            let market_info: MarketInfo = self.solver.market_info.read(market_id);
             let state: MarketState = self.solver.market_state.read(market_id);
-            let params: MarketParams = self.market_params.read(market_id);
+            let params = self.market_params.read(market_id);
+            let trend_state: TrendState = self.trend_state.read(market_id);
 
-            // Fetch oracle price.
+            // Fetch oracle price and cached oracle price.
             let (oracle_price, is_valid) = self.get_oracle_price(market_id);
             assert(is_valid, 'InvalidOraclePrice');
+            let scaled_cached_price = if trend_state.cached_price == 0 {
+                0 
+            } else {
+                self.scale_oracle_price(
+                    @market_info, trend_state.cached_price, trend_state.cached_decimals
+                )
+            };
 
-            // Calculate position ranges.
-            let delta = spread_math::get_delta(
-                params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
-            );
-            let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
-                true, params.min_spread, delta, params.range, oracle_price
-            );
-            let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
-                false, params.min_spread, delta, params.range, oracle_price
-            );
+            // Calculate conditions for enabling single and double sided liquidity.
+            //   1. if price trends up and price > cached price, quote for bids only
+            //   2. if price trends down and price < cached price, quote for asks only
+            //   3. otherwise, quote for both
+            // In cases 1 and 2, we update the cached price in the `after_swap` callback fn.
+            let (enable_bid, enable_ask) = match trend_state.trend {
+                Trend::Up => {
+                    (true, oracle_price <= scaled_cached_price)
+                },
+                Trend::Down => {
+                    (oracle_price >= scaled_cached_price, true)
+                },
+                Trend::Range => (true, true),
+            };
 
             // Calculate and return positions.
             let mut bid: PositionInfo = Default::default();
             let mut ask: PositionInfo = Default::default();
-            if state.quote_reserves != 0 {
+            if state.quote_reserves != 0 && enable_bid {
+                let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
+                    true, params.spread, params.range, oracle_price
+                );
                 bid =
                     spread_math::get_virtual_position(
                         true, bid_lower, bid_upper, state.quote_reserves
                     );
             }
-            if state.base_reserves != 0 {
+            if state.base_reserves != 0 && enable_ask {
+                let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
+                    false, params.spread, params.range, oracle_price
+                );
                 ask =
                     spread_math::get_virtual_position(
                         false, ask_lower, ask_upper, state.base_reserves
@@ -344,6 +390,36 @@ pub mod ReplicatingSolver {
             }
 
             (bid, ask)
+        }
+    }
+
+    #[abi(per_item)]
+    #[generate_trait]
+    pub impl InternalImpl of InternalTrait {
+        // Internal function to scale the oracle price retrieved from Pragma by token decimals.
+        // We return the scaled price as base 1e28.
+        //
+        // # Arguments
+        // * `market_info` - market info
+        // * `oracle_price` - oracle price
+        // * `decimals` - oracle price decimals
+        fn scale_oracle_price(
+            self: @ContractState,
+            market_info: @MarketInfo,
+            oracle_price: u128,
+            decimals: u32
+        ) -> u256 {
+            // Get token decimals.
+            let base_token = ERC20ABIDispatcher { contract_address: *market_info.base_token };
+            let quote_token = ERC20ABIDispatcher { contract_address: *market_info.quote_token };
+            let base_decimals: u256 = base_token.decimals().into();
+            let quote_decimals: u256 = quote_token.decimals().into();
+            assert(28 + quote_decimals >= decimals.into() + base_decimals, 'DecimalsUF');
+            let decimals: u256 = 28 + quote_decimals - decimals.into() - base_decimals;
+
+            // Scale and return oracle price.
+            let scaling_factor = math::pow(10, decimals);
+            oracle_price.into() * scaling_factor
         }
     }
 }

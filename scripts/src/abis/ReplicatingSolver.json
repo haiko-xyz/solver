@@ -1,0 +1,936 @@
+[
+  {
+    "type": "impl",
+    "name": "SolverHooks",
+    "interface_name": "haiko_solver_core::interfaces::ISolver::ISolverHooks"
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      { "name": "False", "type": "()" },
+      { "name": "True", "type": "()" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      { "name": "low", "type": "core::integer::u128" },
+      { "name": "high", "type": "core::integer::u128" }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::option::Option::<core::integer::u256>",
+    "variants": [
+      { "name": "Some", "type": "core::integer::u256" },
+      { "name": "None", "type": "()" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "haiko_solver_core::types::SwapParams",
+    "members": [
+      { "name": "is_buy", "type": "core::bool" },
+      { "name": "amount", "type": "core::integer::u256" },
+      { "name": "exact_input", "type": "core::bool" },
+      {
+        "name": "threshold_sqrt_price",
+        "type": "core::option::Option::<core::integer::u256>"
+      },
+      {
+        "name": "threshold_amount",
+        "type": "core::option::Option::<core::integer::u256>"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "haiko_solver_core::interfaces::ISolver::ISolverHooks",
+    "items": [
+      {
+        "type": "function",
+        "name": "quote",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          {
+            "name": "swap_params",
+            "type": "haiko_solver_core::types::SwapParams"
+          }
+        ],
+        "outputs": [{ "type": "(core::integer::u256, core::integer::u256)" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "initial_supply",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "core::integer::u256" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "after_swap",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          {
+            "name": "swap_params",
+            "type": "haiko_solver_core::types::SwapParams"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "ReplicatingSolver",
+    "interface_name": "haiko_solver_replicating::interfaces::IReplicatingSolver::IReplicatingSolver"
+  },
+  {
+    "type": "struct",
+    "name": "haiko_solver_replicating::types::MarketParams",
+    "members": [
+      { "name": "min_spread", "type": "core::integer::u32" },
+      { "name": "range", "type": "core::integer::u32" },
+      { "name": "max_delta", "type": "core::integer::u32" },
+      { "name": "max_skew", "type": "core::integer::u16" },
+      { "name": "base_currency_id", "type": "core::felt252" },
+      { "name": "quote_currency_id", "type": "core::felt252" },
+      { "name": "min_sources", "type": "core::integer::u32" },
+      { "name": "max_age", "type": "core::integer::u64" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "haiko_solver_core::types::PositionInfo",
+    "members": [
+      { "name": "lower_sqrt_price", "type": "core::integer::u256" },
+      { "name": "upper_sqrt_price", "type": "core::integer::u256" },
+      { "name": "liquidity", "type": "core::integer::u128" }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "haiko_solver_replicating::interfaces::IReplicatingSolver::IReplicatingSolver",
+    "items": [
+      {
+        "type": "function",
+        "name": "market_params",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [
+          { "type": "haiko_solver_replicating::types::MarketParams" }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "oracle",
+        "inputs": [],
+        "outputs": [
+          { "type": "core::starknet::contract_address::ContractAddress" }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_oracle_price",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "(core::integer::u256, core::bool)" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "set_market_params",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          {
+            "name": "params",
+            "type": "haiko_solver_replicating::types::MarketParams"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "change_oracle",
+        "inputs": [
+          {
+            "name": "oracle",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "get_virtual_positions",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [
+          {
+            "type": "(haiko_solver_core::types::PositionInfo, haiko_solver_core::types::PositionInfo)"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "SolverImpl",
+    "interface_name": "haiko_solver_core::interfaces::ISolver::ISolver"
+  },
+  {
+    "type": "struct",
+    "name": "core::byte_array::ByteArray",
+    "members": [
+      {
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
+      },
+      { "name": "pending_word", "type": "core::felt252" },
+      { "name": "pending_word_len", "type": "core::integer::u32" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "haiko_solver_core::types::MarketInfo",
+    "members": [
+      {
+        "name": "base_token",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "quote_token",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      { "name": "is_public", "type": "core::bool" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "haiko_solver_core::types::MarketState",
+    "members": [
+      { "name": "base_reserves", "type": "core::integer::u256" },
+      { "name": "quote_reserves", "type": "core::integer::u256" },
+      { "name": "is_paused", "type": "core::bool" },
+      {
+        "name": "vault_token",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::felt252>",
+    "members": [
+      { "name": "snapshot", "type": "@core::array::Array::<core::felt252>" }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<(core::integer::u256, core::integer::u256)>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<(core::integer::u256, core::integer::u256)>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<core::starknet::contract_address::ContractAddress>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::starknet::contract_address::ContractAddress>"
+      }
+    ]
+  },
+  {
+    "type": "struct",
+    "name": "core::array::Span::<(core::integer::u256, core::integer::u256, core::integer::u256, core::integer::u256)>",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<(core::integer::u256, core::integer::u256, core::integer::u256, core::integer::u256)>"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::option::Option::<core::starknet::contract_address::ContractAddress>",
+    "variants": [
+      {
+        "name": "Some",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      { "name": "None", "type": "()" }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "haiko_solver_core::interfaces::ISolver::ISolver",
+    "items": [
+      {
+        "type": "function",
+        "name": "name",
+        "inputs": [],
+        "outputs": [{ "type": "core::byte_array::ByteArray" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "symbol",
+        "inputs": [],
+        "outputs": [{ "type": "core::byte_array::ByteArray" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "market_id",
+        "inputs": [
+          {
+            "name": "market_info",
+            "type": "haiko_solver_core::types::MarketInfo"
+          }
+        ],
+        "outputs": [{ "type": "core::felt252" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "market_info",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "haiko_solver_core::types::MarketInfo" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "market_state",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "haiko_solver_core::types::MarketState" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "vault_token_class",
+        "inputs": [],
+        "outputs": [{ "type": "core::starknet::class_hash::ClassHash" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "owner",
+        "inputs": [],
+        "outputs": [
+          { "type": "core::starknet::contract_address::ContractAddress" }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "queued_owner",
+        "inputs": [],
+        "outputs": [
+          { "type": "core::starknet::contract_address::ContractAddress" }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "withdraw_fee_rate",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "core::integer::u16" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "withdraw_fees",
+        "inputs": [
+          {
+            "name": "token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [{ "type": "core::integer::u256" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_balances",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [{ "type": "(core::integer::u256, core::integer::u256)" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_balances_array",
+        "inputs": [
+          { "name": "market_ids", "type": "core::array::Span::<core::felt252>" }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Span::<(core::integer::u256, core::integer::u256)>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "get_user_balances_array",
+        "inputs": [
+          {
+            "name": "users",
+            "type": "core::array::Span::<core::starknet::contract_address::ContractAddress>"
+          },
+          { "name": "market_ids", "type": "core::array::Span::<core::felt252>" }
+        ],
+        "outputs": [
+          {
+            "type": "core::array::Span::<(core::integer::u256, core::integer::u256, core::integer::u256, core::integer::u256)>"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "create_market",
+        "inputs": [
+          {
+            "name": "market_info",
+            "type": "haiko_solver_core::types::MarketInfo"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::felt252, core::option::Option::<core::starknet::contract_address::ContractAddress>)"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "swap",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          {
+            "name": "swap_params",
+            "type": "haiko_solver_core::types::SwapParams"
+          }
+        ],
+        "outputs": [{ "type": "(core::integer::u256, core::integer::u256)" }],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "deposit_initial",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          { "name": "base_amount", "type": "core::integer::u256" },
+          { "name": "quote_amount", "type": "core::integer::u256" }
+        ],
+        "outputs": [
+          {
+            "type": "(core::integer::u256, core::integer::u256, core::integer::u256)"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "deposit_initial_with_referrer",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          { "name": "base_amount", "type": "core::integer::u256" },
+          { "name": "quote_amount", "type": "core::integer::u256" },
+          {
+            "name": "referrer",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::integer::u256, core::integer::u256, core::integer::u256)"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "deposit",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          { "name": "base_amount", "type": "core::integer::u256" },
+          { "name": "quote_amount", "type": "core::integer::u256" }
+        ],
+        "outputs": [
+          {
+            "type": "(core::integer::u256, core::integer::u256, core::integer::u256)"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "deposit_with_referrer",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          { "name": "base_amount", "type": "core::integer::u256" },
+          { "name": "quote_amount", "type": "core::integer::u256" },
+          {
+            "name": "referrer",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "(core::integer::u256, core::integer::u256, core::integer::u256)"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "withdraw_at_ratio",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          { "name": "shares", "type": "core::integer::u256" }
+        ],
+        "outputs": [{ "type": "(core::integer::u256, core::integer::u256)" }],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "withdraw",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          { "name": "base_amount", "type": "core::integer::u256" },
+          { "name": "quote_amount", "type": "core::integer::u256" }
+        ],
+        "outputs": [{ "type": "(core::integer::u256, core::integer::u256)" }],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "collect_withdraw_fees",
+        "inputs": [
+          {
+            "name": "receiver",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "token",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [{ "type": "core::integer::u256" }],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_withdraw_fee",
+        "inputs": [
+          { "name": "market_id", "type": "core::felt252" },
+          { "name": "fee_rate", "type": "core::integer::u16" }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "change_vault_token_class",
+        "inputs": [
+          {
+            "name": "new_class_hash",
+            "type": "core::starknet::class_hash::ClassHash"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "transfer_owner",
+        "inputs": [
+          {
+            "name": "new_owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "accept_owner",
+        "inputs": [],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "pause",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "unpause",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "upgrade",
+        "inputs": [
+          {
+            "name": "new_class_hash",
+            "type": "core::starknet::class_hash::ClassHash"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "oracle",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "vault_token_class",
+        "type": "core::starknet::class_hash::ClassHash"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::SetMarketParams",
+    "kind": "struct",
+    "members": [
+      { "name": "market_id", "type": "core::felt252", "kind": "key" },
+      { "name": "min_spread", "type": "core::integer::u32", "kind": "data" },
+      { "name": "range", "type": "core::integer::u32", "kind": "data" },
+      { "name": "max_delta", "type": "core::integer::u32", "kind": "data" },
+      { "name": "max_skew", "type": "core::integer::u16", "kind": "data" },
+      { "name": "base_currency_id", "type": "core::felt252", "kind": "data" },
+      { "name": "quote_currency_id", "type": "core::felt252", "kind": "data" },
+      { "name": "min_sources", "type": "core::integer::u32", "kind": "data" },
+      { "name": "max_age", "type": "core::integer::u64", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::ChangeOracle",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "oracle",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::CreateMarket",
+    "kind": "struct",
+    "members": [
+      { "name": "market_id", "type": "core::felt252", "kind": "key" },
+      {
+        "name": "base_token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      {
+        "name": "quote_token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      {
+        "name": "owner",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      { "name": "is_public", "type": "core::bool", "kind": "data" },
+      {
+        "name": "vault_token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::Deposit",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "caller",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      { "name": "market_id", "type": "core::felt252", "kind": "key" },
+      { "name": "base_amount", "type": "core::integer::u256", "kind": "data" },
+      { "name": "quote_amount", "type": "core::integer::u256", "kind": "data" },
+      { "name": "shares", "type": "core::integer::u256", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::Withdraw",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "caller",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      { "name": "market_id", "type": "core::felt252", "kind": "key" },
+      { "name": "base_amount", "type": "core::integer::u256", "kind": "data" },
+      { "name": "quote_amount", "type": "core::integer::u256", "kind": "data" },
+      { "name": "shares", "type": "core::integer::u256", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::Swap",
+    "kind": "struct",
+    "members": [
+      { "name": "market_id", "type": "core::felt252", "kind": "key" },
+      {
+        "name": "caller",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      { "name": "is_buy", "type": "core::bool", "kind": "data" },
+      { "name": "exact_input", "type": "core::bool", "kind": "data" },
+      { "name": "amount_in", "type": "core::integer::u256", "kind": "data" },
+      { "name": "amount_out", "type": "core::integer::u256", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::CollectWithdrawFee",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "receiver",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      { "name": "amount", "type": "core::integer::u256", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::SetWithdrawFee",
+    "kind": "struct",
+    "members": [
+      { "name": "market_id", "type": "core::felt252", "kind": "key" },
+      { "name": "fee_rate", "type": "core::integer::u16", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::WithdrawFeeEarned",
+    "kind": "struct",
+    "members": [
+      { "name": "market_id", "type": "core::felt252", "kind": "key" },
+      {
+        "name": "token",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      { "name": "amount", "type": "core::integer::u256", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::ChangeOwner",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "old",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      },
+      {
+        "name": "new",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::ChangeVaultTokenClass",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "class_hash",
+        "type": "core::starknet::class_hash::ClassHash",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::Pause",
+    "kind": "struct",
+    "members": [{ "name": "market_id", "type": "core::felt252", "kind": "key" }]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::Unpause",
+    "kind": "struct",
+    "members": [{ "name": "market_id", "type": "core::felt252", "kind": "key" }]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::Referral",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "caller",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "referrer",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::Upgraded",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "class_hash",
+        "type": "core::starknet::class_hash::ClassHash",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_core::contracts::solver::SolverComponent::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "CreateMarket",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::CreateMarket",
+        "kind": "nested"
+      },
+      {
+        "name": "Deposit",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::Deposit",
+        "kind": "nested"
+      },
+      {
+        "name": "Withdraw",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::Withdraw",
+        "kind": "nested"
+      },
+      {
+        "name": "Swap",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::Swap",
+        "kind": "nested"
+      },
+      {
+        "name": "CollectWithdrawFee",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::CollectWithdrawFee",
+        "kind": "nested"
+      },
+      {
+        "name": "SetWithdrawFee",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::SetWithdrawFee",
+        "kind": "nested"
+      },
+      {
+        "name": "WithdrawFeeEarned",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::WithdrawFeeEarned",
+        "kind": "nested"
+      },
+      {
+        "name": "ChangeOwner",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::ChangeOwner",
+        "kind": "nested"
+      },
+      {
+        "name": "ChangeVaultTokenClass",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::ChangeVaultTokenClass",
+        "kind": "nested"
+      },
+      {
+        "name": "Pause",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::Pause",
+        "kind": "nested"
+      },
+      {
+        "name": "Unpause",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::Unpause",
+        "kind": "nested"
+      },
+      {
+        "name": "Referral",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::Referral",
+        "kind": "nested"
+      },
+      {
+        "name": "Upgraded",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::Upgraded",
+        "kind": "nested"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "SetMarketParams",
+        "type": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::SetMarketParams",
+        "kind": "nested"
+      },
+      {
+        "name": "ChangeOracle",
+        "type": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::ChangeOracle",
+        "kind": "nested"
+      },
+      {
+        "name": "SolverEvent",
+        "type": "haiko_solver_core::contracts::solver::SolverComponent::Event",
+        "kind": "flat"
+      }
+    ]
+  }
+]

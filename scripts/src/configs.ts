@@ -1,5 +1,6 @@
 import { toFixed } from "./utils";
 import { ENV } from "./env";
+import { CairoOption, CairoOptionVariant, Uint256 } from "starknet";
 
 // Pragma oracle currency ids
 const ETH_CURR_ID = "4543560";
@@ -8,7 +9,7 @@ const USDC_CURR_ID = "1431520323";
 const USDT_CURR_ID = "1431520340";
 const DPI_CURR_ID = "4477001";
 
-export type CreateMarketParams = {
+export type RunnerMarketParams = {
   base_symbol: string;
   quote_symbol: string;
   base_token: string;
@@ -27,10 +28,20 @@ export type CreateMarketParams = {
   quote_deposit_initial: string;
   base_deposit: string;
   quote_deposit: string;
+  swaps: SwapParams[];
+  withdraw_public_proportion: number;
+};
+
+type SwapParams = {
+  is_buy: boolean;
+  amount: string;
+  exact_input: boolean;
+  threshold_sqrt_price: CairoOption<Uint256>;
+  threshold_amount: CairoOption<Uint256>;
 };
 
 // Define list of markets to create
-export const INITIAL_MARKETS: CreateMarketParams[] = [
+export const MARKET_PARAMS: RunnerMarketParams[] = [
   {
     base_symbol: "ETH",
     quote_symbol: "USDC",
@@ -50,6 +61,16 @@ export const INITIAL_MARKETS: CreateMarketParams[] = [
     quote_deposit_initial: toFixed(10000, 6),
     base_deposit: toFixed(1, 18),
     quote_deposit: toFixed(1000, 6),
+    swaps: [
+      {
+        is_buy: true,
+        exact_input: true,
+        amount: toFixed(500, 6),
+        threshold_amount: new CairoOption(CairoOptionVariant.None),
+        threshold_sqrt_price: new CairoOption(CairoOptionVariant.None),
+      },
+    ],
+    withdraw_public_proportion: 0.5,
   },
   {
     base_symbol: "STRK",
@@ -70,6 +91,16 @@ export const INITIAL_MARKETS: CreateMarketParams[] = [
     quote_deposit_initial: toFixed(10000, 6),
     base_deposit: toFixed(20000, 18),
     quote_deposit: toFixed(10000, 6),
+    swaps: [
+      {
+        is_buy: false,
+        exact_input: true,
+        amount: toFixed(1000, 18),
+        threshold_amount: new CairoOption(CairoOptionVariant.None),
+        threshold_sqrt_price: new CairoOption(CairoOptionVariant.None),
+      },
+    ],
+    withdraw_public_proportion: 0.5,
   },
   {
     base_symbol: "STRK",
@@ -90,6 +121,16 @@ export const INITIAL_MARKETS: CreateMarketParams[] = [
     quote_deposit_initial: toFixed(10, 18),
     base_deposit: toFixed(40000, 18),
     quote_deposit: toFixed(20, 18),
+    swaps: [
+      {
+        is_buy: false,
+        exact_input: false,
+        amount: toFixed(1, 18),
+        threshold_amount: new CairoOption(CairoOptionVariant.None),
+        threshold_sqrt_price: new CairoOption(CairoOptionVariant.None),
+      },
+    ],
+    withdraw_public_proportion: 0.5,
   },
   {
     base_symbol: "USDC",
@@ -110,6 +151,16 @@ export const INITIAL_MARKETS: CreateMarketParams[] = [
     quote_deposit_initial: toFixed(15000, 8),
     base_deposit: toFixed(1000, 6),
     quote_deposit: toFixed(1000, 8),
+    swaps: [
+      {
+        is_buy: true,
+        exact_input: false,
+        amount: toFixed(1000, 6),
+        threshold_amount: new CairoOption(CairoOptionVariant.None),
+        threshold_sqrt_price: new CairoOption(CairoOptionVariant.None),
+      },
+    ],
+    withdraw_public_proportion: 0.5,
   },
   {
     base_symbol: "DPI",
@@ -130,5 +181,15 @@ export const INITIAL_MARKETS: CreateMarketParams[] = [
     quote_deposit_initial: toFixed(10, 6),
     base_deposit: toFixed(1000, 18),
     quote_deposit: toFixed(100, 6),
+    swaps: [
+      {
+        is_buy: true,
+        exact_input: true,
+        amount: toFixed(50, 6),
+        threshold_amount: new CairoOption(CairoOptionVariant.None),
+        threshold_sqrt_price: new CairoOption(CairoOptionVariant.None),
+      },
+    ],
+    withdraw_public_proportion: 0.5,
   },
 ];

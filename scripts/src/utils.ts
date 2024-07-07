@@ -24,3 +24,13 @@ export const toDecimals = (number: Decimal.Value, decimals: Decimal.Value) => {
 export const shortenAddress = (address: string) => {
   return `${address.slice(0, 7)}...${address.slice(-4)}`;
 };
+
+export const mul = (a: Decimal.Value, b: Decimal.Value) => {
+  setPrecision();
+  return new Decimal(a).mul(b).toFixed();
+};
+
+export const round = (a: Decimal.Value) => {
+  setPrecision();
+  return new Decimal(a).toFixed(0);
+};

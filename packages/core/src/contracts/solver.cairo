@@ -377,6 +377,7 @@ pub mod SolverComponent {
             // Check params.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'BaseTokenNull');
             assert(market_info.quote_token != contract_address_const::<0x0>(), 'QuoteTokenNull');
+            assert(market_info.base_token != market_info.quote_token, 'SameToken');
             assert(market_info.owner != contract_address_const::<0x0>(), 'OwnerNull');
 
             // Set market info.

@@ -72,6 +72,7 @@ pub fn get_virtual_position_range(
 
     // Apply minimum spread.
     if is_bid {
+        assert(limit >= min_spread, 'LimitUF');
         limit -= min_spread;
     } else {
         limit += min_spread;
@@ -79,6 +80,7 @@ pub fn get_virtual_position_range(
 
     // Apply delta.
     if delta.sign {
+        assert(limit >= delta.val, 'LimitUF');
         limit -= delta.val;
     } else {
         limit += delta.val;

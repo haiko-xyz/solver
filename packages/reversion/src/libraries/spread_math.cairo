@@ -61,6 +61,7 @@ pub fn get_virtual_position_range(
 
     // Apply minimum spread.
     if is_bid {
+        assert(limit >= spread, 'LimitUF');
         limit -= spread;
     } else {
         limit += spread;

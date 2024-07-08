@@ -1,4 +1,5 @@
 use starknet::ContractAddress;
+use starknet::contract_address_const;
 
 ////////////////////////////////
 // TYPES
@@ -56,6 +57,21 @@ pub struct PositionInfo {
     pub lower_sqrt_price: u256,
     pub upper_sqrt_price: u256,
     pub liquidity: u128,
+}
+
+////////////////////////////////
+// IMPLS
+////////////////////////////////
+
+pub impl DefaultMarketState of Default<MarketState> {
+    fn default() -> MarketState {
+        MarketState {
+            base_reserves: 0,
+            quote_reserves: 0,
+            is_paused: false,
+            vault_token: contract_address_const::<0x0>(),
+        }
+    }
 }
 
 ////////////////////////////////

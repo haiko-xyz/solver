@@ -387,7 +387,7 @@ pub mod SolverComponent {
             if market_info.is_public {
                 let vault_token_addr = self._deploy_vault_token(market_info);
                 vault_token = Option::Some(vault_token_addr);
-                let mut state: MarketState = self.market_state.read(market_id);
+                let mut state: MarketState = Default::default();
                 state.vault_token = vault_token_addr;
                 self.market_state.write(market_id, state);
             }

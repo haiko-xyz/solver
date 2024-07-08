@@ -500,7 +500,7 @@
       },
       {
         "type": "function",
-        "name": "withdraw_at_ratio",
+        "name": "withdraw_public",
         "inputs": [
           { "name": "market_id", "type": "core::felt252" },
           { "name": "shares", "type": "core::integer::u256" }

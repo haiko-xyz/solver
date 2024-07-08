@@ -62,7 +62,7 @@ fn test_withdraw_partial_shares_from_public_vault() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_withdraw, quote_withdraw) = solver.withdraw_at_ratio(market_id, shares / 2);
+    let (base_withdraw, quote_withdraw) = solver.withdraw_public(market_id, shares / 2);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, alice());
@@ -113,7 +113,7 @@ fn test_withdraw_remaining_shares_from_public_vault() {
 
     // Withdraw owner.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.withdraw_at_ratio(market_id, shares_init);
+    solver.withdraw_public(market_id, shares_init);
 
     // Snapshot before.
     let vault_token = vault_token_opt.unwrap();
@@ -121,7 +121,7 @@ fn test_withdraw_remaining_shares_from_public_vault() {
 
     // Withdraw LP.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_withdraw, quote_withdraw) = solver.withdraw_at_ratio(market_id, shares);
+    let (base_withdraw, quote_withdraw) = solver.withdraw_public(market_id, shares);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, alice());
@@ -174,7 +174,7 @@ fn test_withdraw_allowed_even_if_paused() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    solver.withdraw_at_ratio(market_id, shares);
+    solver.withdraw_public(market_id, shares);
 }
 
 #[test]
@@ -206,7 +206,7 @@ fn test_withdraw_private_base_only() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_withdraw, quote_withdraw) = solver.withdraw(market_id, base_amount, 0);
+    let (base_withdraw, quote_withdraw) = solver.withdraw_private(market_id, base_amount, 0);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
@@ -249,7 +249,7 @@ fn test_withdraw_private_quote_only() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_withdraw, quote_withdraw) = solver.withdraw(market_id, 0, quote_amount);
+    let (base_withdraw, quote_withdraw) = solver.withdraw_private(market_id, 0, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
@@ -285,7 +285,7 @@ fn test_withdraw_private_partial_amounts() {
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let (base_withdraw, quote_withdraw) = solver
-        .withdraw(market_id, base_amount / 2, quote_amount / 2);
+        .withdraw_private(market_id, base_amount / 2, quote_amount / 2);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
@@ -338,7 +338,8 @@ fn test_withdraw_all_remaining_balances_from_private_vault() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_withdraw, quote_withdraw) = solver.withdraw(market_id, base_amount, quote_amount);
+    let (base_withdraw, quote_withdraw) = solver
+        .withdraw_private(market_id, base_amount, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
@@ -384,7 +385,7 @@ fn test_withdraw_more_than_available_correctly_caps_amount_for_private_vault() {
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let (base_withdraw, quote_withdraw) = solver
-        .withdraw(market_id, base_amount * 2, quote_amount * 2);
+        .withdraw_private(market_id, base_amount * 2, quote_amount * 2);
 
     // Run checks.
     assert(approx_eq(base_withdraw, base_amount, 10), 'Base withdraw');

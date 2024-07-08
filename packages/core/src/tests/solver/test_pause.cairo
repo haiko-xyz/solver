@@ -48,7 +48,7 @@ fn test_pause_allows_withdraws() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    solver.withdraw_at_ratio(market_id, shares);
+    solver.withdraw_public(market_id, shares);
 }
 
 #[test]

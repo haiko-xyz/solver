@@ -570,7 +570,7 @@ const execute = async (configs: RunnerConfigs) => {
         );
 
         // Withdraw tokens.
-        const res = await solver.withdraw_at_ratio(marketId, sharesToWithdraw);
+        const res = await solver.withdraw_public(marketId, sharesToWithdraw);
         const receipt = (await provider.waitForTransaction(
           res.transaction_hash
         )) as {

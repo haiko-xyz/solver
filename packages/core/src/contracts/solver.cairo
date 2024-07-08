@@ -760,7 +760,7 @@ pub mod SolverComponent {
         }
 
         // Burn pool shares and withdraw funds from market.
-        // Called for public vaults. For private vaults, use `withdraw_amount`.
+        // Called for public vaults. For private vaults, use `withdraw_private`.
         //
         // # Arguments
         // * `market_id` - market id
@@ -769,7 +769,7 @@ pub mod SolverComponent {
         // # Returns
         // * `base_amount` - base asset withdrawn
         // * `quote_amount` - quote asset withdrawn
-        fn withdraw_at_ratio(
+        fn withdraw_public(
             ref self: ComponentState<TContractState>, market_id: felt252, shares: u256
         ) -> (u256, u256) {
             // Fetch state.
@@ -801,7 +801,7 @@ pub mod SolverComponent {
         }
 
         // Withdraw exact token amounts from market.
-        // Called for private vaults. For public vaults, use `withdraw_at_ratio`.
+        // Called for private vaults. For public vaults, use `withdraw_public`.
         //
         // # Arguments
         // * `market_id` - market id
@@ -811,7 +811,7 @@ pub mod SolverComponent {
         // # Returns
         // * `base_amount` - base asset withdrawn
         // * `quote_amount` - quote asset withdrawn
-        fn withdraw(
+        fn withdraw_private(
             ref self: ComponentState<TContractState>,
             market_id: felt252,
             base_amount: u256,

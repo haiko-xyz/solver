@@ -144,11 +144,11 @@ fn deposit(
 ) -> (u256, u256, u256);
 ```
 
-Withdrawals can be made either by calling `withdraw_at_ratio()` to withdraw from a public vault, or `withdraw()` to withdraw an arbitrary amounts from a private vault (available to the vault owner only).
+Withdrawals can be made either by calling `withdraw_public()` to withdraw from a public vault, or `withdraw_private()` to withdraw an arbitrary amounts from a private vault (available to the vault owner only).
 
 ```rust
 // Burn pool shares and withdraw funds from market.
-// Called for public vaults. For private vaults, use `withdraw_amount`.
+// Called for public vaults. For private vaults, use `withdraw_private`.
 //
 // # Arguments
 // * `market_id` - market id
@@ -157,12 +157,12 @@ Withdrawals can be made either by calling `withdraw_at_ratio()` to withdraw from
 // # Returns
 // * `base_amount` - base asset withdrawn
 // * `quote_amount` - quote asset withdrawn
-fn withdraw_at_ratio(
+fn withdraw_public(
     ref self: TContractState, market_id: felt252, shares: u256
 ) -> (u256, u256);
 
 // Withdraw exact token amounts from market.
-// Called for private vaults. For public vaults, use `withdraw_at_ratio`.
+// Called for private vaults. For public vaults, use `withdraw_public`.
 //
 // # Arguments
 // * `market_id` - market id
@@ -172,7 +172,7 @@ fn withdraw_at_ratio(
 // # Returns
 // * `base_amount` - base asset withdrawn
 // * `quote_amount` - quote asset withdrawn
-fn withdraw(
+fn withdraw_private(
     ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
 ) -> (u256, u256);
 ```

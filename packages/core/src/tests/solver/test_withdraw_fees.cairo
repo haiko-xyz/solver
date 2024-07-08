@@ -63,7 +63,7 @@ fn test_collect_withdraw_fees() {
     solver.deposit_initial(market_id, base_amount, quote_amount);
 
     // Withdraw.
-    solver.withdraw(market_id, base_amount, quote_amount);
+    solver.withdraw_private(market_id, base_amount, quote_amount);
 
     // Collect withdraw fees.
     let base_fees = solver.collect_withdraw_fees(owner(), base_token.contract_address);
@@ -128,7 +128,7 @@ fn test_collect_withdraw_fees_emits_event() {
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
 
     // Withdraw.
-    solver.withdraw(market_id, base_amount, quote_amount);
+    solver.withdraw_private(market_id, base_amount, quote_amount);
 
     // Collect withdraw fees.
     let base_fees = solver.collect_withdraw_fees(owner(), base_token.contract_address);

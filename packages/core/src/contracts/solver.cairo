@@ -818,6 +818,7 @@ pub mod SolverComponent {
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(!market_info.is_public, 'UseWithdrawAtRatio');
+            self.assert_market_owner(market_id);
 
             // Cap withdraw amount at available. Commit state changes.
             let base_withdraw = min(base_amount, state.base_reserves);

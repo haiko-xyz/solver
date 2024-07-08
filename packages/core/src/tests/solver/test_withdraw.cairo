@@ -492,5 +492,18 @@ fn test_withdraw_private_uninitialised_market() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.withdraw_at_ratio(1, 1000);
+    solver.withdraw(1, to_e18(100), to_e18(500));
+}
+
+#[test]
+#[should_panic(expected: ('OnlyMarketOwner',))]
+fn test_withdraw_private_not_owner() {
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
+        before(
+        false
+    );
+
+    // Withdraw.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    solver.withdraw(market_id, to_e18(100), to_e18(500));
 }

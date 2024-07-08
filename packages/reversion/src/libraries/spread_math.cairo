@@ -7,7 +7,6 @@ use haiko_solver_core::types::PositionInfo;
 // Haiko imports.
 use haiko_lib::math::{price_math, liquidity_math, math};
 use haiko_lib::constants::MAX_LIMIT_SHIFTED;
-use haiko_lib::types::i32::{i32, I32Trait};
 
 ////////////////////////////////
 // FUNCTIONS

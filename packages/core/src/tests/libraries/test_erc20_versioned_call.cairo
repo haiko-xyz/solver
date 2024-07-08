@@ -23,7 +23,6 @@ fn test_erc20_bytearray() {
     symbol.serialize(ref calldata);
     let contract_address = erc20_class.deploy(@calldata).unwrap();
     let result = erc20_versioned_call::get_symbol(contract_address);
-    println!("result(bytearray): {}", result);
     assert(result == "MOCK", 'Symbol (byte array)');
 }
 
@@ -38,6 +37,5 @@ fn test_erc20_felt252() {
     symbol.serialize(ref calldata);
     let contract_address = erc20_class.deploy(@calldata).unwrap();
     let result = erc20_versioned_call::get_symbol(contract_address);
-    println!("result(felt252): {}", result);
     assert(result == "MOCK", 'Symbol (felt252)');
 }

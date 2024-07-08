@@ -683,7 +683,8 @@ fn run_swap_cases(cases: Span<TestCase>) {
             market_params.range = case.range;
             market_params.max_delta = case.max_delta;
             market_params.max_skew = case.max_skew;
-            repl_solver.set_market_params(market_id, market_params);
+            repl_solver.queue_market_params(market_id, market_params);
+            repl_solver.set_market_params(market_id);
 
             // Set oracle price.
             start_warp(CheatTarget::One(oracle.contract_address), 1000);
@@ -782,7 +783,8 @@ fn test_swap_that_improves_skew_is_allowed() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut params = repl_solver.market_params(market_id);
     params.max_skew = 5000;
-    repl_solver.set_market_params(market_id, params);
+    repl_solver.queue_market_params(market_id, params);
+    repl_solver.set_market_params(market_id);
 
     // Set oracle price.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);
@@ -858,7 +860,8 @@ fn test_swap_fails_if_swap_buy_below_threshold_amount() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = repl_solver.market_params(market_id);
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -891,7 +894,8 @@ fn test_swap_fails_if_swap_sell_below_threshold_amount() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = repl_solver.market_params(market_id);
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Deposit initial.
     solver.deposit_initial(market_id, to_e18(1000), to_e18(1000));
@@ -924,7 +928,8 @@ fn test_swap_fails_if_limit_overflows() {
     let mut market_params = repl_solver.market_params(market_id);
     market_params.range = 8000000;
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Deposit initial.
     solver.deposit_initial(market_id, to_e18(1000), to_e18(1000));
@@ -961,7 +966,8 @@ fn test_swap_fails_if_limit_underflows() {
     let mut market_params = repl_solver.market_params(market_id);
     market_params.range = 7000000;
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Deposit initial.
     solver.deposit_initial(market_id, to_e18(1000), to_e18(1000));
@@ -992,7 +998,8 @@ fn test_swap_buy_above_max_skew_is_disallowed() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut params = repl_solver.market_params(market_id);
     params.max_skew = 5000;
-    repl_solver.set_market_params(market_id, params);
+    repl_solver.queue_market_params(market_id, params);
+    repl_solver.set_market_params(market_id);
 
     // Set oracle price.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);
@@ -1028,7 +1035,8 @@ fn test_swap_sell_above_max_skew_is_disallowed() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut params = repl_solver.market_params(market_id);
     params.max_skew = 5000;
-    repl_solver.set_market_params(market_id, params);
+    repl_solver.queue_market_params(market_id, params);
+    repl_solver.set_market_params(market_id);
 
     // Set oracle price.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);
@@ -1064,7 +1072,8 @@ fn test_change_in_oracle_price_above_max_skew_prevents_swap() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut params = repl_solver.market_params(market_id);
     params.max_skew = 5000;
-    repl_solver.set_market_params(market_id, params);
+    repl_solver.queue_market_params(market_id, params);
+    repl_solver.set_market_params(market_id);
 
     // Set oracle price.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);

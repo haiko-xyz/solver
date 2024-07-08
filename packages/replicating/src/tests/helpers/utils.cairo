@@ -195,8 +195,11 @@ fn _before(
     let (market_id, vault_token_opt) = solver.create_market(market_info);
 
     // Set params.
+    start_warp(CheatTarget::One(solver.contract_address), 1000);
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    repl_solver.set_market_params(market_id, default_market_params());
+    let market_params = default_market_params();
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Set oracle price.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);

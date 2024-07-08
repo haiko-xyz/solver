@@ -191,7 +191,8 @@ fn test_withdraw_private_base_only() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -233,7 +234,8 @@ fn test_withdraw_private_quote_only() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());

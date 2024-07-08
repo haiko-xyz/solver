@@ -87,7 +87,8 @@ fn test_deposit_initial_public_base_token_only() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Snapshot before.
     let vault_token = vault_token_opt.unwrap();
@@ -135,7 +136,8 @@ fn test_deposit_initial_public_quote_token_only() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Snapshot before.
     let vault_token = vault_token_opt.unwrap();
@@ -226,7 +228,8 @@ fn test_deposit_initial_private_base_token_only() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Snapshot before.
     let vault_token = contract_address_const::<0x0>();
@@ -274,7 +277,8 @@ fn test_deposit_initial_private_quote_token_only() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Snapshot before.
     let vault_token = contract_address_const::<0x0>();

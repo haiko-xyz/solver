@@ -426,6 +426,12 @@ pub mod SolverComponent {
         fn swap(
             ref self: ComponentState<TContractState>, market_id: felt252, swap_params: SwapParams,
         ) -> (u256, u256) {
+            // Run validity checks.
+            let state: MarketState = self.market_state.read(market_id);
+            let market_info: MarketInfo = self.market_info.read(market_id);
+            assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
+            assert(!state.is_paused, 'Paused');
+
             // Get amounts.
             let solver_hooks = ISolverHooksDispatcher { contract_address: get_contract_address() };
             let (amount_in, amount_out) = solver_hooks.quote(market_id, swap_params);

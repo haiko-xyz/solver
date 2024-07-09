@@ -336,7 +336,10 @@ pub mod ReplicatingSolver {
             // Run checks.
             self.solver.assert_market_owner(market_id);
             assert(params != queued_params, 'ParamsUnchanged');
-            assert(queued_at + delay <= get_block_timestamp(), 'DelayNotPassed');
+            if params != Default::default() {
+                // Skip this check if we are initialising the market for first time.
+                assert(queued_at + delay <= get_block_timestamp(), 'DelayNotPassed');
+            }
             assert(queued_at != 0 && queued_params != Default::default(), 'NotQueued');
             assert(queued_params.range != 0, 'RangeZero');
             assert(queued_params.min_sources != 0, 'MinSourcesZero');

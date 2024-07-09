@@ -125,6 +125,38 @@ fn test_queue_and_set_market_params_with_delay() {
 }
 
 #[test]
+fn test_queue_and_set_market_params_with_delay_first_initialisation() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        true
+    );
+
+    // Set delay.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    repl_solver.set_delay(86400);
+
+    // Get market params.
+    // Note market params are already set in the `before` fn.
+    let market_params = repl_solver.market_params(market_id);
+    let queued_params = repl_solver.queued_market_params(market_id);
+
+    // Run checks.
+    let params = default_market_params();
+    assert(market_params.min_spread == params.min_spread, 'Min spread');
+    assert(market_params.range == params.range, 'Range');
+    assert(market_params.max_delta == params.max_delta, 'Max delta');
+    assert(market_params.max_skew == params.max_skew, 'Max skew');
+    assert(market_params.base_currency_id == params.base_currency_id, 'Base currency ID');
+    assert(market_params.quote_currency_id == params.quote_currency_id, 'Quote currency ID');
+    assert(market_params.min_sources == params.min_sources, 'Min sources');
+    assert(market_params.max_age == params.max_age, 'Max age');
+    assert(queued_params == Default::default(), 'Queued params');
+}
+
+#[test]
 fn test_set_delay() {
     let (
         _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
@@ -571,13 +603,13 @@ fn test_set_market_params_fails_before_delay_complete() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     repl_solver.set_delay(delay);
 
-    // Queue market params.
+    // Queue new market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
-    let mut params = repl_solver.market_params(market_id);
+    let mut params = default_market_params();
     params.min_spread = 987;
     repl_solver.queue_market_params(market_id, params);
 
-    // Set market params.
+    // Set new market params.
     start_warp(CheatTarget::One(solver.contract_address), 2000);
     repl_solver.set_market_params(market_id);
 }
@@ -621,7 +653,7 @@ fn test_set_market_params_fails_none_queued_null_params() {
 
     // Queue market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
-    let mut params = repl_solver.market_params(market_id);
+    let mut params = default_market_params();
     params.min_spread = 987;
     repl_solver.queue_market_params(market_id, params);
 
@@ -659,10 +691,9 @@ fn test_set_market_params_fails_if_unchanged() {
     repl_solver.set_market_params(market_id);
 
     // Queue market params again.
-    start_warp(CheatTarget::One(solver.contract_address), 1000);
     repl_solver.queue_market_params(market_id, params);
 
     // Set market params again.
-    start_warp(CheatTarget::One(solver.contract_address), 100000);
+    start_warp(CheatTarget::One(solver.contract_address), 200000);
     repl_solver.set_market_params(market_id);
 }

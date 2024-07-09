@@ -780,7 +780,7 @@ pub mod SolverComponent {
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(shares != 0, 'SharesZero');
-            assert(market_info.is_public, 'UseWithdraw');
+            assert(market_info.is_public, 'UseWithdrawPrivate');
             let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
             let caller = get_caller_address();
             assert(shares <= vault_token.balanceOf(caller), 'InsuffShares');
@@ -824,7 +824,7 @@ pub mod SolverComponent {
 
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
-            assert(!market_info.is_public, 'UseWithdrawAtRatio');
+            assert(!market_info.is_public, 'UseWithdrawPublic');
             self.assert_market_owner(market_id);
 
             // Cap withdraw amount at available. Commit state changes.

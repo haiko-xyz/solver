@@ -450,7 +450,7 @@ fn test_withdraw_public_uninitialised_market() {
 }
 
 #[test]
-#[should_panic(expected: ('UseWithdrawAtRatio',))]
+#[should_panic(expected: ('UseWithdrawPublic',))]
 fn test_withdraw_custom_amounts_fail_for_public_vault() {
     let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
@@ -466,7 +466,6 @@ fn test_withdraw_custom_amounts_fail_for_public_vault() {
     // Withdraw.
     solver.withdraw_private(market_id, base_amount, quote_amount);
 }
-
 
 #[test]
 #[should_panic(expected: ('AmountZero',))]
@@ -508,4 +507,22 @@ fn test_withdraw_private_not_owner() {
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
     solver.withdraw_private(market_id, to_e18(100), to_e18(500));
+}
+
+#[test]
+#[should_panic(expected: ('UseWithdrawPrivate',))]
+fn test_withdraw_public_fail_for_private_vault() {
+    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
+        before(
+        false
+    );
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let base_amount = to_e18(100);
+    let quote_amount = to_e18(500);
+    solver.deposit_initial(market_id, base_amount, quote_amount);
+
+    // Withdraw.
+    solver.withdraw_public(market_id, 1000);
 }

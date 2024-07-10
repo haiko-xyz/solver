@@ -30,6 +30,7 @@ export type RunnerMarketParams = {
   quote_deposit: string;
   swaps: SwapParams[];
   withdraw_public_proportion: number;
+  withdraw_fee_rate: number;
 };
 
 type SwapParams = {
@@ -71,6 +72,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
       },
     ],
     withdraw_public_proportion: 0.5,
+    withdraw_fee_rate: 50,
   },
   {
     base_symbol: "STRK",
@@ -101,6 +103,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
       },
     ],
     withdraw_public_proportion: 0.5,
+    withdraw_fee_rate: 50,
   },
   {
     base_symbol: "STRK",
@@ -131,6 +134,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
       },
     ],
     withdraw_public_proportion: 0.5,
+    withdraw_fee_rate: 50,
   },
   {
     base_symbol: "USDC",
@@ -161,6 +165,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
       },
     ],
     withdraw_public_proportion: 0.5,
+    withdraw_fee_rate: 50,
   },
   {
     base_symbol: "DPI",
@@ -191,5 +196,6 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
       },
     ],
     withdraw_public_proportion: 0.5,
+    withdraw_fee_rate: 50,
   },
 ];

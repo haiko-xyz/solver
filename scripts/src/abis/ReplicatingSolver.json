@@ -127,6 +127,22 @@
       },
       {
         "type": "function",
+        "name": "queued_market_params",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [
+          { "type": "haiko_solver_replicating::types::MarketParams" }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "delay",
+        "inputs": [],
+        "outputs": [{ "type": "core::integer::u64" }],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
         "name": "oracle",
         "inputs": [],
         "outputs": [
@@ -143,7 +159,7 @@
       },
       {
         "type": "function",
-        "name": "set_market_params",
+        "name": "queue_market_params",
         "inputs": [
           { "name": "market_id", "type": "core::felt252" },
           {
@@ -151,6 +167,20 @@
             "type": "haiko_solver_replicating::types::MarketParams"
           }
         ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_market_params",
+        "inputs": [{ "name": "market_id", "type": "core::felt252" }],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "set_delay",
+        "inputs": [{ "name": "delay", "type": "core::integer::u64" }],
         "outputs": [],
         "state_mutability": "external"
       },
@@ -510,7 +540,7 @@
       },
       {
         "type": "function",
-        "name": "withdraw",
+        "name": "withdraw_private",
         "inputs": [
           { "name": "market_id", "type": "core::felt252" },
           { "name": "base_amount", "type": "core::integer::u256" },
@@ -624,6 +654,22 @@
   },
   {
     "type": "event",
+    "name": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::QueueMarketParams",
+    "kind": "struct",
+    "members": [
+      { "name": "market_id", "type": "core::felt252", "kind": "key" },
+      { "name": "min_spread", "type": "core::integer::u32", "kind": "data" },
+      { "name": "range", "type": "core::integer::u32", "kind": "data" },
+      { "name": "max_delta", "type": "core::integer::u32", "kind": "data" },
+      { "name": "max_skew", "type": "core::integer::u16", "kind": "data" },
+      { "name": "base_currency_id", "type": "core::felt252", "kind": "data" },
+      { "name": "quote_currency_id", "type": "core::felt252", "kind": "data" },
+      { "name": "min_sources", "type": "core::integer::u32", "kind": "data" },
+      { "name": "max_age", "type": "core::integer::u64", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
     "name": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::SetMarketParams",
     "kind": "struct",
     "members": [
@@ -636,6 +682,14 @@
       { "name": "quote_currency_id", "type": "core::felt252", "kind": "data" },
       { "name": "min_sources", "type": "core::integer::u32", "kind": "data" },
       { "name": "max_age", "type": "core::integer::u64", "kind": "data" }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::SetDelay",
+    "kind": "struct",
+    "members": [
+      { "name": "delay", "type": "core::integer::u64", "kind": "data" }
     ]
   },
   {
@@ -917,8 +971,18 @@
     "kind": "enum",
     "variants": [
       {
+        "name": "QueueMarketParams",
+        "type": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::QueueMarketParams",
+        "kind": "nested"
+      },
+      {
         "name": "SetMarketParams",
         "type": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::SetMarketParams",
+        "kind": "nested"
+      },
+      {
+        "name": "SetDelay",
+        "type": "haiko_solver_replicating::contracts::replicating_solver::ReplicatingSolver::SetDelay",
         "kind": "nested"
       },
       {

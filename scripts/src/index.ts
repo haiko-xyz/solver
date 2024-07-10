@@ -41,6 +41,7 @@ const magenta = "\x1b[35m";
 
 type RunnerConfigs = {
   createMarkets: boolean;
+  queueMarketParams: boolean;
   setMarketParams: boolean;
   getMarketIds: boolean;
   getMarketOwners: boolean;
@@ -272,10 +273,10 @@ const execute = async (configs: RunnerConfigs) => {
       }
     }
 
-    // Set market params
+    // Queue market params
     if (configs.setMarketParams) {
       console.log(
-        `Setting ${market.base_symbol}-${market.quote_symbol} market params...`
+        `Queueing ${market.base_symbol}-${market.quote_symbol} market params...`
       );
       try {
         const marketParams = {
@@ -288,7 +289,22 @@ const execute = async (configs: RunnerConfigs) => {
           min_sources: market.min_sources,
           max_age: market.max_age,
         };
-        const res = await solver.set_market_params(marketId, marketParams);
+        const res = await solver.queue_market_params(marketId, marketParams);
+        await provider.waitForTransaction(res.transaction_hash);
+        console.log(`✅ Queued market params`);
+      } catch (e) {
+        console.error(e);
+        continue;
+      }
+    }
+
+    // Set market params
+    if (configs.setMarketParams) {
+      console.log(
+        `Setting ${market.base_symbol}-${market.quote_symbol} market params...`
+      );
+      try {
+        const res = await solver.set_market_params(marketId);
         await provider.waitForTransaction(res.transaction_hash);
         console.log(`✅ Set market params`);
       } catch (e) {
@@ -808,6 +824,7 @@ const logBalance = (
 
 execute({
   createMarkets: false,
+  queueMarketParams: false,
   setMarketParams: false,
   getMarketIds: false,
   getMarketOwners: false,
@@ -825,7 +842,7 @@ execute({
   depositThirdPartyReferral: false,
   quote: false,
   swap: false,
-  withdrawPublic: true,
+  withdrawPublic: false,
   withdrawPrivate: false,
   pause: false,
   unpause: false,

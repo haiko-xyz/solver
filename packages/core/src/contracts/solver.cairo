@@ -53,6 +53,8 @@ pub mod SolverComponent {
         withdraw_fees: LegacyMap::<ContractAddress, u256>,
         // vault token class hash
         vault_token_class: ClassHash,
+        // reentrancy guard (unlocked for hook calls)
+        unlocked: bool,
     }
 
     ////////////////////////////////
@@ -476,7 +478,9 @@ pub mod SolverComponent {
             self.market_state.write(market_id, state);
 
             // Execute after swap hook.
+            self.unlocked.write(true);
             solver_hooks.after_swap(market_id, swap_params);
+            self.unlocked.write(false);
 
             // Emit events.
             self

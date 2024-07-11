@@ -169,11 +169,14 @@ pub mod MockSolver {
         }
 
         // Callback function to execute any state updates after a swap is completed.
+        // This fn should only be callable by the solver contract.
         //
         // # Arguments
         // * `market_id` - market id
         // * `swap_params` - swap parameters
-        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {}
+        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {
+            assert(self.solver.unlocked.read(), 'NotSolver');
+        }
     }
 
     #[abi(embed_v0)]

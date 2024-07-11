@@ -161,11 +161,15 @@ pub mod ReversionSolver {
         }
 
         // Callback function to execute any state updates after a swap is completed.
+        // This fn should only be callable by the solver contract.
         //
         // # Arguments
         // * `market_id` - market id
         // * `swap_params` - swap parameters
         fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {
+            // Run checks.
+            assert(self.solver.unlocked.read(), 'NotSolver');
+            
             // Fetch state.
             let mut trend_state: TrendState = self.trend_state.read(market_id);
             let oracle_output = self.get_unscaled_oracle_price(market_id);

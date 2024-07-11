@@ -15,7 +15,7 @@ use starknet::ContractAddress;
 // * `quote_currency_id` - Pragma oracle quote currency id
 // * `min_sources` - minimum number of oracle data sources aggregated
 // * `max_age` - maximum age of quoted oracle price
-#[derive(Drop, Copy, Serde, PartialEq)]
+#[derive(Drop, Copy, Serde, PartialEq, Default)]
 pub struct MarketParams {
     pub min_spread: u32,
     pub range: u32,

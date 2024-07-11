@@ -41,6 +41,7 @@ const magenta = "\x1b[35m";
 
 type RunnerConfigs = {
   createMarkets: boolean;
+  queueMarketParams: boolean;
   setMarketParams: boolean;
   getMarketIds: boolean;
   getMarketOwners: boolean;
@@ -55,10 +56,14 @@ type RunnerConfigs = {
   depositInitial: boolean;
   depositThirdPartyApprove: boolean;
   depositThirdParty: boolean;
+  depositThirdPartyReferral: boolean;
   quote: boolean;
   swap: boolean;
   withdrawPublic: boolean;
   withdrawPrivate: boolean;
+  pause: boolean;
+  unpause: boolean;
+  setWithdrawFee: boolean;
 };
 
 type MarketInfo = {
@@ -85,7 +90,7 @@ const execute = async (configs: RunnerConfigs) => {
   );
   solver.connect(owner);
 
-  // Loop through markets and create them, setting params
+  // Loop through markets
   for (const market of MARKET_PARAMS) {
     // Define market info
     const marketInfo: MarketInfo = {
@@ -104,6 +109,7 @@ const execute = async (configs: RunnerConfigs) => {
       continue;
     }
 
+    // Print market ids
     if (configs.getMarketIds) {
       console.log(
         `Market ID (${market.base_symbol}-${
@@ -112,7 +118,7 @@ const execute = async (configs: RunnerConfigs) => {
       );
     }
 
-    // Create market (disable if already created)
+    // Create markets
     if (configs.createMarkets) {
       console.log(
         `Creating ${market.base_symbol}-${market.quote_symbol} market...`
@@ -267,10 +273,10 @@ const execute = async (configs: RunnerConfigs) => {
       }
     }
 
-    // Set market params
+    // Queue market params
     if (configs.setMarketParams) {
       console.log(
-        `Setting ${market.base_symbol}-${market.quote_symbol} market params...`
+        `Queueing ${market.base_symbol}-${market.quote_symbol} market params...`
       );
       try {
         const marketParams = {
@@ -283,7 +289,22 @@ const execute = async (configs: RunnerConfigs) => {
           min_sources: market.min_sources,
           max_age: market.max_age,
         };
-        const res = await solver.set_market_params(marketId, marketParams);
+        const res = await solver.queue_market_params(marketId, marketParams);
+        await provider.waitForTransaction(res.transaction_hash);
+        console.log(`✅ Queued market params`);
+      } catch (e) {
+        console.error(e);
+        continue;
+      }
+    }
+
+    // Set market params
+    if (configs.setMarketParams) {
+      console.log(
+        `Setting ${market.base_symbol}-${market.quote_symbol} market params...`
+      );
+      try {
+        const res = await solver.set_market_params(marketId);
         await provider.waitForTransaction(res.transaction_hash);
         console.log(`✅ Set market params`);
       } catch (e) {
@@ -443,6 +464,52 @@ const execute = async (configs: RunnerConfigs) => {
       }
     }
 
+    // Deposit 3rd party liquidity with referral
+    if (configs.depositThirdPartyReferral) {
+      console.log(
+        `Depositing 3rd party liquidity with referrer into ${market.base_symbol}-${market.quote_symbol} market...`
+      );
+      try {
+        // Approve spend.
+        await approve(
+          provider,
+          lp,
+          market.base_token,
+          market.base_symbol,
+          ENV.REPLICATING_SOLVER_ADDRESS,
+          market.base_deposit
+        );
+        await approve(
+          provider,
+          lp,
+          market.quote_token,
+          market.quote_symbol,
+          ENV.REPLICATING_SOLVER_ADDRESS,
+          market.quote_deposit
+        );
+        // Deposit tokens with referrer.
+        solver.connect(lp);
+        const referrer = ENV.OWNER_ADDRESS;
+        const res = await solver.deposit_with_referrer(
+          marketId,
+          market.base_deposit,
+          market.quote_deposit,
+          referrer
+        );
+        await provider.waitForTransaction(res.transaction_hash);
+        console.log(
+          `    ✅ Deposited ${yellow}${market.base_deposit} ${
+            market.base_symbol
+          }${reset} and ${yellow}${market.quote_deposit} ${
+            market.quote_symbol
+          }${reset} with referrer ${green}${shortenAddress(referrer)}${reset}`
+        );
+      } catch (e) {
+        console.error(e);
+        continue;
+      }
+    }
+
     // Swap quote
     if (configs.quote) {
       for (const swap of market.swaps) {
@@ -570,7 +637,7 @@ const execute = async (configs: RunnerConfigs) => {
         );
 
         // Withdraw tokens.
-        const res = await solver.withdraw_at_ratio(marketId, sharesToWithdraw);
+        const res = await solver.withdraw_public(marketId, sharesToWithdraw);
         const receipt = (await provider.waitForTransaction(
           res.transaction_hash
         )) as {
@@ -606,6 +673,56 @@ const execute = async (configs: RunnerConfigs) => {
           }${reset} and ${yellow}${toDecimals(quoteAmount, quoteDecimals)} ${
             market.quote_symbol
           }${reset} (shares: ${yellow}${shares}${reset})`
+        );
+      } catch (e) {
+        console.error(e);
+        continue;
+      }
+    }
+
+    // Pause
+    if (configs.pause) {
+      console.log(
+        `Pausing ${market.base_symbol}-${market.quote_symbol} market...`
+      );
+      try {
+        const res = await solver.pause(marketId);
+        await provider.waitForTransaction(res.transaction_hash);
+        console.log(`✅ Paused market`);
+      } catch (e) {
+        console.error(e);
+        continue;
+      }
+    }
+
+    // Unpause
+    if (configs.unpause) {
+      console.log(
+        `Unpausing ${market.base_symbol}-${market.quote_symbol} market...`
+      );
+      try {
+        const res = await solver.unpause(marketId);
+        await provider.waitForTransaction(res.transaction_hash);
+        console.log(`✅ Unpaused market`);
+      } catch (e) {
+        console.error(e);
+        continue;
+      }
+    }
+
+    // Set withdraw fee
+    if (configs.setWithdrawFee) {
+      console.log(
+        `Setting withdraw fee for ${market.base_symbol}-${market.quote_symbol} market...`
+      );
+      try {
+        const res = await solver.set_withdraw_fee(
+          marketId,
+          market.withdraw_fee_rate
+        );
+        await provider.waitForTransaction(res.transaction_hash);
+        console.log(
+          `✅ Set withdraw fee to ${market.withdraw_fee_rate / 100}%`
         );
       } catch (e) {
         console.error(e);
@@ -707,6 +824,7 @@ const logBalance = (
 
 execute({
   createMarkets: false,
+  queueMarketParams: false,
   setMarketParams: false,
   getMarketIds: false,
   getMarketOwners: false,
@@ -721,8 +839,12 @@ execute({
   depositInitial: false,
   depositThirdPartyApprove: false,
   depositThirdParty: false,
+  depositThirdPartyReferral: false,
   quote: false,
   swap: false,
-  withdrawPublic: true,
+  withdrawPublic: false,
   withdrawPrivate: false,
+  pause: false,
+  unpause: false,
+  setWithdrawFee: false,
 });

@@ -78,7 +78,8 @@ fn test_solver_e2e_private_market() {
     let (amount_in, amount_out) = solver.swap(market_id, params);
 
     // Withdraw.
-    let (base_withdraw, quote_withdraw) = solver.withdraw(market_id, to_e18(50), to_e18(300));
+    let (base_withdraw, quote_withdraw) = solver
+        .withdraw_private(market_id, to_e18(50), to_e18(300));
 
     // Run checks.
     let (base_reserves, quote_reserves) = solver.get_balances(market_id);
@@ -141,7 +142,7 @@ fn test_solver_e2e_public_market() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_withdraw, quote_withdraw) = solver.withdraw_at_ratio(market_id, shares);
+    let (base_withdraw, quote_withdraw) = solver.withdraw_public(market_id, shares);
     println!("base_withdraw: {}, quote_withdraw: {}", base_withdraw, quote_withdraw);
 
     // Collect withdraw fees.

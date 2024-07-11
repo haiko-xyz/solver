@@ -57,6 +57,7 @@ pub fn get_virtual_position(
 // `is_bid` - whether to calculate bid or ask position
 // `min_spread` - minimum spread to apply
 // `delta` - inventory delta (+ve if ask spread, -ve if bid spread)
+//           note `delta` uses a custom i32 implementation that is [-4294967295, 4294967295]
 // `range` - position range
 // `oracle_price` - current oracle price (base 10e28)
 // 
@@ -72,6 +73,7 @@ pub fn get_virtual_position_range(
 
     // Apply minimum spread.
     if is_bid {
+        assert(limit >= min_spread, 'LimitUF');
         limit -= min_spread;
     } else {
         limit += min_spread;
@@ -79,6 +81,7 @@ pub fn get_virtual_position_range(
 
     // Apply delta.
     if delta.sign {
+        assert(limit >= delta.val, 'LimitUF');
         limit -= delta.val;
     } else {
         limit += delta.val;
@@ -104,7 +107,8 @@ pub fn get_virtual_position_range(
 // `price` - current price (base 10 ** 28)
 //
 // # Returns
-// `inv_delta` - inventory delta (+ve if ask spread, -ve if bid spread)
+// `delta` - inventory delta (+ve if ask spread, -ve if bid spread)
+//           note `delta` uses a custom i32 implementation that is [-4294967295, 4294967295]
 pub fn get_delta(max_delta: u32, base_reserves: u256, quote_reserves: u256, price: u256) -> i32 {
     let (skew, is_skew_bid) = get_skew(base_reserves, quote_reserves, price);
     let spread: u32 = math::mul_div(max_delta.into(), skew, DENOMINATOR, false).try_into().unwrap();

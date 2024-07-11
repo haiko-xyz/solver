@@ -52,6 +52,13 @@ pub mod ReplicatingSolver {
         oracle: IOracleABIDispatcher,
         // Indexed by market id
         market_params: LegacyMap::<felt252, MarketParams>,
+        // Indexed by market id
+        queued_market_params: LegacyMap::<felt252, MarketParams>,
+        // Indexed by market id
+        // timestamp when market params were queued
+        queued_at: LegacyMap::<felt252, u64>,
+        // delay in seconds for confirming queued market params
+        delay: u64,
     }
 
     ////////////////////////////////
@@ -61,10 +68,26 @@ pub mod ReplicatingSolver {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub(crate) enum Event {
+        QueueMarketParams: QueueMarketParams,
         SetMarketParams: SetMarketParams,
+        SetDelay: SetDelay,
         ChangeOracle: ChangeOracle,
         #[flat]
         SolverEvent: SolverComponent::Event,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub(crate) struct QueueMarketParams {
+        #[key]
+        pub market_id: felt252,
+        pub min_spread: u32,
+        pub range: u32,
+        pub max_delta: u32,
+        pub max_skew: u16,
+        pub base_currency_id: felt252,
+        pub quote_currency_id: felt252,
+        pub min_sources: u32,
+        pub max_age: u64,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -79,6 +102,11 @@ pub mod ReplicatingSolver {
         pub quote_currency_id: felt252,
         pub min_sources: u32,
         pub max_age: u64,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub(crate) struct SetDelay {
+        pub delay: u64,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -166,11 +194,14 @@ pub mod ReplicatingSolver {
         }
 
         // Callback function to execute any state updates after a swap is completed.
+        // This fn should only be callable by the solver contract.
         //
         // # Arguments
         // * `market_id` - market id
         // * `swap_params` - swap parameters
-        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {}
+        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {
+            assert(self.solver.unlocked.read(), 'NotSolver');
+        }
 
         // Get the initial token supply to mint when first depositing to a market.
         //
@@ -196,6 +227,16 @@ pub mod ReplicatingSolver {
         // Market parameters
         fn market_params(self: @ContractState, market_id: felt252) -> MarketParams {
             self.market_params.read(market_id)
+        }
+
+        // Queued market parameters
+        fn queued_market_params(self: @ContractState, market_id: felt252) -> MarketParams {
+            self.queued_market_params.read(market_id)
+        }
+
+        // Delay (in seconds) for setting market parameters
+        fn delay(self: @ContractState) -> u64 {
+            self.delay.read()
         }
 
         // Pragma oracle contract address
@@ -245,31 +286,29 @@ pub mod ReplicatingSolver {
             (output.price.into() * scaling_factor, is_valid)
         }
 
-        // Change parameters of the solver market.
+        // Queue change to the parameters of the solver market.
+        // This must be accepted after the set delay in order for the change to be applied.
         // Only callable by market owner.
         //
         // # Params
         // * `market_id` - market id
         // * `params` - market params
-        fn set_market_params(ref self: ContractState, market_id: felt252, params: MarketParams) {
+        fn queue_market_params(ref self: ContractState, market_id: felt252, params: MarketParams) {
             // Run checks.
             self.solver.assert_market_owner(market_id);
             let old_params = self.market_params.read(market_id);
             assert(old_params != params, 'ParamsUnchanged');
-            assert(params.range != 0, 'RangeZero');
-            assert(params.min_sources != 0, 'MinSourcesZero');
-            assert(params.max_age != 0, 'MaxAgeZero');
-            assert(params.base_currency_id != 0, 'BaseIdZero');
-            assert(params.quote_currency_id != 0, 'QuoteIdZero');
 
             // Update state.
-            self.market_params.write(market_id, params);
+            let now = get_block_timestamp();
+            self.queued_market_params.write(market_id, params);
+            self.queued_at.write(market_id, now);
 
             // Emit event.
             self
                 .emit(
-                    Event::SetMarketParams(
-                        SetMarketParams {
+                    Event::QueueMarketParams(
+                        QueueMarketParams {
                             market_id,
                             min_spread: params.min_spread,
                             range: params.range,
@@ -282,6 +321,75 @@ pub mod ReplicatingSolver {
                         }
                     )
                 );
+        }
+
+        // Confirm and set queued market parameters.
+        // Must have been queued for at least the set delay.
+        // Only callable by market owner.
+        //
+        // # Params
+        // * `market_id` - market id
+        fn set_market_params(ref self: ContractState, market_id: felt252) {
+            // Fetch queued params and delay.
+            let params = self.market_params.read(market_id);
+            let queued_params = self.queued_market_params.read(market_id);
+            let queued_at = self.queued_at.read(market_id);
+            let delay = self.delay.read();
+
+            // Run checks.
+            self.solver.assert_market_owner(market_id);
+            assert(params != queued_params, 'ParamsUnchanged');
+            if params != Default::default() {
+                // Skip this check if we are initialising the market for first time.
+                assert(queued_at + delay <= get_block_timestamp(), 'DelayNotPassed');
+            }
+            assert(queued_at != 0 && queued_params != Default::default(), 'NotQueued');
+            assert(queued_params.range != 0, 'RangeZero');
+            assert(queued_params.min_sources != 0, 'MinSourcesZero');
+            assert(queued_params.max_age != 0, 'MaxAgeZero');
+            assert(queued_params.base_currency_id != 0, 'BaseIdZero');
+            assert(queued_params.quote_currency_id != 0, 'QuoteIdZero');
+
+            // Update state.
+            self.queued_market_params.write(market_id, Default::default());
+            self.queued_at.write(market_id, 0);
+            self.market_params.write(market_id, queued_params);
+
+            // Emit event.
+            self
+                .emit(
+                    Event::SetMarketParams(
+                        SetMarketParams {
+                            market_id,
+                            min_spread: queued_params.min_spread,
+                            range: queued_params.range,
+                            max_delta: queued_params.max_delta,
+                            max_skew: queued_params.max_skew,
+                            base_currency_id: queued_params.base_currency_id,
+                            quote_currency_id: queued_params.quote_currency_id,
+                            min_sources: queued_params.min_sources,
+                            max_age: queued_params.max_age,
+                        }
+                    )
+                );
+        }
+
+        // Set delay (in seconds) for changing market parameters
+        // Only callable by owner.
+        //
+        // # Params
+        // * `delay` - delay in blocks
+        fn set_delay(ref self: ContractState, delay: u64) {
+            // Run checks.
+            self.solver.assert_owner();
+            let old_delay = self.delay.read();
+            assert(delay != old_delay, 'DelayUnchanged');
+
+            // Update state.
+            self.delay.write(delay);
+
+            // Emit event.
+            self.emit(Event::SetDelay(SetDelay { delay }));
         }
 
         // Change the oracle contract address.

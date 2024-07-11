@@ -155,7 +155,8 @@ fn test_deposit_public_vault_both_tokens_above_available() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Transfer excess balances.
     start_prank(CheatTarget::One(base_token.contract_address), owner());
@@ -193,7 +194,8 @@ fn test_deposit_public_vault_base_token_only() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -252,7 +254,8 @@ fn test_deposit_public_vault_quote_token_only() {
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut market_params = default_market_params();
     market_params.max_skew = 0;
-    repl_solver.set_market_params(market_id, market_params);
+    repl_solver.queue_market_params(market_id, market_params);
+    repl_solver.set_market_params(market_id);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());

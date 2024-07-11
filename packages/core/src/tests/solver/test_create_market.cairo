@@ -187,6 +187,25 @@ fn test_create_market_with_null_quote_token_fails() {
 }
 
 #[test]
+#[should_panic(expected: ('SameToken',))]
+fn test_create_market_with_same_token_fails() {
+    let (base_token, _quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =
+        before(
+        true
+    );
+
+    // Create market.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let market_info = MarketInfo {
+        base_token: base_token.contract_address,
+        quote_token: base_token.contract_address,
+        owner: alice(),
+        is_public: true,
+    };
+    solver.create_market(market_info);
+}
+
+#[test]
 #[should_panic(expected: ('OwnerNull',))]
 fn test_create_market_with_null_owner_fails() {
     let (base_token, quote_token, _vault_token_class, solver, _market_id, _vault_token_opt) =

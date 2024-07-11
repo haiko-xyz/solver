@@ -53,6 +53,8 @@ pub mod SolverComponent {
         withdraw_fees: LegacyMap::<ContractAddress, u256>,
         // vault token class hash
         vault_token_class: ClassHash,
+        // reentrancy guard (unlocked for hook calls)
+        unlocked: bool,
     }
 
     ////////////////////////////////
@@ -377,6 +379,7 @@ pub mod SolverComponent {
             // Check params.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'BaseTokenNull');
             assert(market_info.quote_token != contract_address_const::<0x0>(), 'QuoteTokenNull');
+            assert(market_info.base_token != market_info.quote_token, 'SameToken');
             assert(market_info.owner != contract_address_const::<0x0>(), 'OwnerNull');
 
             // Set market info.
@@ -387,7 +390,7 @@ pub mod SolverComponent {
             if market_info.is_public {
                 let vault_token_addr = self._deploy_vault_token(market_info);
                 vault_token = Option::Some(vault_token_addr);
-                let mut state: MarketState = self.market_state.read(market_id);
+                let mut state: MarketState = Default::default();
                 state.vault_token = vault_token_addr;
                 self.market_state.write(market_id, state);
             }
@@ -426,6 +429,12 @@ pub mod SolverComponent {
         fn swap(
             ref self: ComponentState<TContractState>, market_id: felt252, swap_params: SwapParams,
         ) -> (u256, u256) {
+            // Run validity checks.
+            let state: MarketState = self.market_state.read(market_id);
+            let market_info: MarketInfo = self.market_info.read(market_id);
+            assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
+            assert(!state.is_paused, 'Paused');
+
             // Get amounts.
             let solver_hooks = ISolverHooksDispatcher { contract_address: get_contract_address() };
             let (amount_in, amount_out) = solver_hooks.quote(market_id, swap_params);
@@ -469,7 +478,9 @@ pub mod SolverComponent {
             self.market_state.write(market_id, state);
 
             // Execute after swap hook.
+            self.unlocked.write(true);
             solver_hooks.after_swap(market_id, swap_params);
+            self.unlocked.write(false);
 
             // Emit events.
             self
@@ -754,7 +765,7 @@ pub mod SolverComponent {
         }
 
         // Burn pool shares and withdraw funds from market.
-        // Called for public vaults. For private vaults, use `withdraw_amount`.
+        // Called for public vaults. For private vaults, use `withdraw_private`.
         //
         // # Arguments
         // * `market_id` - market id
@@ -763,7 +774,7 @@ pub mod SolverComponent {
         // # Returns
         // * `base_amount` - base asset withdrawn
         // * `quote_amount` - quote asset withdrawn
-        fn withdraw_at_ratio(
+        fn withdraw_public(
             ref self: ComponentState<TContractState>, market_id: felt252, shares: u256
         ) -> (u256, u256) {
             // Fetch state.
@@ -773,7 +784,7 @@ pub mod SolverComponent {
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(shares != 0, 'SharesZero');
-            assert(market_info.is_public, 'UseWithdraw');
+            assert(market_info.is_public, 'UseWithdrawPrivate');
             let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
             let caller = get_caller_address();
             assert(shares <= vault_token.balanceOf(caller), 'InsuffShares');
@@ -795,7 +806,7 @@ pub mod SolverComponent {
         }
 
         // Withdraw exact token amounts from market.
-        // Called for private vaults. For public vaults, use `withdraw_at_ratio`.
+        // Called for private vaults. For public vaults, use `withdraw_public`.
         //
         // # Arguments
         // * `market_id` - market id
@@ -805,7 +816,7 @@ pub mod SolverComponent {
         // # Returns
         // * `base_amount` - base asset withdrawn
         // * `quote_amount` - quote asset withdrawn
-        fn withdraw(
+        fn withdraw_private(
             ref self: ComponentState<TContractState>,
             market_id: felt252,
             base_amount: u256,
@@ -817,7 +828,8 @@ pub mod SolverComponent {
 
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
-            assert(!market_info.is_public, 'UseWithdrawAtRatio');
+            assert(!market_info.is_public, 'UseWithdrawPublic');
+            self.assert_market_owner(market_id);
 
             // Cap withdraw amount at available. Commit state changes.
             let base_withdraw = min(base_amount, state.base_reserves);

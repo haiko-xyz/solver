@@ -2,11 +2,15 @@
 
 ## Solvers vs Strategies
 
-Solvers are a new product from Haiko. They are similar to strategies, but are simpler and significantly more gas efficient.
+Solvers are an improved version of Haiko strategies. They take the best parts of strategies and make them simpler, more efficient, and less error-prone.
 
-Unlike Strategies, Solvers are standalone smart contracts that generate quotes and execute swaps on demand, without ever depositing to or interacting with an underlying AMM. Rather than executing position updates before swaps, solvers directly compute and quote swap amounts, and execute trades atomatically against depositors' positions.
+Unlike Strategies, Solvers are standalone smart contracts that generate quotes and execute swaps on demand, without ever depositing to or interacting with an underlying AMM. Rather than rebalancing positions on an AMM, solvers directly compute swap amounts on the fly and execute trades against depositors' positions.
 
-By using a stateless architecture, Solvers are significantly more gas efficient as compared to strategies.
+By using a stateless architecture, Solvers are:
+
+- Significantly more gas efficient for LPs and swappers, avoiding the gas cost of position storage and rebalancing
+- Less error-prone, as they do not rely on external AMM state
+- More flexible, as they can be used to create markets based on any pricing formula, not just those adopting Uniswap-style liquidity
 
 AMM liquidity positions earn fees by charging a swap fee rate on swaps. Solvers earn fees by adding a spread to the amount quoted for swaps. Given the same spread and swap fee rate, the two approaches are approximately equivalent.
 
@@ -19,7 +23,7 @@ This monorepo contains both the core solver libraries and contracts (in package 
 The `SolverComponent` in the `core` package implements most of the core functionality of a `Solver` contract, including:
 
 1. Creating and managing new solver markets (which comprise of a `base_token` and `quote_token` pair and an `owner`)
-2. Managing deposits and withdrawals from solver markets, which are tracked using ERC20 vault tokens for
+2. Managing deposits and withdrawals from solver markets, which are tracked using ERC20 vault tokens for composability
 3. Swapping assets through a solver market
 4. Managing and collecting withdraw fees (if enabled)
 5. Admin actions such as pausing and unpausing, upgrading and transferring ownership of the contract
@@ -49,9 +53,9 @@ The solver market configs are as follows:
 4. Max delta: the delta (or offset) applied to bid and ask prices to correct for inventory skew
 5. Max skew: the maximum portfolio skew of the market, above which swaps will be rejected
 
-As with strategies, LPs can deposit to Solvers to have their liquidity automatically managed.
+Max skew is a new parameter that did not exist in the Replicating Strategy. It is a hard cap applied to the skew of the pool, above which swaps are rejected. This explicitly prevents the pool from becoming overly imbalanced.
 
-Solvers currently support two market types: (1) Private Markets, which offer more granular control, and (2) Public Markets, which are open to 3rd party depositors and track ERC20 vault tokens for composability.
+In addition, Solvers now support two market types: (1) Private Markets, a new market type which offer more granular control for a single depositor, and (2) Public Markets, which are open to 3rd party depositors and track ERC20 vault tokens for composability.
 
 ### Reversion Solver ([`reversion`](./packages/reversion/))
 

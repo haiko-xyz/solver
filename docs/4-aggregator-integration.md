@@ -2,6 +2,8 @@
 
 This document provides an overview of the Replicating Solver and highlights some key points for integration with aggregators, focusing on differences as compared to Strategies.
 
+It is also worth reading [this](./3-events.md) document for indexing events.
+
 ## Overview: Solvers vs Strategies
 
 Solvers are a new product from Haiko that takes the best parts of Strategies and makes them simpler and more gas efficient.

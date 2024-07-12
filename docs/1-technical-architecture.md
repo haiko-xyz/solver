@@ -25,7 +25,7 @@ The `SolverComponent` contract is a Cairo component that implements the core fun
 To be a valid implementation, a Solver contract must:
 
 1. Inherit the base functionality of `SolverComponent`
-2. Implement `SolverHooks` which contains methods for generating quotes and over which swaps are executed
+2. Implement `SolverHooks` which contains methods for generating quotes, minting initial liquidity for new markets, and executing custom logic or state updates after a swap
 
 ```rust
 #[starknet::interface]
@@ -41,7 +41,7 @@ pub trait ISolverHooks<TContractState> {
   // * `amount_out` - amount out
   fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
 
-  // Initial token supply to mint when first depositing to a market.
+  // Get the initial token supply to mint when first depositing to a market.
   //
   // # Arguments
   // * `market_id` - market id
@@ -49,6 +49,13 @@ pub trait ISolverHooks<TContractState> {
   // # Returns
   // * `initial_supply` - initial supply
   fn initial_supply(self: @TContractState, market_id: felt252) -> u256;
+
+  // Callback function to execute any state updates after a swap is completed.
+  //
+  // # Arguments
+  // * `market_id` - market id
+  // * `swap_params` - swap parameters
+  fn after_swap(ref self: TContractState, market_id: felt252, swap_params: SwapParams);
 }
 ```
 

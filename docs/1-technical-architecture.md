@@ -8,6 +8,8 @@ Solvers are standalone smart contracts that accept deposits from liquidity provi
 
 By using a stateless architecture, Solvers are simpler and significantly more gas efficient as compared to strategies.
 
+![solvers-vs-strategies](https://github.com/user-attachments/assets/3e2fdd7b-13af-4430-ae61-8efc0ce671a7)
+
 ## Contracts
 
 ### `SolverComponent`

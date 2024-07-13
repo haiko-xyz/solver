@@ -1,4 +1,6 @@
-# Haiko Solver
+![solver-banner](https://github.com/user-attachments/assets/e9db3d1f-089a-42fa-9a4f-ebb33815140a)
+
+# Solver
 
 Solvers are the new, improved version of Haiko [Strategies](https://haiko-docs.gitbook.io/docs/protocol/strategy-vaults). They take the best parts of Strategies (e.g. convenience, 1-click automation) and make them simpler, more efficient, and less error-prone.
 

@@ -21,6 +21,8 @@ By using a stateless architecture, Solvers are:
 2. **Less error-prone**, as they do not rely on external AMM state
 3. **More flexible**, as they can be used to create markets based on any pricing formula, not just those adopting Uniswap-style liquidity
 
+![solvers-vs-strategies](https://github.com/user-attachments/assets/c6d884d8-dab5-4030-b0a5-44d4a4ceea81)
+
 There are some key differences between AMM markets and Solver markets. These are summarised in the table below.
 
 | Feature     | AMM / Strategies                | Solver                                                                      |

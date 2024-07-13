@@ -17,15 +17,18 @@ Unlike Strategies, Solvers are standalone smart contracts that generate quotes a
 
 By using a stateless architecture, Solvers are:
 
-- More gas efficient for LPs and swappers, as they avoid the gas cost of on-chain position storage and rebalancing
-- Less error-prone, as they do not rely on external AMM state
-- More flexible, as they can be used to create markets based on any pricing formula, not just those adopting Uniswap-style liquidity
+1. **More gas efficient** for LPs and swappers, as they avoid the gas cost of on-chain position storage and rebalancing
+2. **Less error-prone**, as they do not rely on external AMM state
+3. **More flexible**, as they can be used to create markets based on any pricing formula, not just those adopting Uniswap-style liquidity
 
-There are some important differences between AMM markets and Solver markets:
+There are some key differences between AMM markets and Solver markets. These are summarised in the table below.
 
-- AMM markets have a fixed swap fee rate, allowing LPs to earn swap fees. Solvers don't have an explicit swap fee rate, but rather charge a spread on swaps. Given the same spread and swap fee rate, the two approaches are approximately equivalent. Spreads have the benefit of being dynmically adjustable, allowing Solvers to adapt to changing market conditions.
-- AMM markets have a set tick width, which determines the granularity of prices. Solvers are agnostic to the pricing formula so can flexibly accomodate any tick width.
-- AMM markets have a set current price. Solver markets are stateless, meaning they don't explicitly store the current price but rather calculate this on the fly.
+| Feature     | AMM / Strategies                | Solver                                                                      |
+| ----------- | ------------------------------- | --------------------------------------------------------------------------- |
+| Swap fees   | Fixed swap fee rate per market  | Charges a dynamic spread on swaps instead of an explicit swap fee rate      |
+| Tick width  | Fixed tick width per market     | Agnostic to pricing formula, can accomodate any tick width                  |
+| Price       | Stores current price            | Stateless, does not need to store current price                             |
+| Rebalancing | Uses swap hooks for rebalancing | No rebalancing needed, calculates positions on the fly at the point of swap |
 
 ## Contracts
 

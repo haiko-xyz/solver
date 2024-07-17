@@ -348,7 +348,7 @@ pub mod ReversionSolver {
             // Fetch oracle price and cached oracle price.
             let (oracle_price, is_valid) = self.get_oracle_price(market_id);
             assert(is_valid, 'InvalidOraclePrice');
-            let scaled_cached_price = if trend_state.cached_price == 0 {
+            let cached_price = if trend_state.cached_price == 0 {
                 0 
             } else {
                 self.scale_oracle_price(
@@ -356,37 +356,19 @@ pub mod ReversionSolver {
                 )
             };
 
-            // Calculate conditions for enabling single and double sided liquidity.
-            //   1. if price trends up and price > cached price, quote for bids only
-            //   2. if price trends down and price < cached price, quote for asks only
-            //   3. otherwise, quote for both
-            // In cases 1 and 2, we update the cached price in the `after_swap` callback fn.
-            let (enable_bid, enable_ask) = match trend_state.trend {
-                Trend::Up => {
-                    (true, oracle_price <= scaled_cached_price)
-                },
-                Trend::Down => {
-                    (oracle_price >= scaled_cached_price, true)
-                },
-                Trend::Range => (true, true),
-            };
-
             // Calculate and return positions.
             let mut bid: PositionInfo = Default::default();
             let mut ask: PositionInfo = Default::default();
-            if state.quote_reserves != 0 && enable_bid {
-                let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
-                    true, params.spread, params.range, oracle_price
-                );
+            let (bid_lower, bid_upper, ask_lower, ask_upper) = spread_math::get_virtual_position_range(
+                trend_state.trend, params.spread, params.range, cached_price, oracle_price
+            );
+            if state.quote_reserves != 0 {
                 bid =
                     spread_math::get_virtual_position(
                         true, bid_lower, bid_upper, state.quote_reserves
                     );
             }
-            if state.base_reserves != 0 && enable_ask {
-                let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
-                    false, params.spread, params.range, oracle_price
-                );
+            if state.base_reserves != 0 {
                 ask =
                     spread_math::get_virtual_position(
                         false, ask_lower, ask_upper, state.base_reserves

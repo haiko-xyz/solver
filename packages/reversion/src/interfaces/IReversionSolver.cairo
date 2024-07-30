@@ -9,8 +9,14 @@ use haiko_solver_reversion::interfaces::pragma::PragmaPricesResponse;
 
 #[starknet::interface]
 pub trait IReversionSolver<TContractState> {
-    // Configurable market parameters
+    // Market parameters
     fn market_params(self: @TContractState, market_id: felt252) -> MarketParams;
+
+    // Queued market parameters
+    fn queued_market_params(self: @TContractState, market_id: felt252) -> MarketParams;
+
+    // Delay (in seconds) for setting market parameters
+    fn delay(self: @TContractState) -> u64;
 
     // Pragma oracle contract address
     fn oracle(self: @TContractState) -> ContractAddress;

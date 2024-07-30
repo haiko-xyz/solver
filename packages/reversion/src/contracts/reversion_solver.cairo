@@ -223,6 +223,16 @@ pub mod ReversionSolver {
             self.market_params.read(market_id)
         }
 
+        // Queued market parameters
+        fn queued_market_params(self: @ContractState, market_id: felt252) -> MarketParams {
+            self.queued_market_params.read(market_id)
+        }
+        
+        // Delay (in seconds) for setting market parameters
+        fn delay(self: @ContractState) -> u64 {
+            self.delay.read()
+        }
+
         // Pragma oracle contract address
         fn oracle(self: @ContractState) -> ContractAddress {
             self.oracle.read().contract_address
@@ -289,7 +299,11 @@ pub mod ReversionSolver {
             assert(trend_state.trend != trend, 'TrendUnchanged');
 
             // Update state.
+            // Whenever we update trend, we also need to update the cached price in case it is stale.
+            let oracle_output = self.get_unscaled_oracle_price(market_id);
             trend_state.trend = trend;
+            trend_state.cached_price = oracle_output.price;
+            trend_state.cached_decimals = oracle_output.decimals;
             self.trend_state.write(market_id, trend_state);
 
             // Emit event.
@@ -328,7 +342,7 @@ pub mod ReversionSolver {
                     Event::QueueMarketParams(
                         QueueMarketParams {
                             market_id,
-                            min_spread: params.min_spread,
+                            spread: params.spread,
                             range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,

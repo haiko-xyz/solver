@@ -84,52 +84,54 @@ pub fn get_virtual_position_range(
     let bid_upper = cached_limit - spread;
     let ask_lower = cached_limit + spread;
     let ask_upper = cached_limit + spread + range;
-    
-    // Then, cap bid upper or ask lower at oracle price and apply conditions for 
+
+    // Second, calculate position ranges on the new oracle price.
+    let new_bid_lower = oracle_limit - spread - range;
+    let new_bid_upper = oracle_limit - spread;
+    let new_ask_lower = oracle_limit + spread;
+    let new_ask_upper = oracle_limit + spread + range;
+
+    // Third, cap bid upper or ask lower at oracle price and apply conditions for 
     // quoting single sided liquidity.
-    // If price is trending UP and:
-    //   1. oracle price > cached price, disable ask and recalculate bid ranges over new oracle price
-    //   2. oracle limit < bid lower limit, disable bid and quote for ask side liquidity over bid range
-    //   3. otherwise, quote for both bid and ask over bid range
-    // If price is trending DOWN and:
-    //   4. oracle price < cached price, disable bid and recalculate ask ranges over new oracle price
-    //   5. oracle limit > ask upper limit, disable ask and quote for bid side liquidity over ask range
-    //   6. otherwise, quote for both bid and ask over ask range
+    // A) If price is trending UP and:
+    //   A1. oracle price > bid position, disable ask and recalculate bid ranges over new oracle price
+    //   A2. oracle price < bid position, disable bid and quote for ask side liquidity over bid range
+    //   A3. otherwise, quote for both bid and ask over bid range
+    // B) If price is trending DOWN and:
+    //   B1. oracle price < ask position, disable bid and recalculate ask ranges over new oracle price
+    //   B2. oracle price > ask position, disable ask and quote for bid side liquidity over ask range
+    //   B3. otherwise, quote for both bid and ask over ask range
     // If price is RANGING, quote for both bid and ask.
     // Note that if a position should be disabled, ranges are returned as 0.
     match trend {
         Trend::Up => {
-            if oracle_price > cached_price {
-                let new_bid_lower = oracle_limit - spread - range;
-                let new_bid_upper = oracle_limit - spread;
+            if new_bid_upper > bid_upper {
                 (new_bid_lower, new_bid_upper, 0, 0)
-            } else if oracle_limit - spread < bid_lower {
+            } else if new_bid_upper <= bid_lower {
                 (0, 0, bid_lower, bid_upper)
             } else {
                 // Handle special case: oracle limit + spread can exceed bid upper, so disable ask
                 if oracle_limit + spread >= bid_upper {
-                    (bid_lower, oracle_limit - spread, 0, 0)
+                    (bid_lower, new_bid_upper, 0, 0)
                 } else {
-                    (bid_lower, oracle_limit - spread, oracle_limit + spread, bid_upper)
+                    (bid_lower, new_bid_upper, new_ask_lower, bid_upper)
                 }
             }
         },
         Trend::Down => {
-            if oracle_price < cached_price {
-                let new_ask_lower = oracle_limit + spread;
-                let new_ask_upper = oracle_limit + spread + range;
+            if new_ask_lower < ask_lower {
                 (0, 0, new_ask_lower, new_ask_upper)
-            } else if oracle_limit + spread > ask_upper {
+            } else if new_ask_lower > ask_upper {
                 (ask_lower, ask_upper, 0, 0)
             } else {
                 // Handle special case: oracle limit - spread can be less than ask lower, disable bid
                 if oracle_limit - spread <= ask_lower {
-                    (0, 0, oracle_limit + spread, ask_upper)
+                    (0, 0, new_ask_lower, ask_upper)
                 } else {
-                    (ask_lower, oracle_limit - spread, oracle_limit + spread, ask_upper)
+                    (ask_lower, new_bid_upper, new_ask_lower, ask_upper)
                 }
             }
         },
-        Trend::Range => (bid_lower, bid_upper, ask_lower, ask_upper),
+        Trend::Range => (new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper),
     }
 }

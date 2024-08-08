@@ -93,7 +93,7 @@ pub mod ReversionSolver {
     pub(crate) struct QueueMarketParams {
         #[key]
         pub market_id: felt252,
-        pub spread: u32,
+        pub fee_rate: u16,
         pub range: u32,
         pub base_currency_id: felt252,
         pub quote_currency_id: felt252,
@@ -105,7 +105,7 @@ pub mod ReversionSolver {
     pub(crate) struct SetMarketParams {
         #[key]
         pub market_id: felt252,
-        pub spread: u32,
+        pub fee_rate: u16,
         pub range: u32,
         pub base_currency_id: felt252,
         pub quote_currency_id: felt252,
@@ -177,7 +177,8 @@ pub mod ReversionSolver {
             };
 
             // Calculate and return swap amounts.
-            swap_lib::get_swap_amounts(swap_params, position)
+            let market_params: MarketParams = self.market_params.read(market_id);
+            swap_lib::get_swap_amounts(swap_params, position, market_params.fee_rate)
         }
 
         // Get the initial token supply to mint when first depositing to a market.
@@ -372,7 +373,7 @@ pub mod ReversionSolver {
                     Event::QueueMarketParams(
                         QueueMarketParams {
                             market_id,
-                            spread: params.spread,
+                            fee_rate: params.fee_rate,
                             range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
@@ -422,12 +423,12 @@ pub mod ReversionSolver {
                     Event::SetMarketParams(
                         SetMarketParams {
                             market_id,
-                            spread: params.spread,
-                            range: params.range,
-                            base_currency_id: params.base_currency_id,
-                            quote_currency_id: params.quote_currency_id,
-                            min_sources: params.min_sources,
-                            max_age: params.max_age,
+                            fee_rate: queued_params.fee_rate,
+                            range: queued_params.range,
+                            base_currency_id: queued_params.base_currency_id,
+                            quote_currency_id: queued_params.quote_currency_id,
+                            min_sources: queued_params.min_sources,
+                            max_age: queued_params.max_age,
                         }
                     )
                 );
@@ -510,7 +511,7 @@ pub mod ReversionSolver {
             let mut ask: PositionInfo = Default::default();
             let (bid_lower, bid_upper, ask_lower, ask_upper) =
                 spread_math::get_virtual_position_range(
-                trend_state.trend, params.spread, params.range, cached_price, oracle_price
+                trend_state.trend, params.range, cached_price, oracle_price
             );
             if state.quote_reserves != 0 {
                 bid =

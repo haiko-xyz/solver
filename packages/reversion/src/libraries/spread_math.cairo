@@ -56,7 +56,6 @@ pub fn get_virtual_position(
 //
 // # Arguments
 // `trend` - current market trend
-// `spread` - spread to apply to the oracle price
 // `range` - position range
 // `cached_price` - cached oracle price (base 10e28)
 // `oracle_price` - current oracle price (base 10e28)
@@ -67,17 +66,17 @@ pub fn get_virtual_position(
 // `ask_lower` - virtual ask lower limit
 // `ask_upper` - virtual ask upper limit
 pub fn get_virtual_position_range(
-    trend: Trend, spread: u32, range: u32, cached_price: u256, oracle_price: u256
+    trend: Trend, range: u32, cached_price: u256, oracle_price: u256
 ) -> (u32, u32, u32, u32) {
     assert(oracle_price != 0, 'OraclePriceZero');
 
     // Calculate position ranges on the new oracle price.
     let oracle_limit = price_math::price_to_limit(oracle_price, 1, false);
-    assert(oracle_limit >= spread + range, 'OracleLimitUF');
-    let new_bid_lower = oracle_limit - spread - range;
-    let new_bid_upper = oracle_limit - spread;
-    let new_ask_lower = oracle_limit + spread;
-    let new_ask_upper = oracle_limit + spread + range;
+    assert(oracle_limit >= range, 'OracleLimitUF');
+    let new_bid_lower = oracle_limit - range;
+    let new_bid_upper = oracle_limit;
+    let new_ask_lower = oracle_limit;
+    let new_ask_upper = oracle_limit + range;
 
     // Handle special case. If cached price is unset, set it to the oracle price.
     let mut cached_price_set = cached_price;
@@ -87,11 +86,11 @@ pub fn get_virtual_position_range(
 
     // Calculate position ranges on the cached price.
     let cached_limit = price_math::price_to_limit(cached_price_set, 1, false);
-    assert(cached_limit >= spread + range, 'CachedLimitUF');
-    let bid_lower = cached_limit - spread - range;
-    let bid_upper = cached_limit - spread;
-    let ask_lower = cached_limit + spread;
-    let ask_upper = cached_limit + spread + range;
+    assert(cached_limit >= range, 'CachedLimitUF');
+    let bid_lower = cached_limit - range;
+    let bid_upper = cached_limit;
+    let ask_lower = cached_limit;
+    let ask_upper = cached_limit + range;
 
     // Otherwise, cap bid upper or ask lower at oracle price and apply conditions for 
     // quoting single sided liquidity.
@@ -115,8 +114,9 @@ pub fn get_virtual_position_range(
                 // Handle special case: oracle limit + spread can exceed bid upper, so disable ask
                 if new_ask_lower >= bid_upper {
                     (bid_lower, new_bid_upper, 0, 0)
+                } else {
+                    (bid_lower, new_bid_upper, new_ask_lower, bid_upper)
                 }
-                (bid_lower, new_bid_upper, new_ask_lower, bid_upper)
             }
         },
         Trend::Down => {
@@ -128,8 +128,9 @@ pub fn get_virtual_position_range(
                 // Handle special case: oracle limit - spread can be less than ask lower, disable bid
                 if new_bid_upper <= ask_lower {
                     (0, 0, new_ask_lower, ask_upper)
+                } else {
+                    (ask_lower, new_bid_upper, new_ask_lower, ask_upper)
                 }
-                (ask_lower, new_bid_upper, new_ask_lower, ask_upper)
             }
         },
         Trend::Range => (new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper),

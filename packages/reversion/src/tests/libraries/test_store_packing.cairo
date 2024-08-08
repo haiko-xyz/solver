@@ -31,7 +31,7 @@ fn test_store_packing_market_params() {
     let store_packing_contract = before();
 
     let market_params = MarketParams {
-        spread: 15,
+        fee_rate: 15,
         range: 15000,
         base_currency_id: 12893128793123,
         quote_currency_id: 128931287,
@@ -42,7 +42,7 @@ fn test_store_packing_market_params() {
     store_packing_contract.set_market_params(1, market_params);
     let unpacked = store_packing_contract.get_market_params(1);
 
-    assert(unpacked.spread == market_params.spread, 'Market params: spread');
+    assert(unpacked.fee_rate == market_params.fee_rate, 'Market params: fee rate');
     assert(unpacked.range == market_params.range, 'Market params: range');
     assert(
         unpacked.base_currency_id == market_params.base_currency_id, 'Market params: base curr id'

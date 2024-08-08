@@ -11,7 +11,7 @@ use haiko_solver_reversion::libraries::swap_lib::{
 use haiko_lib::math::fee_math::gross_to_net;
 use haiko_lib::constants::{ONE, MAX};
 use haiko_lib::helpers::utils::{
-    approx_eq, encode_sqrt_price, to_e18, to_e28, to_e18_u128, to_e28_u128
+    approx_eq, approx_eq_pct, encode_sqrt_price, to_e18, to_e28, to_e18_u128, to_e28_u128
 };
 
 ////////////////////////////////
@@ -32,7 +32,7 @@ fn test_get_swap_amounts_succeeds() {
         upper_sqrt_price: encode_sqrt_price(1, 1),
         liquidity: to_e18_u128(10000),
     };
-    let (amount_in, amount_out) = get_swap_amounts(swap_params, position);
+    let (amount_in, amount_out) = get_swap_amounts(swap_params, position, 0);
     assert(approx_eq(amount_in, 1000000000000000000, 1000), 'Swap amts: amt in');
     assert(approx_eq(amount_out, 1249860261374659470, 1000), 'Swap amts: amt out');
 }
@@ -48,10 +48,10 @@ fn test_get_swap_amounts_over_zero_liquidity() {
     };
     let position = PositionInfo {
         lower_sqrt_price: encode_sqrt_price(1, 1),
-        upper_sqrt_price: encode_sqrt_price(10, 10),
+        upper_sqrt_price: encode_sqrt_price(12, 10),
         liquidity: 0,
     };
-    let (amount_in, amount_out) = get_swap_amounts(swap_params, position);
+    let (amount_in, amount_out) = get_swap_amounts(swap_params, position, 50);
     assert(amount_in == 0 && amount_out == 0, 'Swap amts: 0 liq');
 }
 
@@ -69,11 +69,10 @@ fn test_get_swap_amounts_bid_threshold_sqrt_price() {
         upper_sqrt_price: encode_sqrt_price(1, 1),
         liquidity: to_e18_u128(200),
     };
-    let (amount_in, amount_out) = get_swap_amounts(swap_params, position);
-    assert(
-        amount_in < 10000000000000000000 && amount_out < 9523809523809523809,
-        'Swap amts: bid threshold'
-    );
+    let (amount_in, amount_out) = get_swap_amounts(swap_params, position, 50);
+    println!("Amount in: {}, Amount out: {}", amount_in, amount_out);
+    assert(approx_eq_pct(amount_in, 5221779313598832344, 14), 'Amount in');
+    assert(approx_eq_pct(amount_out, 5064113103820740000, 14), 'Amount out');
 }
 
 #[test]
@@ -90,11 +89,10 @@ fn test_get_swap_amounts_ask_threshold_sqrt_price() {
         upper_sqrt_price: encode_sqrt_price(12, 10),
         liquidity: to_e18_u128(200),
     };
-    let (amount_in, amount_out) = get_swap_amounts(swap_params, position);
-    assert(
-        amount_in < 10000000000000000000 && amount_out < 9523809523809523809,
-        'Swap amts: ask threshold'
-    );
+    let (amount_in, amount_out) = get_swap_amounts(swap_params, position, 50);
+    println!("Amount in: {}, Amount out: {}", amount_in, amount_out);
+    assert(approx_eq_pct(amount_in, 4963834491650251256, 14), 'Amount in');
+    assert(approx_eq_pct(amount_out, 4819985410293394924, 14), 'Amount out');
 }
 
 ////////////////////////////////

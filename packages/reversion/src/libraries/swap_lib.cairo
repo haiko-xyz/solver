@@ -7,7 +7,7 @@ use haiko_solver_core::types::{MarketState, PositionInfo, SwapParams};
 use haiko_solver_reversion::types::MarketParams;
 
 // Haiko imports.
-use haiko_lib::math::{math, liquidity_math};
+use haiko_lib::math::{math, fee_math, liquidity_math};
 use haiko_lib::constants::{ONE, MAX_SQRT_PRICE};
 use haiko_lib::types::i128::I128Trait;
 
@@ -20,7 +20,9 @@ use haiko_lib::types::i128::I128Trait;
 // # Returns
 // `amount_in` - amount swapped in
 // `amount_out` - amount swapped out
-pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u256, u256) {
+pub fn get_swap_amounts(
+    swap_params: SwapParams, position: PositionInfo, fee_rate: u16
+) -> (u256, u256) {
     // Define start and target prices based on swap direction.
     let start_sqrt_price = if swap_params.is_buy {
         position.lower_sqrt_price
@@ -30,6 +32,7 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
     let target_sqrt_price = if swap_params.is_buy {
         if swap_params.threshold_sqrt_price.is_some() {
             let threshold = swap_params.threshold_sqrt_price.unwrap();
+            println!("threshold: {}, position.lower_sqrt_price: {}", threshold, position.lower_sqrt_price);
             assert(threshold > position.lower_sqrt_price, 'ThresholdInvalid');
             min(position.upper_sqrt_price, threshold)
         } else {
@@ -38,6 +41,7 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
     } else {
         if swap_params.threshold_sqrt_price.is_some() {
             let threshold = swap_params.threshold_sqrt_price.unwrap();
+            println!("threshold: {}, position.upper_sqrt_price: {}", threshold, position.upper_sqrt_price);
             assert(threshold < position.upper_sqrt_price, 'ThresholdInvalid');
             max(position.lower_sqrt_price, threshold)
         } else {
@@ -45,16 +49,25 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
         }
     };
 
+    // Deduct swap fee.
+    let net_amount = if swap_params.exact_input {
+        fee_math::gross_to_net(swap_params.amount, fee_rate)
+    } else {
+        swap_params.amount
+    };
+
     // Compute swap amounts.
-    let (amount_in, amount_out, _) = compute_swap_amounts(
+    let (net_amount_in, net_amount_out, _) = compute_swap_amounts(
         start_sqrt_price,
         target_sqrt_price,
         position.liquidity,
-        swap_params.amount,
+        net_amount,
         swap_params.exact_input,
     );
 
-    (amount_in, amount_out)
+    // Calculate and return amounts.
+    let amount_in = fee_math::net_to_gross(net_amount_in, fee_rate);
+    (amount_in, net_amount_out)
 }
 
 // Compute amounts swapped and new price after swapping between two prices.

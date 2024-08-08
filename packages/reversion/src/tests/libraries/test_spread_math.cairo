@@ -31,7 +31,6 @@ struct PositionTestCase {
 #[derive(Drop, Copy)]
 struct PositionRangeTestCase {
     trend: Trend,
-    spread: u32,
     range: u32,
     cached_price: u256,
     oracle_price: u256,
@@ -192,182 +191,167 @@ fn test_get_virtual_position_range() {
         // Case 1: Uptrend, oracle price is outside (above) bid position
         PositionRangeTestCase {
             trend: Trend::Up,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(11) / 10, // 1.1
-            bid_lower_exp: 7915146,
-            bid_upper_exp: 7916146,
+            bid_lower_exp: 7915156,
+            bid_upper_exp: 7916156,
             ask_lower_exp: 0,
             ask_upper_exp: 0,
         },
         // Case 2: Uptrend, oracle price is equal to cached price
         PositionRangeTestCase {
             trend: Trend::Up,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(1),
-            bid_lower_exp: 7905615,
-            bid_upper_exp: 7906615,
+            bid_lower_exp: 7905625,
+            bid_upper_exp: 7906625,
             ask_lower_exp: 0,
             ask_upper_exp: 0,
         },
         // Case 3: Uptrend, oracle price is inside virtual bid position
         PositionRangeTestCase {
             trend: Trend::Up,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(995) / 1000, // 0.995
-            bid_lower_exp: 7905615,
-            bid_upper_exp: 7906113,
-            ask_lower_exp: 7906133,
-            ask_upper_exp: 7906615,
+            bid_lower_exp: 7905625,
+            bid_upper_exp: 7906123,
+            ask_lower_exp: 7906123,
+            ask_upper_exp: 7906625,
         },
         // Case 4: Uptrend, oracle price at bid lower
         PositionRangeTestCase {
             trend: Trend::Up,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(99005) / 100000, // 0.99005
             bid_lower_exp: 0,
             bid_upper_exp: 0,
-            ask_lower_exp: 7905615,
-            ask_upper_exp: 7906615,
+            ask_lower_exp: 7905625,
+            ask_upper_exp: 7906625,
         },
         // Case 5: Uptrend, oracle price is outside (above) ask position
         PositionRangeTestCase {
             trend: Trend::Up,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(95) / 100, // 0.95
             bid_lower_exp: 0,
             bid_upper_exp: 0,
-            ask_lower_exp: 7905615,
-            ask_upper_exp: 7906615,
+            ask_lower_exp: 7905625,
+            ask_upper_exp: 7906625,
         },
         // Case 6: Uptrend, cached price unset
         PositionRangeTestCase {
             trend: Trend::Up,
-            spread: 10,
             range: 1000,
             cached_price: 0,
             oracle_price: to_e28(9) / 10, // 0.9
-            bid_lower_exp: 7895078,
-            bid_upper_exp: 7896078,
-            ask_lower_exp: 7896098,
-            ask_upper_exp: 7897098,
+            bid_lower_exp: 7895088,
+            bid_upper_exp: 7896088,
+            ask_lower_exp: 0,
+            ask_upper_exp: 0,
         },
         // Case 7: Downtrend, oracle price is outside (below) bid position
         PositionRangeTestCase {
             trend: Trend::Down,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(9) / 10, // 0.9
             bid_lower_exp: 0,
             bid_upper_exp: 0,
-            ask_lower_exp: 7896098,
-            ask_upper_exp: 7897098,
+            ask_lower_exp: 7896088,
+            ask_upper_exp: 7897088,
         },
         // Case 8: Downtrend, oracle price is equal to cached price
         PositionRangeTestCase {
             trend: Trend::Down,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(1),
             bid_lower_exp: 0,
             bid_upper_exp: 0,
-            ask_lower_exp: 7906635,
-            ask_upper_exp: 7907635,
+            ask_lower_exp: 7906625,
+            ask_upper_exp: 7907625,
         },
         // Case 9: Downtrend, oracle price is inside ask position
         PositionRangeTestCase {
             trend: Trend::Down,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(1005) / 1000, // 1.005
-            bid_lower_exp: 7906635,
-            bid_upper_exp: 7907114,
-            ask_lower_exp: 7907134,
-            ask_upper_exp: 7907635,
+            bid_lower_exp: 7906625,
+            bid_upper_exp: 7907124,
+            ask_lower_exp: 7907124,
+            ask_upper_exp: 7907625,
         },
         // Case 10: Downtrend, oracle price is at ask upper
         PositionRangeTestCase {
             trend: Trend::Down,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(101006) / 100000, // 1.01006
-            bid_lower_exp: 7906635,
-            bid_upper_exp: 7907635,
+            bid_lower_exp: 7906625,
+            bid_upper_exp: 7907625,
             ask_lower_exp: 0,
             ask_upper_exp: 0,
         },
         // Case 11: Downtrend, oracle price is outside (above) ask upper
         PositionRangeTestCase {
             trend: Trend::Down,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(105) / 100, // 1.05
-            bid_lower_exp: 7906635,
-            bid_upper_exp: 7907635,
+            bid_lower_exp: 7906625,
+            bid_upper_exp: 7907625,
             ask_lower_exp: 0,
             ask_upper_exp: 0,
         },
         // Case 12: Downtrend, cached price unset
         PositionRangeTestCase {
             trend: Trend::Down,
-            spread: 10,
             range: 1000,
             cached_price: 0,
             oracle_price: to_e28(11) / 10, // 1.1
-            bid_lower_exp: 7915146,
-            bid_upper_exp: 7916146,
-            ask_lower_exp: 7916166,
-            ask_upper_exp: 7917166,
+            bid_lower_exp: 0,
+            bid_upper_exp: 0,
+            ask_lower_exp: 7916156,
+            ask_upper_exp: 7917156,
         },
         // Case 13: Ranging, oracle price is equal to cached
         PositionRangeTestCase {
             trend: Trend::Range,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(1),
-            bid_lower_exp: 7905615,
-            bid_upper_exp: 7906615,
-            ask_lower_exp: 7906635,
-            ask_upper_exp: 7907635,
+            bid_lower_exp: 7905625,
+            bid_upper_exp: 7906625,
+            ask_lower_exp: 7906625,
+            ask_upper_exp: 7907625,
         },
         // Case 14: Ranging, oracle price is above cached
         PositionRangeTestCase {
             trend: Trend::Range,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(15) / 10, // 1.5
-            bid_lower_exp: 7946161,
-            bid_upper_exp: 7947161,
-            ask_lower_exp: 7947181,
-            ask_upper_exp: 7948181,
+            bid_lower_exp: 7946171,
+            bid_upper_exp: 7947171,
+            ask_lower_exp: 7947171,
+            ask_upper_exp: 7948171,
         },
         // Case 15: Ranging, oracle price is above cached
         PositionRangeTestCase {
             trend: Trend::Range,
-            spread: 10,
             range: 1000,
             cached_price: to_e28(1),
             oracle_price: to_e28(5) / 10, // 0.5
-            bid_lower_exp: 7836299,
-            bid_upper_exp: 7837299,
-            ask_lower_exp: 7837319,
-            ask_upper_exp: 7838319,
+            bid_lower_exp: 7836309,
+            bid_upper_exp: 7837309,
+            ask_lower_exp: 7837309,
+            ask_upper_exp: 7838309,
         },
     ]
         .span();
@@ -380,7 +364,7 @@ fn test_get_virtual_position_range() {
         }
         let case = *cases.at(i);
         let (bid_lower, bid_upper, ask_lower, ask_upper) = get_virtual_position_range(
-            case.trend, case.spread, case.range, case.cached_price, case.oracle_price
+            case.trend, case.range, case.cached_price, case.oracle_price
         );
         if (!approx_eq(bid_lower.into(), case.bid_lower_exp.into(), 1)) {
             panic!("Bid lower {}: {} (act), {} (exp)", i + 1, bid_lower, case.bid_lower_exp);
@@ -401,17 +385,17 @@ fn test_get_virtual_position_range() {
 #[test]
 #[should_panic(expected: ('CachedLimitUF',))]
 fn test_get_virtual_position_range_cached_limit_underflow() {
-    get_virtual_position_range(Trend::Range, 10, 2000000, 10, to_e28(1));
+    get_virtual_position_range(Trend::Range, 2000000, 10, to_e28(1));
 }
 
 #[test]
 #[should_panic(expected: ('OracleLimitUF',))]
 fn test_get_virtual_position_range_oracle_limit_underflow() {
-    get_virtual_position_range(Trend::Range, 10, 2000000, to_e28(1), 10);
+    get_virtual_position_range(Trend::Range, 2000000, to_e28(1), 10);
 }
 
 #[test]
 #[should_panic(expected: ('OraclePriceZero',))]
 fn test_get_virtual_position_range_oracle_price_zero() {
-    get_virtual_position_range(Trend::Range, 10, 1000, to_e28(1), 0);
+    get_virtual_position_range(Trend::Range, 1000, to_e28(1), 0);
 }

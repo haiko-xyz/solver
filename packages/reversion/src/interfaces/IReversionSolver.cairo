@@ -21,6 +21,12 @@ pub trait IReversionSolver<TContractState> {
     // Pragma oracle contract address
     fn oracle(self: @TContractState) -> ContractAddress;
 
+    // Trend setter contract address
+    fn trend_setter(self: @TContractState) -> ContractAddress;
+    
+    // Get trend of solver market.
+    fn trend(self: @TContractState, market_id: felt252) -> Trend;
+
     // Get unscaled oracle price from oracle feed.
     // 
     // # Arguments
@@ -75,6 +81,12 @@ pub trait IReversionSolver<TContractState> {
     // # Arguments
     // * `oracle` - contract address of oracle feed
     fn change_oracle(ref self: TContractState, oracle: ContractAddress);
+
+    // Change the trend setter.
+    //
+    // # Arguments
+    // * `trend_setter` - contract address of trend setter admin
+    fn change_trend_setter(ref self: TContractState, trend_setter: ContractAddress);
 
     // Query virtual liquidity positions against which swaps are executed.
     // 

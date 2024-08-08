@@ -2,7 +2,9 @@
 use starknet::storage_access::StorePacking;
 
 // Local imports.
-use haiko_solver_reversion::types::{Trend, MarketParams, TrendState, PackedMarketParams, PackedTrendState};
+use haiko_solver_reversion::types::{
+    Trend, MarketParams, TrendState, PackedMarketParams, PackedTrendState
+};
 
 ////////////////////////////////
 // CONSTANTS
@@ -73,11 +75,7 @@ pub impl TrendStateStorePacking of StorePacking<TrendState, PackedTrendState> {
         let cached_decimals: u32 = ((slab0 / TWO_POW_128.into()) & MASK_32).try_into().unwrap();
         let trend: Trend = u256_to_trend((value.slab0.into() / TWO_POW_160.into()) & MASK_2);
 
-        TrendState {
-            trend,
-            cached_price,
-            cached_decimals
-        }
+        TrendState { trend, cached_price, cached_decimals }
     }
 }
 

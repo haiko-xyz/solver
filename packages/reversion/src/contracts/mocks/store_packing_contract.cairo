@@ -12,7 +12,9 @@ pub trait IStorePackingContract<TContractState> {
 #[starknet::contract]
 pub mod StorePackingContract {
     use haiko_solver_reversion::types::{MarketParams, TrendState};
-    use haiko_solver_reversion::libraries::store_packing::{MarketParamsStorePacking, TrendStateStorePacking};
+    use haiko_solver_reversion::libraries::store_packing::{
+        MarketParamsStorePacking, TrendStateStorePacking
+    };
     use super::IStorePackingContract;
 
     ////////////////////////////////
@@ -52,9 +54,7 @@ pub mod StorePackingContract {
             self.market_params.write(market_id, market_params);
         }
 
-        fn set_trend_state(
-            ref self: ContractState, market_id: felt252, trend_state: TrendState
-        ) {
+        fn set_trend_state(ref self: ContractState, market_id: felt252, trend_state: TrendState) {
             self.trend_state.write(market_id, trend_state);
         }
     }

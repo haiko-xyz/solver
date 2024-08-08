@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import {
   getVirtualPosition,
   getVirtualPositionRange,
-} from "../../src/libraries/SpreadMath";
+} from "../../replicating/libraries/SpreadMath";
 
 const testGetVirtualPositionCases = () => {
   const cases = [
@@ -64,5 +64,5 @@ const testGetVirtualPositionRangeCases = () => {
   }
 };
 
-testGetVirtualPositionCases();
-// testGetVirtualPositionRangeCases();
+// testGetVirtualPositionCases();
+testGetVirtualPositionRangeCases();

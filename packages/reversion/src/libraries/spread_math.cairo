@@ -114,9 +114,8 @@ pub fn get_virtual_position_range(
                 // Handle special case: oracle limit + spread can exceed bid upper, so disable ask
                 if new_ask_lower >= bid_upper {
                     (bid_lower, new_bid_upper, 0, 0)
-                } else {
-                    (bid_lower, new_bid_upper, new_ask_lower, bid_upper)
                 }
+                (bid_lower, new_bid_upper, new_ask_lower, bid_upper)
             }
         },
         Trend::Down => {
@@ -128,9 +127,8 @@ pub fn get_virtual_position_range(
                 // Handle special case: oracle limit - spread can be less than ask lower, disable bid
                 if new_bid_upper <= ask_lower {
                     (0, 0, new_ask_lower, ask_upper)
-                } else {
-                    (ask_lower, new_bid_upper, new_ask_lower, ask_upper)
                 }
+                (ask_lower, new_bid_upper, new_ask_lower, ask_upper)
             }
         },
         Trend::Range => (new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper),

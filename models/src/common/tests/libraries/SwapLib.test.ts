@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { getSwapAmounts } from "../../src/libraries/SwapLib";
+import { getSwapAmounts } from "../../../common/libraries/SwapLib";
 
 const testGetSwapAmounts = () => {
   const cases = [

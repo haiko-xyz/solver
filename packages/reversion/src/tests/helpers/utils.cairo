@@ -269,3 +269,27 @@ pub fn snapshot(
         ask,
     }
 }
+// Print foundry events.
+// Doesn't work as a fn - copy code body into test.
+// fn print_events(ref spy: EventSpy) {
+//     spy.fetch_events();
+//     let mut i = 0;
+//     loop {
+//         if i == spy.events.len() {
+//             break;
+//         }
+//         let (_, event) = spy.events.at(i);
+//         let mut j = 0;
+//         loop {
+//             if j == event.data.len() {
+//                 break;
+//             }
+//             let data = event.data.at(j);
+//             println!("[event {}] index {}: {}", i, j, data);
+//             j += 1;
+//         };
+//         i += 1;
+//     };
+// }
+
+

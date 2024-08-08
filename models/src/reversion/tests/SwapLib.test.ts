@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { getSwapAmounts } from "../../../common/libraries/SwapLib";
+import { getSwapAmounts } from "../libraries/SwapLib";
 
 const testGetSwapAmounts = () => {
   const cases = [
@@ -9,9 +9,10 @@ const testGetSwapAmounts = () => {
       amount: 1,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
-      lowerSqrtPrice: 1,
-      upperSqrtPrice: 1.2 ** 0.5,
+      lowerSqrtPrice: 0.8 ** 0.5,
+      upperSqrtPrice: 1,
       liquidity: 10000,
+      feeRate: 0,
     },
     {
       isBuy: true,
@@ -22,6 +23,7 @@ const testGetSwapAmounts = () => {
       lowerSqrtPrice: 1,
       upperSqrtPrice: 1.2 ** 0.5,
       liquidity: 0,
+      feeRate: 0.005,
     },
     {
       isBuy: false,
@@ -32,6 +34,7 @@ const testGetSwapAmounts = () => {
       lowerSqrtPrice: 0.8 ** 0.5,
       upperSqrtPrice: 1,
       liquidity: 200,
+      feeRate: 0.005,
     },
     {
       isBuy: true,
@@ -42,6 +45,7 @@ const testGetSwapAmounts = () => {
       lowerSqrtPrice: 1,
       upperSqrtPrice: 1.2 ** 0.5,
       liquidity: 200,
+      feeRate: 0.005,
     },
   ];
 
@@ -55,7 +59,8 @@ const testGetSwapAmounts = () => {
       params.thresholdAmount,
       params.lowerSqrtPrice,
       params.upperSqrtPrice,
-      params.liquidity
+      params.liquidity,
+      params.feeRate
     );
     console.log(`Case ${i + 1}`);
     console.log({

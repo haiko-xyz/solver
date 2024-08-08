@@ -51,21 +51,21 @@ const testGetVirtualPositionCases = () => {
 
 const testGetVirtualPositionRangeCases = () => {
   const cases = [
-    getVirtualPositionRange(Trend.Up, 10, 1000, 1, 1.1),
-    getVirtualPositionRange(Trend.Up, 10, 1000, 1, 1),
-    getVirtualPositionRange(Trend.Up, 10, 1000, 1, 0.995),
-    getVirtualPositionRange(Trend.Up, 10, 1000, 1, 0.99005),
-    getVirtualPositionRange(Trend.Up, 10, 1000, 1, 0.95),
-    getVirtualPositionRange(Trend.Up, 10, 1000, 0, 0.9),
-    getVirtualPositionRange(Trend.Down, 10, 1000, 1, 0.9),
-    getVirtualPositionRange(Trend.Down, 10, 1000, 1, 1),
-    getVirtualPositionRange(Trend.Down, 10, 1000, 1, 1.005),
-    getVirtualPositionRange(Trend.Down, 10, 1000, 1, 1.01006),
-    getVirtualPositionRange(Trend.Down, 10, 1000, 1, 1.05),
-    getVirtualPositionRange(Trend.Down, 10, 1000, 0, 1.1),
-    getVirtualPositionRange(Trend.Range, 10, 1000, 1, 1),
-    getVirtualPositionRange(Trend.Range, 10, 1000, 1, 1.5),
-    getVirtualPositionRange(Trend.Range, 10, 1000, 1, 0.5),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 1.1),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 1),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 0.995),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 0.99005),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 0.95),
+    getVirtualPositionRange(Trend.Up, 1000, 0, 0.9),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 0.9),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 1),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 1.005),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 1.01006),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 1.05),
+    getVirtualPositionRange(Trend.Down, 1000, 0, 1.1),
+    getVirtualPositionRange(Trend.Range, 1000, 1, 1),
+    getVirtualPositionRange(Trend.Range, 1000, 1, 1.5),
+    getVirtualPositionRange(Trend.Range, 1000, 1, 0.5),
   ];
 
   for (let i = 0; i < cases.length; i++) {

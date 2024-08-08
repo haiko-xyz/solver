@@ -1,10 +1,10 @@
 import Decimal from "decimal.js";
-import { getSwapAmounts } from "../../../common/libraries/SwapLib";
+import { getSwapAmounts } from "../libraries/SwapLib";
 import {
   getDelta,
   getVirtualPosition,
   getVirtualPositionRange,
-} from "../../libraries/SpreadMath";
+} from "../libraries/SpreadMath";
 
 type Case = {
   description: string;

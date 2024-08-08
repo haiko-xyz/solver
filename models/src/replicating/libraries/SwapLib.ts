@@ -1,6 +1,9 @@
 import Decimal from "decimal.js";
-import { liquidityToBase, liquidityToQuote } from "../math/liquidityMath";
-import { PRECISION, ROUNDING } from "../config";
+import {
+  liquidityToBase,
+  liquidityToQuote,
+} from "../../common/math/liquidityMath";
+import { PRECISION, ROUNDING } from "../../common/config";
 
 export const getSwapAmounts = (
   isBuy: boolean,
@@ -12,6 +15,13 @@ export const getSwapAmounts = (
   upperSqrtPrice: Decimal.Value,
   liquidity: Decimal.Value
 ): { amountIn: Decimal.Value; amountOut: Decimal.Value } => {
+  if (
+    new Decimal(liquidity).isZero() ||
+    new Decimal(lowerSqrtPrice).eq(upperSqrtPrice)
+  ) {
+    return { amountIn: "0", amountOut: "0" };
+  }
+
   const startSqrtPrice = isBuy ? lowerSqrtPrice : upperSqrtPrice;
   const targetSqrtPrice = isBuy
     ? thresholdSqrtPrice

@@ -49,7 +49,6 @@ export const getVirtualPosition = (
 
 export const getVirtualPositionRange = (
   trend: Trend,
-  spread: Decimal.Value,
   range: Decimal.Value,
   cachedPrice: Decimal.Value,
   oraclePrice: Decimal.Value
@@ -61,10 +60,10 @@ export const getVirtualPositionRange = (
   }
 
   const oracleLimit = priceToLimit(oraclePrice, 1);
-  const newBidLower = oracleLimit.sub(spread).sub(range);
-  const newBidUpper = oracleLimit.sub(spread);
-  const newAskLower = oracleLimit.add(spread);
-  const newAskUpper = oracleLimit.add(spread).add(range);
+  const newBidLower = oracleLimit.sub(range);
+  const newBidUpper = oracleLimit;
+  const newAskLower = oracleLimit;
+  const newAskUpper = oracleLimit.add(range);
 
   let cachedPriceSet = cachedPrice;
   if (new Decimal(cachedPrice).isZero()) {
@@ -72,10 +71,10 @@ export const getVirtualPositionRange = (
   }
 
   const cachedLimit = priceToLimit(cachedPriceSet, 1);
-  const bidLower = cachedLimit.sub(spread).sub(range);
-  const bidUpper = cachedLimit.sub(spread);
-  const askLower = cachedLimit.add(spread);
-  const askUpper = cachedLimit.add(spread).add(range);
+  const bidLower = cachedLimit.sub(range);
+  const bidUpper = cachedLimit;
+  const askLower = cachedLimit;
+  const askUpper = cachedLimit.add(range);
 
   switch (trend) {
     case Trend.Up:

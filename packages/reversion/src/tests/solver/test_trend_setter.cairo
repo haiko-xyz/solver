@@ -83,9 +83,7 @@ fn test_change_trend_setter_emits_event() {
                 (
                     solver.contract_address,
                     ReversionSolver::Event::ChangeTrendSetter(
-                        ReversionSolver::ChangeTrendSetter {
-                            trend_setter: alice()
-                        }
+                        ReversionSolver::ChangeTrendSetter { trend_setter: alice() }
                     )
                 )
             ]
@@ -126,7 +124,7 @@ fn test_change_trend_setter_fails_if_trend_setter_unchanged() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
     rev_solver.change_trend_setter(alice());
-    
+
     // Change again to same setter.
     rev_solver.change_trend_setter(alice());
 }

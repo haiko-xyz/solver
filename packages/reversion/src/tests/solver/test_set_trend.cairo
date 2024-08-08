@@ -98,7 +98,7 @@ fn test_set_trend_is_callable_by_trend_setter() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
     rev_solver.change_trend_setter(alice());
-    
+
     // Set trend.
     start_prank(CheatTarget::One(solver.contract_address), alice());
     rev_solver.set_trend(market_id, Trend::Up);
@@ -133,10 +133,7 @@ fn test_set_trend_emits_event() {
                 (
                     solver.contract_address,
                     ReversionSolver::Event::SetTrend(
-                        ReversionSolver::SetTrend {
-                            market_id,
-                            trend: Trend::Up
-                        }
+                        ReversionSolver::SetTrend { market_id, trend: Trend::Up }
                     )
                 )
             ]

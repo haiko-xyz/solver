@@ -1,24 +1,26 @@
 import Decimal from "decimal.js";
-import { getSwapAmounts } from "../../../common/libraries/SwapLib";
+import { getSwapAmounts } from "../libraries/SwapLib";
 import {
-  getDelta,
   getVirtualPosition,
   getVirtualPositionRange,
-} from "../../libraries/SpreadMath";
+} from "../libraries/SpreadMath";
+import { Trend } from "../types";
+
+const reset = "\x1b[0m";
+const green = "\x1b[32m";
 
 type Case = {
   description: string;
   oraclePrice: Decimal.Value;
   baseReserves: Decimal.Value;
   quoteReserves: Decimal.Value;
-  minSpread: Decimal.Value;
+  feeRate: Decimal.Value;
   range: Decimal.Value;
-  maxDelta: Decimal.Value;
-  maxSkew: Decimal.Value;
   amount: Decimal.Value;
   thresholdSqrtPrice: Decimal.Value | null;
   thresholdAmount: Decimal.Value | null;
   swapCasesOverride?: SwapCase[];
+  trendCasesOverride?: Trend[];
 };
 
 type SwapCase = {
@@ -51,158 +53,111 @@ const getSwapCases = (): SwapCase[] => {
 const testSwapCases = () => {
   const cases: Case[] = [
     {
-      description: "1) Full range liq, price 1, no spread",
+      description: "1) Full range liq, price 1, 0% fee",
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 0,
+      feeRate: 0,
       range: 7906625,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "2) Full range liq, price 0.1, no spread",
+      description: "2) Full range liq, price 0.1, 0% fee",
       oraclePrice: 0.1,
       baseReserves: 100,
       quoteReserves: 1000,
-      minSpread: 0,
+      feeRate: 0,
       range: 7676365,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 10,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "3) Full range liq, price 10, no spread",
+      description: "3) Full range liq, price 10, 0% fee",
       oraclePrice: 10,
       baseReserves: 1000,
       quoteReserves: 100,
-      minSpread: 0,
+      feeRate: 0,
       range: 7676365,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "4) Concentrated liq, price 1, no spread",
+      description: "4) Concentrated liq, price 1, 0% fee",
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 0,
+      feeRate: 0,
       range: 5000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "5) Concentrated liq, price 1, 100 spread",
+      description: "5) Concentrated liq, price 1, 1% fee",
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 0.01,
       range: 5000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "6) Concentrated liq, price 10, 50000 spread",
+      description: "6) Concentrated liq, price 10, 50% fee",
       oraclePrice: 10,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 50000,
+      feeRate: 0.5,
       range: 5000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "7) Concentrated liq, price 1, 100 spread, 500 max delta",
-      oraclePrice: 1,
-      baseReserves: 500,
-      quoteReserves: 1000,
-      minSpread: 100,
-      range: 5000,
-      maxDelta: 500,
-      maxSkew: 0,
-      amount: 100,
-      thresholdSqrtPrice: null,
-      thresholdAmount: null,
-    },
-    {
-      description:
-        "8) Concentrated liq, price 0.1, 100 spread, 20000 max delta",
-      oraclePrice: 0.1,
-      baseReserves: 500,
-      quoteReserves: 1000,
-      minSpread: 100,
-      range: 5000,
-      maxDelta: 20000,
-      maxSkew: 0,
-      amount: 100,
-      thresholdSqrtPrice: null,
-      thresholdAmount: null,
-    },
-    {
-      description: "9) Swap with liquidity exhausted",
+      description: "7) Swap with liquidity exhausted",
       oraclePrice: 1,
       baseReserves: 100,
       quoteReserves: 100,
-      minSpread: 100,
+      feeRate: 0.01,
       range: 5000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 200,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "10) Swap with high oracle price",
+      description: "8) Swap with high oracle price",
       oraclePrice: 1000000000000000,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 0.01,
       range: 5000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "11) Swap with low oracle price",
+      description: "9) Swap with low oracle price",
       oraclePrice: "0.00000001",
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 0.01,
       range: 5000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
     },
     {
-      description: "12) Swap buy capped at threshold price",
+      description: "10) Swap buy capped at threshold price",
       oraclePrice: 1,
       baseReserves: 100,
       quoteReserves: 100,
-      minSpread: 100,
+      feeRate: 0.01,
       range: 50000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 50,
       thresholdSqrtPrice: "1.0488088481701515469914535136",
       thresholdAmount: null,
@@ -218,14 +173,12 @@ const testSwapCases = () => {
       ],
     },
     {
-      description: "13) Swap sell capped at threshold price",
+      description: "11) Swap sell capped at threshold price",
       oraclePrice: 1,
       baseReserves: 100,
       quoteReserves: 100,
-      minSpread: 100,
+      feeRate: 0.01,
       range: 50000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 50,
       thresholdSqrtPrice: "0.9486832980505137995996680633",
       thresholdAmount: null,
@@ -241,14 +194,12 @@ const testSwapCases = () => {
       ],
     },
     {
-      description: "14) Swap exact in with threshold amount",
+      description: "12) Swap exact in with threshold amount",
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 0.01,
       range: 5000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
       thresholdAmount: "0.99650000000000000000",
@@ -264,17 +215,15 @@ const testSwapCases = () => {
       ],
     },
     {
-      description: "15) Swap exact out with threshold amount",
+      description: "13) Swap exact out with threshold amount",
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 0.01,
       range: 5000,
-      maxDelta: 0,
-      maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
-      thresholdAmount: "1.00350000000000000000",
+      thresholdAmount: "102",
       swapCasesOverride: [
         {
           isBuy: true,
@@ -294,35 +243,30 @@ const testSwapCases = () => {
       oraclePrice,
       baseReserves,
       quoteReserves,
-      minSpread,
+      feeRate,
       range,
-      maxDelta,
       amount,
       thresholdSqrtPrice,
       thresholdAmount,
       swapCasesOverride,
+      trendCasesOverride,
     } = cases[i];
 
     console.log(`Test Case ${description}`);
-    const delta = getDelta(maxDelta, baseReserves, quoteReserves, oraclePrice);
 
+    // Loop through swap cases
     const swapCases = swapCasesOverride ?? getSwapCases();
     let j = 0;
     for (const { isBuy, exactInput } of swapCases) {
       console.log(
-        `Swap Case ${j + 1}) isBuy: ${isBuy}, exactInput: ${exactInput}`
+        `  Swap Case ${j + 1}) isBuy: ${isBuy}, exactInput: ${exactInput}`
       );
-      const { lowerLimit, upperLimit } = getVirtualPositionRange(
-        !isBuy,
-        minSpread,
-        delta,
-        range,
-        oraclePrice
-      );
+      const { bidLower, bidUpper, askLower, askUpper } =
+        getVirtualPositionRange(Trend.Range, range, 0, oraclePrice);
       const { lowerSqrtPrice, upperSqrtPrice, liquidity } = getVirtualPosition(
         !isBuy,
-        lowerLimit,
-        upperLimit,
+        isBuy ? askLower : bidLower,
+        isBuy ? askUpper : bidUpper,
         isBuy ? baseReserves : quoteReserves
       );
       const { amountIn, amountOut } = getSwapAmounts(
@@ -333,12 +277,16 @@ const testSwapCases = () => {
         thresholdAmount,
         lowerSqrtPrice,
         upperSqrtPrice,
-        liquidity
+        liquidity,
+        feeRate
       );
-      console.log({
-        amountIn: new Decimal(amountIn).mul(1e18).toFixed(0),
-        amountOut: new Decimal(amountOut).mul(1e18).toFixed(0),
-      });
+      console.log(
+        `    amountIn: ${green}${new Decimal(amountIn)
+          .mul(1e18)
+          .toFixed(0)}${reset}, amountOut: ${green}${new Decimal(amountOut)
+          .mul(1e18)
+          .toFixed(0)}${reset}`
+      );
       j++;
     }
   }

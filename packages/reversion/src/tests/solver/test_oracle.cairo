@@ -7,9 +7,7 @@ use haiko_solver_reversion::{
     contracts::mocks::mock_pragma_oracle::{
         IMockPragmaOracleDispatcher, IMockPragmaOracleDispatcherTrait
     },
-    interfaces::{
-        IReversionSolver::{IReversionSolverDispatcher, IReversionSolverDispatcherTrait},
-    },
+    interfaces::{IReversionSolver::{IReversionSolverDispatcher, IReversionSolverDispatcherTrait},},
     tests::{
         helpers::{
             actions::{deploy_reversion_solver, deploy_mock_pragma_oracle},

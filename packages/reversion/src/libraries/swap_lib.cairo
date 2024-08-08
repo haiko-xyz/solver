@@ -32,7 +32,9 @@ pub fn get_swap_amounts(
     let target_sqrt_price = if swap_params.is_buy {
         if swap_params.threshold_sqrt_price.is_some() {
             let threshold = swap_params.threshold_sqrt_price.unwrap();
-            println!("threshold: {}, position.lower_sqrt_price: {}", threshold, position.lower_sqrt_price);
+            println!(
+                "threshold: {}, position.lower_sqrt_price: {}", threshold, position.lower_sqrt_price
+            );
             assert(threshold > position.lower_sqrt_price, 'ThresholdInvalid');
             min(position.upper_sqrt_price, threshold)
         } else {
@@ -41,7 +43,9 @@ pub fn get_swap_amounts(
     } else {
         if swap_params.threshold_sqrt_price.is_some() {
             let threshold = swap_params.threshold_sqrt_price.unwrap();
-            println!("threshold: {}, position.upper_sqrt_price: {}", threshold, position.upper_sqrt_price);
+            println!(
+                "threshold: {}, position.upper_sqrt_price: {}", threshold, position.upper_sqrt_price
+            );
             assert(threshold < position.upper_sqrt_price, 'ThresholdInvalid');
             max(position.lower_sqrt_price, threshold)
         } else {

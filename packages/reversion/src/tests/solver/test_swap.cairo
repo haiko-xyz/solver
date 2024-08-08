@@ -482,7 +482,7 @@ fn get_test_cases_3() -> Span<TestCase> {
             range: 5000,
             amount: to_e18(100),
             threshold_sqrt_price: Option::None(()),
-            threshold_amount: Option::Some(99650000000000000000),
+            threshold_amount: Option::Some(98650000000000000000),
             exp: array![
                 SwapCase {
                     is_buy: true,
@@ -508,7 +508,7 @@ fn get_test_cases_3() -> Span<TestCase> {
             range: 5000,
             amount: to_e18(100),
             threshold_sqrt_price: Option::None(()),
-            threshold_amount: Option::Some(100350000000000000000),
+            threshold_amount: Option::Some(101350000000000000000),
             exp: array![
                 SwapCase {
                     is_buy: true,

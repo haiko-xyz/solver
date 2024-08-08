@@ -23,7 +23,7 @@ pub trait IReversionSolver<TContractState> {
 
     // Trend setter contract address
     fn trend_setter(self: @TContractState) -> ContractAddress;
-    
+
     // Get trend of solver market.
     fn trend(self: @TContractState, market_id: felt252) -> Trend;
 

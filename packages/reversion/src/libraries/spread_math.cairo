@@ -79,13 +79,14 @@ pub fn get_virtual_position_range(
     let new_ask_lower = oracle_limit + spread;
     let new_ask_upper = oracle_limit + spread + range;
 
-    // Handle special case. If cached price is unset, quote as if ranging case.
+    // Handle special case. If cached price is unset, set it to the oracle price.
+    let mut cached_price_set = cached_price;
     if cached_price == 0 {
-        return (new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper);
+        cached_price_set = oracle_price;
     }
 
     // Calculate position ranges on the cached price.
-    let cached_limit = price_math::price_to_limit(cached_price, 1, false);
+    let cached_limit = price_math::price_to_limit(cached_price_set, 1, false);
     assert(cached_limit >= spread + range, 'CachedLimitUF');
     let bid_lower = cached_limit - spread - range;
     let bid_upper = cached_limit - spread;

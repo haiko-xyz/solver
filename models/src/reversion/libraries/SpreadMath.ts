@@ -66,16 +66,12 @@ export const getVirtualPositionRange = (
   const newAskLower = oracleLimit.add(spread);
   const newAskUpper = oracleLimit.add(spread).add(range);
 
+  let cachedPriceSet = cachedPrice;
   if (new Decimal(cachedPrice).isZero()) {
-    return {
-      bidLower: newBidLower,
-      bidUpper: newBidUpper,
-      askLower: newAskLower,
-      askUpper: newAskUpper,
-    };
+    cachedPriceSet = oraclePrice;
   }
 
-  const cachedLimit = priceToLimit(cachedPrice, 1);
+  const cachedLimit = priceToLimit(cachedPriceSet, 1);
   const bidLower = cachedLimit.sub(spread).sub(range);
   const bidUpper = cachedLimit.sub(spread);
   const askLower = cachedLimit.add(spread);

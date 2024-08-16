@@ -105,7 +105,8 @@ pub mod ReversionSolver {
         oracle: ContractAddress,
         vault_token_class: ClassHash,
     ) {
-        self.solver._initializer("Reversion", "RVRS", owner, vault_token_class);
+        let hooks = Hooks { after_swap: true, after_withdraw: false, };
+        self.solver._initializer("Reversion", "RVRS", owner, vault_token_class, hooks);
         let oracle_dispatcher = IOracleABIDispatcher { contract_address: oracle };
         self.oracle.write(oracle_dispatcher);
     }
@@ -166,7 +167,7 @@ pub mod ReversionSolver {
         // # Arguments
         // * `market_id` - market id
         // * `swap_params` - swap parameters
-        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {
+        fn after_swap(ref self: ContractState, market_id: felt252, caller: ContractAddress, swap_params: SwapParams) {
             // Run checks.
             assert(self.solver.unlocked.read(), 'NotSolver');
             
@@ -187,6 +188,26 @@ pub mod ReversionSolver {
 
             // Commit state.
             self.trend_state.write(market_id, trend_state);
+        }
+
+        // Callback function to execute any state updates after a withdraw is completed.
+        // This fn should only be callable by the solver contract.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `caller` - withdrawing depositor
+        // * `shares` - shares withdrawn
+        // * `base_amount` - base amount withdrawn
+        // * `quote_amount` - quote amount withdrawn
+        fn after_withdraw(
+            ref self: ContractState,
+            market_id: felt252,
+            caller: ContractAddress,
+            shares: u256,
+            base_amount: u256,
+            quote_amount: u256
+        ) {
+            assert(self.solver.unlocked.read(), 'NotSolver');
         }
     }
 

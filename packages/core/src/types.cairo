@@ -59,6 +59,36 @@ pub struct PositionInfo {
     pub liquidity: u128,
 }
 
+// Execution hooks to extend call functionality.
+//
+// * `after_swap` - enable after swap hook
+// * `after_withdraw` - enable after withdraw hook
+// TODO: add store packing
+#[derive(Drop, Copy, Serde, Default, starknet::Store)]
+pub struct Hooks {
+    pub after_swap: bool,
+    pub after_withdraw: bool,
+}
+
+// TODO: add docstring
+// TODO: add store packing
+#[derive(Drop, Serde, starknet::Store)]
+pub struct Proposal {
+    pub proposer: ContractAddress,
+    pub proposal_id: felt252,
+    pub market_id: felt252,
+    pub expiry: u64,
+}
+
+// TODO: add docstring
+// TODO: add store packing
+#[derive(Drop, Copy, Serde, PartialEq, Default, starknet::Store)]
+pub struct GovernorParams {
+    pub quorum: u16,
+    pub min_ownership: u16,
+    pub duration: u64,
+}
+
 ////////////////////////////////
 // IMPLS
 ////////////////////////////////

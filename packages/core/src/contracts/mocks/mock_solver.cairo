@@ -27,7 +27,7 @@ pub mod MockSolver {
     use haiko_solver_core::contracts::solver::SolverComponent;
     use haiko_solver_core::libraries::math::fast_sqrt;
     use haiko_solver_core::interfaces::ISolver::ISolverHooks;
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
+    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
 
     // Haiko imports.
     use haiko_lib::math::math;
@@ -77,7 +77,8 @@ pub mod MockSolver {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress, vault_token_class: ClassHash,) {
-        self.solver._initializer("Mock", "MOCK", owner, vault_token_class);
+        let hooks = Hooks { after_swap: false, after_withdraw: false };
+        self.solver._initializer("Mock", "MOCK", owner, vault_token_class, hooks);
     }
 
     ////////////////////////////////
@@ -174,7 +175,32 @@ pub mod MockSolver {
         // # Arguments
         // * `market_id` - market id
         // * `swap_params` - swap parameters
-        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {
+        fn after_swap(
+            ref self: ContractState,
+            market_id: felt252,
+            caller: ContractAddress,
+            swap_params: SwapParams
+        ) {
+            assert(self.solver.unlocked.read(), 'NotSolver');
+        }
+
+        // Callback function to execute any state updates after a withdraw is completed.
+        // This fn should only be callable by the solver contract.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `caller` - withdrawing depositor
+        // * `shares` - shares withdrawn
+        // * `base_amount` - base amount withdrawn
+        // * `quote_amount` - quote amount withdrawn
+        fn after_withdraw(
+            ref self: ContractState,
+            market_id: felt252,
+            caller: ContractAddress,
+            shares: u256,
+            base_amount: u256,
+            quote_amount: u256
+        ) {
             assert(self.solver.unlocked.read(), 'NotSolver');
         }
     }

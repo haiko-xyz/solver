@@ -45,12 +45,27 @@ pub trait IReplicatingSolver<TContractState> {
     // * `params` - market params
     fn set_market_params(ref self: TContractState, market_id: felt252);
 
+    // Propose market params for a solver market with governance enabled.
+    // Only callable by market depositors. Should implement checks of proposed parameters and
+    // emit relevant events.
+    //
+    // # Params
+    // * `market_id` - market id
+    // * `params` - proposed market params
+    //
+    // # Returns
+    // * `proposal_id` - proposal id
+    fn propose_market_params(
+        ref self: TContractState, market_id: felt252, params: MarketParams
+    ) -> felt252;
+
     // Set delay (in seconds) for changing market parameters
     // Only callable by owner.
     //
     // # Params
     // * `delay` - delay in blocks
     fn set_delay(ref self: TContractState, delay: u64);
+
 
     // Change the oracle contract address.
     //

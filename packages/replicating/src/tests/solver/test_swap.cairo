@@ -1119,5 +1119,5 @@ fn test_after_swap_fails_for_non_solver_caller() {
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
     };
-    solver_hooks.after_swap(market_id, params);
+    solver_hooks.after_swap(market_id, alice(), params);
 }

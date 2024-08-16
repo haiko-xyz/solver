@@ -8,7 +8,9 @@ pub mod ReplicatingSolver {
 
     // Local imports.
     use haiko_solver_core::contracts::solver::SolverComponent;
+    use haiko_solver_core::contracts::governor::GovernorComponent;
     use haiko_solver_core::interfaces::ISolver::ISolverHooks;
+    use haiko_solver_core::interfaces::IGovernor::IGovernorHooks;
     use haiko_solver_replicating::libraries::{
         swap_lib, spread_math, store_packing::MarketParamsStorePacking
     };
@@ -19,7 +21,7 @@ pub mod ReplicatingSolver {
             IOracleABIDispatcherTrait
         },
     };
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
+    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
     use haiko_solver_replicating::types::MarketParams;
 
     // Haiko imports.
@@ -33,11 +35,15 @@ pub mod ReplicatingSolver {
     ///////////////////////////////
 
     component!(path: SolverComponent, storage: solver, event: SolverEvent);
-
     #[abi(embed_v0)]
     impl SolverImpl = SolverComponent::SolverImpl<ContractState>;
     impl SolverModifierImpl = SolverComponent::SolverModifier<ContractState>;
     impl SolverInternalImpl = SolverComponent::InternalImpl<ContractState>;
+    
+    component!(path: GovernorComponent, storage: governor, event: GovernorEvent);
+    #[abi(embed_v0)]
+    impl GovernorImpl = GovernorComponent::GovernorImpl<ContractState>;
+    impl GovernorInternalImpl = GovernorComponent::InternalImpl<ContractState>;
 
     ////////////////////////////////
     // STORAGE
@@ -48,12 +54,17 @@ pub mod ReplicatingSolver {
         // Solver
         #[substorage(v0)]
         solver: SolverComponent::Storage,
+        // Governance
+        #[substorage(v0)]
+        governor: GovernorComponent::Storage,
         // oracle for price and volatility feeds
         oracle: IOracleABIDispatcher,
         // Indexed by market id
         market_params: LegacyMap::<felt252, MarketParams>,
         // Indexed by market id
         queued_market_params: LegacyMap::<felt252, MarketParams>,
+        // indexed by proposal id
+        proposed_market_params: LegacyMap::<felt252, MarketParams>,
         // Indexed by market id
         // timestamp when market params were queued
         queued_at: LegacyMap::<felt252, u64>,
@@ -68,12 +79,31 @@ pub mod ReplicatingSolver {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub(crate) enum Event {
+        ProposeMarketParams: ProposeMarketParams,
         QueueMarketParams: QueueMarketParams,
         SetMarketParams: SetMarketParams,
         SetDelay: SetDelay,
         ChangeOracle: ChangeOracle,
         #[flat]
         SolverEvent: SolverComponent::Event,
+        #[flat]
+        GovernorEvent: GovernorComponent::Event,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub(crate) struct ProposeMarketParams {
+        #[key]
+        pub market_id: felt252,
+        #[key]
+        pub proposal_id: felt252,
+        pub min_spread: u32,
+        pub range: u32,
+        pub max_delta: u32,
+        pub max_skew: u16,
+        pub base_currency_id: felt252,
+        pub quote_currency_id: felt252,
+        pub min_sources: u32,
+        pub max_age: u64,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -125,7 +155,8 @@ pub mod ReplicatingSolver {
         oracle: ContractAddress,
         vault_token_class: ClassHash,
     ) {
-        self.solver._initializer("Replicating", "REPL", owner, vault_token_class);
+        let hooks = Hooks { after_swap: false, after_withdraw: true, };
+        self.solver._initializer("Replicating", "REPL", owner, vault_token_class, hooks);
         let oracle_dispatcher = IOracleABIDispatcher { contract_address: oracle };
         self.oracle.write(oracle_dispatcher);
     }
@@ -193,16 +224,6 @@ pub mod ReplicatingSolver {
             (amount_in, amount_out)
         }
 
-        // Callback function to execute any state updates after a swap is completed.
-        // This fn should only be callable by the solver contract.
-        //
-        // # Arguments
-        // * `market_id` - market id
-        // * `swap_params` - swap parameters
-        fn after_swap(ref self: ContractState, market_id: felt252, swap_params: SwapParams) {
-            assert(self.solver.unlocked.read(), 'NotSolver');
-        }
-
         // Get the initial token supply to mint when first depositing to a market.
         //
         // # Arguments
@@ -219,6 +240,85 @@ pub mod ReplicatingSolver {
 
             // Calculate initial supply.            
             (bid.liquidity + ask.liquidity).into()
+        }
+
+        // Callback function to execute any state updates after a swap is completed.
+        // This fn should only be callable by the solver contract.
+        //
+        // # Arguments
+        // * `market_id` - market id
+        // * `swap_params` - swap parameters
+        fn after_swap(
+            ref self: ContractState,
+            market_id: felt252,
+            caller: ContractAddress,
+            swap_params: SwapParams
+        ) {
+            assert(self.solver.unlocked.read(), 'NotSolver');
+        }
+
+        // Callback function to execute any state updates after a withdraw is completed.
+        // This fn should only be callable by the solver contract.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `caller` - withdrawing depositor
+        // * `shares` - shares withdrawn
+        // * `base_amount` - base amount withdrawn
+        // * `quote_amount` - quote amount withdrawn
+        fn after_withdraw(
+            ref self: ContractState,
+            market_id: felt252,
+            caller: ContractAddress,
+            shares: u256,
+            base_amount: u256,
+            quote_amount: u256
+        ) {
+            assert(self.solver.unlocked.read(), 'NotSolver');
+
+            // Call governance hooks.
+            self.governor.after_withdraw_governor(market_id, caller, shares);
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl GovernorHooks of IGovernorHooks<ContractState> {
+        // Hook called to set a passed market param.
+        // Should be implemented by solver to set the passed market params in state.
+        // Should emit any relevant events.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `proposal_id` - proposal id
+        fn set_passed_market_params(
+            ref self: ContractState, market_id: felt252, proposal_id: felt252
+        ) {
+            // Should only be callable internally.
+            assert(self.solver.unlocked.read(), 'NotSolver');
+
+            // Fetch proposed params.
+            let params = self.proposed_market_params.read(proposal_id);
+
+            // Update state.
+            self.market_params.write(market_id, params);
+
+            // Emit event.
+            self
+                .emit(
+                    Event::SetMarketParams(
+                        SetMarketParams {
+                            market_id,
+                            min_spread: params.min_spread,
+                            range: params.range,
+                            max_delta: params.max_delta,
+                            max_skew: params.max_skew,
+                            base_currency_id: params.base_currency_id,
+                            quote_currency_id: params.quote_currency_id,
+                            min_sources: params.min_sources,
+                            max_age: params.max_age,
+                        }
+                    )
+                );
         }
     }
 
@@ -372,6 +472,53 @@ pub mod ReplicatingSolver {
                         }
                     )
                 );
+        }
+
+        // Propose market params for a solver market with governance enabled.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `params` - proposed market params
+        fn propose_market_params(
+            ref self: ContractState, market_id: felt252, params: MarketParams
+        ) -> felt252 {
+            // Run checks.
+            let old_params = self.market_params.read(market_id);
+            assert(old_params != params, 'ParamsUnchanged');
+            assert(params.range != 0, 'RangeZero');
+            assert(params.min_sources != 0, 'MinSourcesZero');
+            assert(params.max_age != 0, 'MaxAgeZero');
+            assert(params.base_currency_id != 0, 'BaseIdZero');
+            assert(params.quote_currency_id != 0, 'QuoteIdZero');
+
+            // Call governor lower level function.
+            let proposal_id = self
+                .governor
+                ._propose_market_params(market_id, );
+
+            // Store proposed params.
+            self.proposed_market_params.write(proposal_id, params);
+
+            // Emit event.
+            self.emit(
+                Event::ProposeMarketParams(
+                    ProposeMarketParams {
+                        market_id,
+                        proposal_id,
+                        min_spread: params.min_spread,
+                        range: params.range,
+                        max_delta: params.max_delta,
+                        max_skew: params.max_skew,
+                        base_currency_id: params.base_currency_id,
+                        quote_currency_id: params.quote_currency_id,
+                        min_sources: params.min_sources,
+                        max_age: params.max_age,
+                    }
+                )
+            );
+
+            // Return proposal id.
+            proposal_id
         }
 
         // Set delay (in seconds) for changing market parameters

@@ -18,7 +18,7 @@ pub mod SolverComponent {
         ISolver::{ISolver, ISolverHooksDispatcher, ISolverHooksDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     };
-    use haiko_solver_core::types::{MarketInfo, MarketState, PositionInfo, SwapParams};
+    use haiko_solver_core::types::{MarketInfo, MarketState, PositionInfo, SwapParams, Hooks};
 
     // Haiko imports.
     use haiko_lib::{math::{math, fee_math}, constants::{ONE, LOG2_1_00001, MAX_FEE_RATE}};
@@ -53,6 +53,8 @@ pub mod SolverComponent {
         withdraw_fees: LegacyMap::<ContractAddress, u256>,
         // vault token class hash
         vault_token_class: ClassHash,
+        // Hooks
+        hooks: Hooks,
         // reentrancy guard (unlocked for hook calls)
         unlocked: bool,
     }
@@ -478,9 +480,12 @@ pub mod SolverComponent {
             self.market_state.write(market_id, state);
 
             // Execute after swap hook.
-            self.unlocked.write(true);
-            solver_hooks.after_swap(market_id, swap_params);
-            self.unlocked.write(false);
+            let hooks = self.hooks.read();
+            if hooks.after_swap {
+                self.unlocked.write(true);
+                solver_hooks.after_swap(market_id, caller, swap_params);
+                self.unlocked.write(false);
+            }
 
             // Emit events.
             self
@@ -802,7 +807,21 @@ pub mod SolverComponent {
             self.market_state.write(market_id, state);
 
             // Deduct applicable fees, emit events and return withdrawn amounts.
-            self._withdraw(market_id, base_withdraw, quote_withdraw, shares)
+            let (base_amount, quote_amount) = self
+                ._withdraw(market_id, base_withdraw, quote_withdraw, shares);
+
+            // Execute after withdraw hook.
+            let hooks = self.hooks.read();
+            if hooks.after_withdraw {
+                let solver_hooks = ISolverHooksDispatcher {
+                    contract_address: get_contract_address()
+                };
+                self.unlocked.write(true);
+                solver_hooks.after_withdraw(market_id, caller, shares, base_amount, quote_amount);
+                self.unlocked.write(false);
+            }
+
+            (base_amount, quote_amount)
         }
 
         // Withdraw exact token amounts from market.
@@ -1000,12 +1019,14 @@ pub mod SolverComponent {
             name: ByteArray,
             symbol: ByteArray,
             owner: ContractAddress,
-            vault_token_class: ClassHash
+            vault_token_class: ClassHash,
+            hooks: Hooks
         ) {
             self.name.write(name);
             self.symbol.write(symbol);
             self.owner.write(owner);
             self.vault_token_class.write(vault_token_class);
+            self.hooks.write(hooks);
         }
 
         // Internal function to deploy vault token for a market on initialisation.

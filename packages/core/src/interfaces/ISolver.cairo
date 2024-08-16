@@ -288,6 +288,29 @@ pub trait ISolverHooks<TContractState> {
     //
     // # Arguments
     // * `market_id` - market id
+    // * `caller` - caller address
     // * `swap_params` - swap parameters
-    fn after_swap(ref self: TContractState, market_id: felt252, swap_params: SwapParams);
+    fn after_swap(
+        ref self: TContractState,
+        market_id: felt252,
+        caller: ContractAddress,
+        swap_params: SwapParams
+    );
+
+    // Callback function to execute any state updates after a withdraw is completed.
+    //
+    // # Arguments
+    // * `market_id` - market id
+    // * `caller` - caller address
+    // * `shares` - shares withdrawn
+    // * `base_amount` - base amount withdrawn
+    // * `quote_amount` - quote amount withdrawn
+    fn after_withdraw(
+        ref self: TContractState,
+        market_id: felt252,
+        caller: ContractAddress,
+        shares: u256,
+        base_amount: u256,
+        quote_amount: u256,
+    );
 }

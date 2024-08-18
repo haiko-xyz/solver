@@ -65,5 +65,5 @@ pub trait IGovernorHooks<TContractState> {
     // * `params` - proposed market params
     // fn propose_market_params(
     //     ref self: ContractState, market_id: felt252, params: MarketParams
-    // ) -> felt252 {
+    // ) -> felt252 {}
 }

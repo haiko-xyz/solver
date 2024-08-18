@@ -232,7 +232,6 @@ pub mod GovernorComponent {
         fn vote_proposed_market_params(
             ref self: ComponentState<TContractState>, market_id: felt252
         ) {
-            println!("vote_proposed_market_params");
             // Caller must be a depositor of the market.
             let solver_comp = get_dep_component!(@self, Solver);
             let market_state = solver_comp.market_state(market_id);

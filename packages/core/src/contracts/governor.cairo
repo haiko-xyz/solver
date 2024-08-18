@@ -351,8 +351,6 @@ pub mod GovernorComponent {
         fn _propose_market_params(
             ref self: ComponentState<TContractState>, market_id: felt252,
         ) -> felt252 {
-            println!("_propose_market_params");
-
             // Run checks.
             // Check market is public.
             let solver_comp = get_dep_component!(@self, Solver);

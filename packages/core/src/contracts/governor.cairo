@@ -11,7 +11,9 @@ pub mod GovernorComponent {
     use starknet::storage::StorageMemberAccessImpl;
 
     // Local imports.
-    use haiko_solver_core::contracts::solver::{SolverComponent, SolverComponent::{SolverModifier, InternalImpl as SolverInternalImpl}};
+    use haiko_solver_core::contracts::solver::{
+        SolverComponent, SolverComponent::{SolverModifier, InternalImpl as SolverInternalImpl}
+    };
     use haiko_solver_core::interfaces::{
         ISolver::ISolver,
         IGovernor::{IGovernor, IGovernorHooksDispatcher, IGovernorHooksDispatcherTrait},
@@ -88,6 +90,14 @@ pub mod GovernorComponent {
         +Drop<TContractState>,
         impl Solver: SolverComponent::HasComponent<TContractState>,
     > of IGovernor<ComponentState<TContractState>> {
+        // Get governance parameters.
+        //
+        // # Returns
+        // * `params` - governance params
+        fn governor_params(self: @ComponentState<TContractState>) -> GovernorParams {
+            self.governor_params.read()
+        }
+
         // Check if market-level governance is enabled.
         //
         // # Params
@@ -97,6 +107,62 @@ pub mod GovernorComponent {
         // * `enabled` - whether governance is enabled
         fn governor_enabled(self: @ComponentState<TContractState>, market_id: felt252) -> bool {
             self.enabled.read(market_id)
+        }
+
+        // Get current proposal id for market.
+        // This can be the current active proposal, or the last expired one.
+        //
+        // # Params
+        // * `market_id` - market id
+        //
+        // # Returns
+        // * `proposal_id` - proposal id
+        fn current_proposal(self: @ComponentState<TContractState>, market_id: felt252) -> felt252 {
+            self.current_proposal.read(market_id)
+        }
+
+        // Get market param proposal.
+        //
+        // # Params
+        // * `proposal_id` - proposal id
+        //
+        // # Returns
+        // * `proposal` - proposal details
+        fn proposal(self: @ComponentState<TContractState>, proposal_id: felt252) -> Proposal {
+            self.proposals.read(proposal_id)
+        }
+
+        // Get user vote weight for proposal.
+        //
+        // # Params
+        // * `caller` - caller address
+        // * `proposal_id` - proposal id
+        //
+        // # Returns
+        // * `shares` - user vote weight
+        fn user_votes(
+            self: @ComponentState<TContractState>, caller: ContractAddress, proposal_id: felt252
+        ) -> u256 {
+            self.user_votes.read((caller, proposal_id))
+        }
+
+        // Get total votes for proposal.
+        //
+        // # Params
+        // `proposal_id` - proposal id
+        //
+        // # Returns
+        // * `total_votes` - total votes for proposal
+        fn total_votes(self: @ComponentState<TContractState>, proposal_id: felt252) -> u256 {
+            self.total_votes.read(proposal_id)
+        }
+
+        // Get last assigned proposal id.
+        //
+        // # Returns
+        // * `last_proposal_id` - last proposal id
+        fn last_proposal_id(self: @ComponentState<TContractState>) -> felt252 {
+            self.last_proposal_id.read()
         }
 
         // Enable or disable governor for market.
@@ -158,7 +224,7 @@ pub mod GovernorComponent {
                     )
                 );
         }
-        
+
         // Vote for the current proposed market params.
         //
         // # Params
@@ -166,6 +232,7 @@ pub mod GovernorComponent {
         fn vote_proposed_market_params(
             ref self: ComponentState<TContractState>, market_id: felt252
         ) {
+            println!("vote_proposed_market_params");
             // Caller must be a depositor of the market.
             let solver_comp = get_dep_component!(@self, Solver);
             let market_state = solver_comp.market_state(market_id);
@@ -208,8 +275,7 @@ pub mod GovernorComponent {
                 let governance_hooks = IGovernorHooksDispatcher { contract_address: contract };
                 let mut solver_comp_mut = get_dep_component_mut!(ref self, Solver);
                 solver_comp_mut.unlocked.write(true);
-                governance_hooks
-                .set_passed_market_params(proposal.market_id, proposal.proposal_id);
+                governance_hooks.set_passed_market_params(proposal.market_id, proposal.proposal_id);
                 solver_comp_mut.unlocked.write(false);
             }
         }
@@ -260,14 +326,14 @@ pub mod GovernorComponent {
     ////////////////////////////////
 
     #[abi(per_item)]
-        #[generate_trait]
-        pub impl InternalImpl<
-            TContractState, 
-            +HasComponent<TContractState>,
-            impl Solver: SolverComponent::HasComponent<TContractState>,
-        > of InternalTrait<TContractState> {
+    #[generate_trait]
+    pub impl InternalImpl<
+        TContractState,
+        +HasComponent<TContractState>,
+        impl Solver: SolverComponent::HasComponent<TContractState>,
+    > of InternalTrait<TContractState> {
         // Internal function to initiate proposal to update market params.
-        
+
         // Can only be called for a public market with pool-level governance enabled. 
         // Passing a proposal requires a yes vote from market owners totaling above quorum 
         // to confirm the change. Callable by market owner, or any depositor with
@@ -283,9 +349,10 @@ pub mod GovernorComponent {
         // # Returns
         // * `proposal_id` - proposal id
         fn _propose_market_params(
-            ref self: ComponentState<TContractState>,
-            market_id: felt252,
+            ref self: ComponentState<TContractState>, market_id: felt252,
         ) -> felt252 {
+            println!("_propose_market_params");
+
             // Run checks.
             // Check market is public.
             let solver_comp = get_dep_component!(@self, Solver);
@@ -326,10 +393,7 @@ pub mod GovernorComponent {
             // Define proposal.
             let now = get_block_timestamp();
             let proposal = Proposal {
-                proposer: caller,
-                market_id,
-                proposal_id,
-                expiry: now + params.duration,
+                proposer: caller, market_id, proposal_id, expiry: now + params.duration,
             };
 
             // Update state.

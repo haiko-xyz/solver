@@ -215,12 +215,16 @@ fn _before(
         approve(quote_token, owner(), solver.contract_address, quote_amount);
     }
 
-    // Fund LP with initial token balances and approve strategy and market manager as spenders.
+    // Fund LPs with initial token balances and approve strategy and market manager as spenders.
     fund(base_token, alice(), base_amount);
     fund(quote_token, alice(), quote_amount);
+    fund(base_token, bob(), base_amount);
+    fund(quote_token, bob(), quote_amount);
     if approve_solver {
         approve(base_token, alice(), solver.contract_address, base_amount);
         approve(quote_token, alice(), solver.contract_address, quote_amount);
+        approve(base_token, bob(), solver.contract_address, base_amount);
+        approve(quote_token, bob(), solver.contract_address, quote_amount);
     }
 
     (

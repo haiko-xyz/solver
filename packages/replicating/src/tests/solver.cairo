@@ -5,4 +5,5 @@ pub mod test_deposit;
 pub mod test_swap;
 pub mod test_withdraw;
 pub mod test_market_params;
+pub mod test_governor;
 pub mod test_oracle;

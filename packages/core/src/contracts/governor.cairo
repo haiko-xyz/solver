@@ -8,9 +8,10 @@ pub mod GovernorComponent {
     use starknet::ContractAddress;
     use core::cmp::min;
     use starknet::{get_caller_address, get_block_timestamp, get_contract_address};
+    use starknet::storage::StorageMemberAccessImpl;
 
     // Local imports.
-    use haiko_solver_core::contracts::solver::{SolverComponent, SolverComponent::SolverModifier};
+    use haiko_solver_core::contracts::solver::{SolverComponent, SolverComponent::{SolverModifier, InternalImpl as SolverInternalImpl}};
     use haiko_solver_core::interfaces::{
         ISolver::ISolver,
         IGovernor::{IGovernor, IGovernorHooksDispatcher, IGovernorHooksDispatcherTrait},
@@ -64,7 +65,7 @@ pub mod GovernorComponent {
     #[derive(Drop, starknet::Event)]
     pub struct ChangeGovernorParams {
         pub quorum: u16,
-        pub min_ownership: u16,
+        pub min_ownership: u32,
         pub duration: u64,
     }
 
@@ -84,6 +85,7 @@ pub mod GovernorComponent {
     pub impl Governor<
         TContractState,
         +HasComponent<TContractState>,
+        +Drop<TContractState>,
         impl Solver: SolverComponent::HasComponent<TContractState>,
     > of IGovernor<ComponentState<TContractState>> {
         // Check if market-level governance is enabled.
@@ -138,7 +140,7 @@ pub mod GovernorComponent {
             assert(params.quorum > 0, 'QuorumZero');
             assert(params.quorum <= 10000, 'QuorumOF');
             assert(params.min_ownership > 0, 'OwnershipZero');
-            assert(params.min_ownership <= 10000, 'OwnershipOF');
+            assert(params.min_ownership <= 1000000, 'OwnershipOF');
             assert(params.duration > 0, 'DurationZero');
 
             // Update governance params.
@@ -204,8 +206,11 @@ pub mod GovernorComponent {
             if total_vote * 10000 >= total_supply * params.quorum.into() {
                 let contract = get_contract_address();
                 let governance_hooks = IGovernorHooksDispatcher { contract_address: contract };
+                let mut solver_comp_mut = get_dep_component_mut!(ref self, Solver);
+                solver_comp_mut.unlocked.write(true);
                 governance_hooks
-                    .set_passed_market_params(proposal.market_id, proposal.proposal_id);
+                .set_passed_market_params(proposal.market_id, proposal.proposal_id);
+                solver_comp_mut.unlocked.write(false);
             }
         }
 

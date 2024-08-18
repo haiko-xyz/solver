@@ -19,7 +19,7 @@ pub mod ReversionSolver {
             IOracleABIDispatcherTrait
         },
     };
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
+    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
     use haiko_solver_reversion::types::{MarketParams, TrendState, Trend};
 
     // Haiko imports.

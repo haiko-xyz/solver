@@ -15,7 +15,7 @@ use haiko_solver_core::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    types::{MarketInfo, MarketState, PositionInfo, SwapParams},
+    types::solver::{MarketInfo, MarketState, PositionInfo, SwapParams},
     tests::helpers::actions::deploy_mock_solver,
 };
 

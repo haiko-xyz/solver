@@ -3,7 +3,7 @@ use starknet::ContractAddress;
 use starknet::class_hash::ClassHash;
 
 // Local imports.
-use haiko_solver_core::types::PositionInfo;
+use haiko_solver_core::types::solver::PositionInfo;
 use haiko_solver_reversion::types::{Trend, MarketParams};
 use haiko_solver_reversion::interfaces::pragma::PragmaPricesResponse;
 

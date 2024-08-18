@@ -18,7 +18,7 @@ pub mod SolverComponent {
         ISolver::{ISolver, ISolverHooksDispatcher, ISolverHooksDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     };
-    use haiko_solver_core::types::{MarketInfo, MarketState, PositionInfo, SwapParams, Hooks};
+    use haiko_solver_core::types::solver::{MarketInfo, MarketState, PositionInfo, SwapParams, Hooks};
 
     // Haiko imports.
     use haiko_lib::{math::{math, fee_math}, constants::{ONE, LOG2_1_00001, MAX_FEE_RATE}};

@@ -228,7 +228,7 @@
   },
   {
     "type": "struct",
-    "name": "haiko_solver_core::types::MarketInfo",
+    "name": "haiko_solver_core::types::solver::MarketInfo",
     "members": [
       {
         "name": "base_token",
@@ -330,7 +330,7 @@
         "inputs": [
           {
             "name": "market_info",
-            "type": "haiko_solver_core::types::MarketInfo"
+            "type": "haiko_solver_core::types::solver::MarketInfo"
           }
         ],
         "outputs": [{ "type": "core::felt252" }],
@@ -340,7 +340,7 @@
         "type": "function",
         "name": "market_info",
         "inputs": [{ "name": "market_id", "type": "core::felt252" }],
-        "outputs": [{ "type": "haiko_solver_core::types::MarketInfo" }],
+        "outputs": [{ "type": "haiko_solver_core::types::solver::MarketInfo" }],
         "state_mutability": "view"
       },
       {
@@ -437,7 +437,7 @@
         "inputs": [
           {
             "name": "market_info",
-            "type": "haiko_solver_core::types::MarketInfo"
+            "type": "haiko_solver_core::types::solver::MarketInfo"
           }
         ],
         "outputs": [

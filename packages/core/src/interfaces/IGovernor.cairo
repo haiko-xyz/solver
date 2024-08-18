@@ -1,5 +1,5 @@
 use starknet::ContractAddress;
-use haiko_solver_core::types::GovernorParams;
+use haiko_solver_core::types::governor::GovernorParams;
 
 #[starknet::interface]
 pub trait IGovernor<TContractState> {

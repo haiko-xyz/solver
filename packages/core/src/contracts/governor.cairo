@@ -16,7 +16,7 @@ pub mod GovernorComponent {
         ISolver::ISolver,
         IGovernor::{IGovernor, IGovernorHooksDispatcher, IGovernorHooksDispatcherTrait},
     };
-    use haiko_solver_core::types::{GovernorParams, Proposal};
+    use haiko_solver_core::types::governor::{GovernorParams, Proposal};
 
     // External imports.
     use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};

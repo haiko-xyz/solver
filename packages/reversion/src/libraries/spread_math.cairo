@@ -2,7 +2,7 @@
 use core::cmp::{min, max};
 
 // Local imports.
-use haiko_solver_core::types::PositionInfo;
+use haiko_solver_core::types::solver::PositionInfo;
 use haiko_solver_reversion::types::Trend;
 
 // Haiko imports.

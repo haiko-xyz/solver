@@ -8,7 +8,7 @@ use haiko_solver_core::{
         ISolverDispatcher, ISolverDispatcherTrait, ISolverHooksDispatcher,
         ISolverHooksDispatcherTrait
     },
-    types::SwapParams,
+    types::solver::SwapParams,
 };
 use haiko_solver_replicating::{
     contracts::mocks::mock_pragma_oracle::{

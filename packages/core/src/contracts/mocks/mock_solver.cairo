@@ -27,7 +27,7 @@ pub mod MockSolver {
     use haiko_solver_core::contracts::solver::SolverComponent;
     use haiko_solver_core::libraries::math::fast_sqrt;
     use haiko_solver_core::interfaces::ISolver::ISolverHooks;
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
+    use haiko_solver_core::types::solver::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
 
     // Haiko imports.
     use haiko_lib::math::math;

@@ -3,7 +3,7 @@ use core::cmp::{min, max};
 
 // Local imports.
 use haiko_solver_replicating::libraries::swap_lib;
-use haiko_solver_core::types::{MarketState, PositionInfo, SwapParams};
+use haiko_solver_core::types::solver::{MarketState, PositionInfo, SwapParams};
 use haiko_solver_replicating::types::MarketParams;
 
 // Haiko imports.

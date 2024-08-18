@@ -9,7 +9,7 @@ use haiko_solver_core::{
         ISolverDispatcher, ISolverDispatcherTrait, ISolverHooksDispatcher,
         ISolverHooksDispatcherTrait
     },
-    types::SwapParams,
+    types::solver::SwapParams,
     tests::helpers::{actions::deploy_mock_solver, utils::{before, before_skip_approve, snapshot},},
 };
 

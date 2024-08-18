@@ -2,7 +2,7 @@
 use starknet::storage_access::StorePacking;
 
 // Local imports.
-use haiko_solver_core::types::{MarketState, PackedMarketState};
+use haiko_solver_core::types::solver::{MarketState, PackedMarketState};
 
 ////////////////////////////////
 // IMPLS

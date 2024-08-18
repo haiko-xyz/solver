@@ -1,4 +1,4 @@
-use haiko_solver_core::types::MarketState;
+use haiko_solver_core::types::solver::MarketState;
 
 #[starknet::interface]
 pub trait IStorePackingContract<TContractState> {
@@ -9,7 +9,7 @@ pub trait IStorePackingContract<TContractState> {
 
 #[starknet::contract]
 pub mod StorePackingContract {
-    use haiko_solver_core::types::MarketState;
+    use haiko_solver_core::types::solver::MarketState;
     use haiko_solver_core::libraries::store_packing::MarketStateStorePacking;
     use super::IStorePackingContract;
 

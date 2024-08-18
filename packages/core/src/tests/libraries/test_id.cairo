@@ -3,7 +3,7 @@ use starknet::contract_address_const;
 
 // Local imports.
 use haiko_solver_core::libraries::id;
-use haiko_solver_core::types::MarketInfo;
+use haiko_solver_core::types::solver::MarketInfo;
 
 #[test]
 fn test_market_id() {

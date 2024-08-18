@@ -21,7 +21,7 @@ pub mod ReplicatingSolver {
             IOracleABIDispatcherTrait
         },
     };
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
+    use haiko_solver_core::types::solver::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
     use haiko_solver_replicating::types::MarketParams;
 
     // Haiko imports.

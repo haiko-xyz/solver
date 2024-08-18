@@ -1,7 +1,7 @@
 
 // Local imports.
 use haiko_solver_core::{
-    types::GovernorParams,
+    types::governor::GovernorParams,
     interfaces::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IGovernor::{IGovernorDispatcher, IGovernorDispatcherTrait, IGovernorHooksDispatcher, IGovernorHooksDispatcherTrait},

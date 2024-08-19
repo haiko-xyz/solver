@@ -272,6 +272,7 @@ fn test_queue_market_params_emits_event() {
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
 
     // Queue market params.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);

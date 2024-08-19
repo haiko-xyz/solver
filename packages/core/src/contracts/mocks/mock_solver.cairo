@@ -1,3 +1,9 @@
+#[derive(Drop, Copy, Serde, PartialEq, Default, starknet::Store)]
+pub struct MockMarketParams {
+    pub foo: felt252,
+    pub bar: felt252,
+}
+
 #[starknet::interface]
 pub trait IMockSolver<TContractState> {
     // Get price for solver market.
@@ -12,6 +18,31 @@ pub trait IMockSolver<TContractState> {
     // * `market_id` - market id
     // * `params` - market params
     fn set_price(ref self: TContractState, market_id: felt252, price: u256);
+
+    // Fetch market params for a solver market.
+    //
+    // # Params
+    // * `market_id` - market id
+    //
+    // # Returns
+    // * `params` - market params
+    fn market_params(self: @TContractState, market_id: felt252) -> MockMarketParams;
+
+    // Propose market params for a solver market with governance enabled.
+    //
+    // # Params
+    // * `market_id` - market id
+    // * `params` - proposed market params
+    fn propose_market_params(
+        ref self: TContractState, market_id: felt252, params: MockMarketParams
+    ) -> felt252;
+
+    // Set market params for a solver market.
+    //
+    // # Params
+    // * `market_id` - market id
+    // * `params` - proposed market params
+    fn set_market_params(ref self: TContractState, market_id: felt252, params: MockMarketParams);
 }
 
 #[starknet::contract]
@@ -23,11 +54,15 @@ pub mod MockSolver {
     use starknet::class_hash::ClassHash;
 
     // Local imports.
-    use super::IMockSolver;
+    use super::{IMockSolver, MockMarketParams};
     use haiko_solver_core::contracts::solver::SolverComponent;
-    use haiko_solver_core::libraries::math::fast_sqrt;
+    use haiko_solver_core::contracts::governor::GovernorComponent;
     use haiko_solver_core::interfaces::ISolver::ISolverHooks;
-    use haiko_solver_core::types::solver::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
+    use haiko_solver_core::interfaces::IGovernor::IGovernorHooks;
+    use haiko_solver_core::libraries::math::fast_sqrt;
+    use haiko_solver_core::types::solver::{
+        PositionInfo, MarketState, MarketInfo, SwapParams, Hooks
+    };
 
     // Haiko imports.
     use haiko_lib::math::math;
@@ -47,6 +82,11 @@ pub mod MockSolver {
     impl SolverModifierImpl = SolverComponent::SolverModifier<ContractState>;
     impl SolverInternalImpl = SolverComponent::InternalImpl<ContractState>;
 
+    component!(path: GovernorComponent, storage: governor, event: GovernorEvent);
+    #[abi(embed_v0)]
+    impl GovernorImpl = GovernorComponent::GovernorImpl<ContractState>;
+    impl GovernorInternalImpl = GovernorComponent::InternalImpl<ContractState>;
+
     ////////////////////////////////
     // STORAGE
     ///////////////////////////////
@@ -56,8 +96,15 @@ pub mod MockSolver {
         // Solver
         #[substorage(v0)]
         solver: SolverComponent::Storage,
+        // Governance
+        #[substorage(v0)]
+        governor: GovernorComponent::Storage,
         // Price (base 1e28, indexed by market id)
         price: LegacyMap::<felt252, u256>,
+        // Market params, indexed by market id
+        market_params: LegacyMap::<felt252, MockMarketParams>,
+        // Proposed market params, indexed by proposal id
+        proposed_market_params: LegacyMap::<felt252, MockMarketParams>,
     }
 
     ////////////////////////////////
@@ -67,8 +114,29 @@ pub mod MockSolver {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub(crate) enum Event {
+        ProposeMarketParams: ProposeMarketParams,
+        SetMarketParams: SetMarketParams,
         #[flat]
         SolverEvent: SolverComponent::Event,
+        #[flat]
+        GovernorEvent: GovernorComponent::Event,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub(crate) struct ProposeMarketParams {
+        #[key]
+        pub market_id: felt252,
+        pub proposal_id: felt252,
+        pub foo: felt252,
+        pub bar: felt252,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub(crate) struct SetMarketParams {
+        #[key]
+        pub market_id: felt252,
+        pub foo: felt252,
+        pub bar: felt252,
     }
 
     ////////////////////////////////
@@ -77,7 +145,7 @@ pub mod MockSolver {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress, vault_token_class: ClassHash,) {
-        let hooks = Hooks { after_swap: false, after_withdraw: false };
+        let hooks = Hooks { after_swap: false, after_withdraw: true };
         self.solver._initializer("Mock", "MOCK", owner, vault_token_class, hooks);
     }
 
@@ -202,6 +270,40 @@ pub mod MockSolver {
             quote_amount: u256
         ) {
             assert(self.solver.unlocked.read(), 'NotSolver');
+
+            // Call governance hooks.
+            self.governor.after_withdraw_governor(market_id, caller, shares);
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl GovernorHooks of IGovernorHooks<ContractState> {
+        // Hook called to set a passed market param.
+        // Should be implemented by solver to set the passed market params in state.
+        // Should emit any relevant events.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `proposal_id` - proposal id
+        fn set_passed_market_params(
+            ref self: ContractState, market_id: felt252, proposal_id: felt252
+        ) {
+            // Should only be callable internally.
+            assert(self.solver.unlocked.read(), 'NotSolver');
+
+            // Fetch proposed params.
+            let params = self.proposed_market_params.read(proposal_id);
+
+            // Update state.
+            self.market_params.write(market_id, params);
+
+            // Emit event.
+            self
+                .emit(
+                    Event::SetMarketParams(
+                        SetMarketParams { market_id, foo: params.foo, bar: params.bar, }
+                    )
+                );
         }
     }
 
@@ -225,6 +327,60 @@ pub mod MockSolver {
         // * `price` - oracle price
         fn set_price(ref self: ContractState, market_id: felt252, price: u256) {
             self.price.write(market_id, price);
+        }
+
+        // Fetch market params for a solver market.
+        //
+        // # Params
+        // * `market_id` - market id
+        //
+        // # Returns
+        // * `params` - market params
+        fn market_params(self: @ContractState, market_id: felt252) -> MockMarketParams {
+            self.market_params.read(market_id)
+        }
+
+        // Propose market params for a solver market with governance enabled.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `params` - proposed market params
+        fn propose_market_params(
+            ref self: ContractState, market_id: felt252, params: MockMarketParams
+        ) -> felt252 {
+            // Check params.
+            let old_params = self.market_params.read(market_id);
+            assert(params != old_params, 'ParamsUnchanged');
+
+            // Call governor lower level function.
+            let proposal_id = self.governor._propose_market_params(market_id,);
+
+            // Store proposed params.
+            self.proposed_market_params.write(proposal_id, params);
+
+            // Emit event.
+            self
+                .emit(
+                    Event::ProposeMarketParams(
+                        ProposeMarketParams {
+                            market_id, proposal_id, foo: params.foo, bar: params.bar,
+                        }
+                    )
+                );
+
+            // Return proposal id.
+            proposal_id
+        }
+
+        // Set market params for a solver market.
+        //
+        // # Params
+        // * `market_id` - market id
+        // * `params` - proposed market params
+        fn set_market_params(
+            ref self: ContractState, market_id: felt252, params: MockMarketParams
+        ) {
+            self.market_params.write(market_id, params);
         }
     }
 }

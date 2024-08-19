@@ -15,7 +15,7 @@ use haiko_solver_replicating::{
     tests::{
         helpers::{
             actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-            params::default_market_params,
+            params::{default_market_params, new_market_params},
             utils::{before, before_custom_decimals, before_skip_approve, snapshot},
         },
     },
@@ -48,16 +48,7 @@ fn test_queue_and_set_market_params_no_delay() {
 
     // Set market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        min_spread: 987,
-        range: 12345,
-        max_delta: 676,
-        max_skew: 9989,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
     repl_solver.set_market_params(market_id);
 
@@ -92,16 +83,7 @@ fn test_queue_and_set_market_params_with_delay() {
 
     // Queue market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
-    let params = MarketParams {
-        min_spread: 987,
-        range: 12345,
-        max_delta: 676,
-        max_skew: 9989,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
 
     // Set market params.
@@ -211,16 +193,7 @@ fn test_update_queued_market_params() {
 
     // Queue market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        min_spread: 987,
-        range: 12345,
-        max_delta: 676,
-        max_skew: 9989,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
 
     // Update queued market params.
@@ -261,16 +234,7 @@ fn test_cancel_queued_market_params() {
 
     // Queue market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        min_spread: 987,
-        range: 12345,
-        max_delta: 676,
-        max_skew: 9989,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
 
     // Cancel queued market params.
@@ -306,16 +270,7 @@ fn test_queue_market_params_emits_event() {
 
     // Queue market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        min_spread: 987,
-        range: 12345,
-        max_delta: 676,
-        max_skew: 9989,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
 
     // Check events emitted.
@@ -385,16 +340,7 @@ fn test_set_market_params_emits_event() {
 
     // Set market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        min_spread: 987,
-        range: 12345,
-        max_delta: 676,
-        max_skew: 9989,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
     repl_solver.set_market_params(market_id);
 

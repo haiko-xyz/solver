@@ -4,6 +4,17 @@ use starknet::contract_address_const;
 use starknet::class_hash::ClassHash;
 
 // Local imports.
+use haiko_solver_core::{
+    interfaces::{
+        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
+        IGovernor::{
+            IGovernorDispatcher, IGovernorDispatcherTrait, IGovernorHooksDispatcher,
+            IGovernorHooksDispatcherTrait
+        },
+        IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
+    },
+    types::{solver::{MarketInfo, MarketState, PositionInfo, SwapParams}, governor::GovernorParams},
+};
 use haiko_solver_replicating::{
     contracts::replicating_solver::ReplicatingSolver,
     contracts::mocks::{
@@ -20,15 +31,8 @@ use haiko_solver_replicating::{
     types::MarketParams,
     tests::helpers::{
         actions::{deploy_replicating_solver, deploy_mock_pragma_oracle},
-        params::default_market_params,
+        params::{default_market_params, default_governor_params},
     },
-};
-use haiko_solver_core::{
-    interfaces::{
-        ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
-        IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
-    },
-    types::solver::{MarketInfo, MarketState, PositionInfo, SwapParams},
 };
 
 // Haiko imports.
@@ -96,7 +100,7 @@ pub fn before(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, 0, Option::None(()))
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, 0, Option::None(()), false)
 }
 
 pub fn before_custom_decimals(
@@ -110,7 +114,7 @@ pub fn before_custom_decimals(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, base_decimals, quote_decimals, true, 0, Option::None(()))
+    _before(is_market_public, base_decimals, quote_decimals, true, 0, Option::None(()), false)
 }
 
 pub fn before_skip_approve(
@@ -124,7 +128,7 @@ pub fn before_skip_approve(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, false, 0, Option::None(()))
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, false, 0, Option::None(()), false)
 }
 
 pub fn before_with_salt(
@@ -140,7 +144,23 @@ pub fn before_with_salt(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, salt, Option::Some(classes))
+    _before(
+        is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, salt, Option::Some(classes), false
+    )
+}
+
+pub fn before_disable_governance(
+    is_market_public: bool,
+) -> (
+    ERC20ABIDispatcher,
+    ERC20ABIDispatcher,
+    IMockPragmaOracleDispatcher,
+    ClassHash,
+    ISolverDispatcher,
+    felt252,
+    Option<ContractAddress>,
+) {
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, 0, Option::None(()), true)
 }
 
 fn _before(
@@ -150,6 +170,7 @@ fn _before(
     approve_solver: bool,
     salt: felt252,
     classes: Option<(ContractClass, ContractClass, ContractClass, ContractClass)>,
+    disable_governance: bool,
 ) -> (
     ERC20ABIDispatcher,
     ERC20ABIDispatcher,
@@ -225,6 +246,15 @@ fn _before(
         approve(quote_token, alice(), solver.contract_address, quote_amount);
         approve(base_token, bob(), solver.contract_address, base_amount);
         approve(quote_token, bob(), solver.contract_address, quote_amount);
+    }
+
+    // Set governance params and enable governance for market if market is public.
+    if is_market_public && !disable_governance {
+        start_prank(CheatTarget::One(solver.contract_address), owner());
+        let gov_solver = IGovernorDispatcher { contract_address: solver.contract_address };
+        gov_solver.change_governor_params(default_governor_params());
+        gov_solver.toggle_governor_enabled(market_id);
+        stop_prank(CheatTarget::One(solver.contract_address));
     }
 
     (

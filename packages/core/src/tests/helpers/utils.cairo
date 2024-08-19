@@ -12,11 +12,17 @@ use haiko_solver_core::{
         },
     },
     interfaces::{
+        IGovernor::{
+            IGovernorDispatcher, IGovernorDispatcherTrait, IGovernorHooksDispatcher,
+            IGovernorHooksDispatcherTrait
+        },
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    types::solver::{MarketInfo, MarketState, PositionInfo, SwapParams},
-    tests::helpers::actions::deploy_mock_solver,
+    types::{solver::{MarketInfo, MarketState, PositionInfo, SwapParams}, governor::GovernorParams,},
+    tests::helpers::{
+        actions::deploy_mock_solver, params::{default_market_params, default_governor_params}
+    },
 };
 
 // Haiko imports.
@@ -77,7 +83,7 @@ pub fn before(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, 0, Option::None(()))
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, 0, Option::None(()), false)
 }
 
 pub fn before_custom_decimals(
@@ -90,7 +96,7 @@ pub fn before_custom_decimals(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, base_decimals, quote_decimals, true, 0, Option::None(()))
+    _before(is_market_public, base_decimals, quote_decimals, true, 0, Option::None(()), false)
 }
 
 pub fn before_skip_approve(
@@ -103,7 +109,7 @@ pub fn before_skip_approve(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, false, 0, Option::None(()))
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, false, 0, Option::None(()), false)
 }
 
 pub fn before_with_salt(
@@ -116,7 +122,22 @@ pub fn before_with_salt(
     felt252,
     Option<ContractAddress>,
 ) {
-    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, salt, Option::Some(classes))
+    _before(
+        is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, salt, Option::Some(classes), false
+    )
+}
+
+pub fn before_disable_governance(
+    is_market_public: bool,
+) -> (
+    ERC20ABIDispatcher,
+    ERC20ABIDispatcher,
+    ClassHash,
+    ISolverDispatcher,
+    felt252,
+    Option<ContractAddress>,
+) {
+    _before(is_market_public, BASE_DECIMALS, QUOTE_DECIMALS, true, 0, Option::None(()), true)
 }
 
 fn _before(
@@ -126,6 +147,7 @@ fn _before(
     approve_solver: bool,
     salt: felt252,
     classes: Option<(ContractClass, ContractClass, ContractClass)>,
+    disable_governance: bool,
 ) -> (
     ERC20ABIDispatcher,
     ERC20ABIDispatcher,
@@ -168,6 +190,9 @@ fn _before(
     let mock_solver = IMockSolverDispatcher { contract_address: solver.contract_address };
     mock_solver.set_price(market_id, ONE);
 
+    // Set market params.
+    mock_solver.set_market_params(market_id, default_market_params());
+
     // Fund owner with initial token balances and approve strategy and market manager as spenders.
     let base_amount = to_e18(10000000000000000000000);
     let quote_amount = to_e18(10000000000000000000000);
@@ -181,9 +206,22 @@ fn _before(
     // Fund LP with initial token balances and approve strategy and market manager as spenders.
     fund(base_token, alice(), base_amount);
     fund(quote_token, alice(), quote_amount);
+    fund(base_token, bob(), base_amount);
+    fund(quote_token, bob(), quote_amount);
     if approve_solver {
         approve(base_token, alice(), solver.contract_address, base_amount);
         approve(quote_token, alice(), solver.contract_address, quote_amount);
+        approve(base_token, bob(), solver.contract_address, base_amount);
+        approve(quote_token, bob(), solver.contract_address, quote_amount);
+    }
+
+    // Set governance params and enable governance for market if market is public.
+    if is_market_public && !disable_governance {
+        start_prank(CheatTarget::One(solver.contract_address), owner());
+        let gov_solver = IGovernorDispatcher { contract_address: solver.contract_address };
+        gov_solver.change_governor_params(default_governor_params());
+        gov_solver.toggle_governor_enabled(market_id);
+        stop_prank(CheatTarget::One(solver.contract_address));
     }
 
     (base_token, quote_token, vault_token_class.class_hash, solver, market_id, vault_token_opt)

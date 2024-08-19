@@ -200,7 +200,7 @@ pub mod GovernorComponent {
 
             // Check governance params are changed.
             let current_params = self.governor_params.read();
-            assert(current_params != params, 'SameParams');
+            assert(current_params != params, 'ParamsUnchanged');
 
             // Verify params.
             assert(params.quorum > 0, 'QuorumZero');
@@ -380,7 +380,10 @@ pub mod GovernorComponent {
             let caller_shares = vault_token.balance_of(caller);
             let total_shares = vault_token.total_supply();
             assert(
-                caller_shares * 10000 >= total_shares * params.min_ownership.into(), 'SharesTooLow'
+                caller_shares != 0 && caller_shares
+                    * 10000 >= total_shares
+                    * params.min_ownership.into(),
+                'SharesTooLow'
             );
 
             // Assign and update proposal id

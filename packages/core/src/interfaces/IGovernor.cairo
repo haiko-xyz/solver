@@ -45,9 +45,7 @@ pub trait IGovernor<TContractState> {
     //
     // # Returns
     // * `shares` - user vote weight
-    fn user_votes(
-        self: @TContractState, caller: ContractAddress, proposal_id: felt252
-    ) -> u256;
+    fn user_votes(self: @TContractState, caller: ContractAddress, proposal_id: felt252) -> u256;
 
     // Get total votes for proposal.
     //

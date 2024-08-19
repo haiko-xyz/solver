@@ -7,3 +7,4 @@ pub mod test_withdraw;
 pub mod test_market_params;
 pub mod test_governor;
 pub mod test_oracle;
+pub mod test_hooks;

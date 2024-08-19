@@ -362,10 +362,10 @@ fn test_deposit_initial_on_paused_market() {
     );
 
     // Pause market.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
     solver.pause(market_id);
 
     // Deposit initial.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
     let quote_amount = to_e18(500);
     solver.deposit_initial(market_id, base_amount, quote_amount);

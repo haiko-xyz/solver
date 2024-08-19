@@ -47,6 +47,7 @@ fn test_queue_and_set_market_params_no_delay() {
     );
 
     // Set market params.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
@@ -192,6 +193,7 @@ fn test_update_queued_market_params() {
     );
 
     // Queue market params.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
@@ -233,6 +235,7 @@ fn test_cancel_queued_market_params() {
     );
 
     // Queue market params.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);
@@ -310,6 +313,7 @@ fn test_set_delay_emits_event() {
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
 
     // Set delay.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let delay = 86400; // 24 hours
     repl_solver.set_delay(delay);
@@ -339,6 +343,7 @@ fn test_set_market_params_emits_event() {
     let mut spy = spy_events(SpyOn::One(solver.contract_address));
 
     // Set market params.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = new_market_params();
     repl_solver.queue_market_params(market_id, params);

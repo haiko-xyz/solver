@@ -8,7 +8,8 @@ use haiko_solver_core::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    types::solver::MarketInfo, tests::helpers::{actions::deploy_mock_solver, utils::{before, snapshot},},
+    types::solver::MarketInfo,
+    tests::helpers::{actions::deploy_mock_solver, utils::{before, snapshot},},
 };
 
 // Haiko imports.

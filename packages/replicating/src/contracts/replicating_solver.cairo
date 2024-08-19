@@ -21,7 +21,9 @@ pub mod ReplicatingSolver {
             IOracleABIDispatcherTrait
         },
     };
-    use haiko_solver_core::types::solver::{PositionInfo, MarketState, MarketInfo, SwapParams, Hooks};
+    use haiko_solver_core::types::solver::{
+        PositionInfo, MarketState, MarketInfo, SwapParams, Hooks
+    };
     use haiko_solver_replicating::types::MarketParams;
 
     // Haiko imports.
@@ -39,7 +41,7 @@ pub mod ReplicatingSolver {
     impl SolverImpl = SolverComponent::SolverImpl<ContractState>;
     impl SolverModifierImpl = SolverComponent::SolverModifier<ContractState>;
     impl SolverInternalImpl = SolverComponent::InternalImpl<ContractState>;
-    
+
     component!(path: GovernorComponent, storage: governor, event: GovernorEvent);
     #[abi(embed_v0)]
     impl GovernorImpl = GovernorComponent::GovernorImpl<ContractState>;
@@ -492,30 +494,29 @@ pub mod ReplicatingSolver {
             assert(params.quote_currency_id != 0, 'QuoteIdZero');
 
             // Call governor lower level function.
-            let proposal_id = self
-                .governor
-                ._propose_market_params(market_id, );
+            let proposal_id = self.governor._propose_market_params(market_id,);
 
             // Store proposed params.
             self.proposed_market_params.write(proposal_id, params);
 
             // Emit event.
-            self.emit(
-                Event::ProposeMarketParams(
-                    ProposeMarketParams {
-                        market_id,
-                        proposal_id,
-                        min_spread: params.min_spread,
-                        range: params.range,
-                        max_delta: params.max_delta,
-                        max_skew: params.max_skew,
-                        base_currency_id: params.base_currency_id,
-                        quote_currency_id: params.quote_currency_id,
-                        min_sources: params.min_sources,
-                        max_age: params.max_age,
-                    }
-                )
-            );
+            self
+                .emit(
+                    Event::ProposeMarketParams(
+                        ProposeMarketParams {
+                            market_id,
+                            proposal_id,
+                            min_spread: params.min_spread,
+                            range: params.range,
+                            max_delta: params.max_delta,
+                            max_skew: params.max_skew,
+                            base_currency_id: params.base_currency_id,
+                            quote_currency_id: params.quote_currency_id,
+                            min_sources: params.min_sources,
+                            max_age: params.max_age,
+                        }
+                    )
+                );
 
             // Return proposal id.
             proposal_id

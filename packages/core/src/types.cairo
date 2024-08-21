@@ -38,6 +38,9 @@ pub struct MarketState {
 // * `is_buy` - whether swap is buy or sell
 // * `amount` - amount swapped in or out
 // * `exact_input` - whether amount is exact input or exact output
+// * `threshold_sqrt_price` - threshold sqrt price for swap
+// * `threshold_amount` - threshold amount for swap
+// * `deadline` - deadline for swap
 #[derive(Copy, Drop, Serde)]
 pub struct SwapParams {
     pub is_buy: bool,
@@ -45,6 +48,7 @@ pub struct SwapParams {
     pub exact_input: bool,
     pub threshold_sqrt_price: Option<u256>,
     pub threshold_amount: Option<u256>,
+    pub deadline: Option<u64>,
 }
 
 // Virtual liquidity position.

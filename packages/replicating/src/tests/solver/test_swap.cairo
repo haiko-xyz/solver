@@ -714,6 +714,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                         exact_input: swap_case.exact_input,
                         threshold_sqrt_price: case.threshold_sqrt_price,
                         threshold_amount: case.threshold_amount,
+                        deadline: Option::None(()),
                     }
                 );
 
@@ -727,6 +728,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                         exact_input: swap_case.exact_input,
                         threshold_sqrt_price: case.threshold_sqrt_price,
                         threshold_amount: case.threshold_amount,
+                        deadline: Option::None(()),
                     }
                 );
 
@@ -806,6 +808,7 @@ fn test_swap_that_improves_skew_is_allowed() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     solver.swap(market_id, params);
 }
@@ -841,6 +844,7 @@ fn test_swap_fails_if_invalid_oracle_price() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     solver.swap(market_id, params);
 }
@@ -875,6 +879,7 @@ fn test_swap_fails_if_swap_buy_below_threshold_amount() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::Some(to_e18(2)),
+        deadline: Option::None(()),
     };
     solver.swap(market_id, params);
 }
@@ -908,6 +913,7 @@ fn test_swap_fails_if_swap_sell_below_threshold_amount() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::Some(to_e18(100)),
+        deadline: Option::None(()),
     };
     solver.swap(market_id, params);
 }
@@ -942,6 +948,7 @@ fn test_swap_fails_if_limit_overflows() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     solver.swap(market_id, params);
 }
@@ -980,6 +987,7 @@ fn test_swap_fails_if_limit_underflows() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     solver.swap(market_id, params);
 }
@@ -1017,6 +1025,7 @@ fn test_swap_buy_above_max_skew_is_disallowed() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     solver.swap(market_id, params);
 }
@@ -1054,6 +1063,7 @@ fn test_swap_sell_above_max_skew_is_disallowed() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     solver.swap(market_id, params);
 }
@@ -1095,6 +1105,35 @@ fn test_change_in_oracle_price_above_max_skew_prevents_swap() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, params);
+}
+
+#[test]
+#[should_panic(expected: ('Expired',))]
+fn test_swap_past_expiry_is_rejected() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Swap.
+    start_warp(CheatTarget::One(solver.contract_address), 1000);
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: true,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::Some(1),
     };
     solver.swap(market_id, params);
 }
@@ -1118,6 +1157,7 @@ fn test_after_swap_fails_for_non_solver_caller() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     solver_hooks.after_swap(market_id, params);
 }

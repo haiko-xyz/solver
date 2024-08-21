@@ -434,6 +434,9 @@ pub mod SolverComponent {
             let market_info: MarketInfo = self.market_info.read(market_id);
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(!state.is_paused, 'Paused');
+            if swap_params.deadline.is_some() {
+                assert(swap_params.deadline.unwrap() >= get_block_timestamp(), 'Expired');
+            }
 
             // Get amounts.
             let solver_hooks = ISolverHooksDispatcher { contract_address: get_contract_address() };

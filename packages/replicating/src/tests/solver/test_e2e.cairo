@@ -74,6 +74,7 @@ fn test_solver_e2e_private_market() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     let (amount_in, amount_out) = solver.swap(market_id, params);
 
@@ -136,6 +137,7 @@ fn test_solver_e2e_public_market() {
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
         threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     let (amount_in, amount_out) = solver.swap(market_id, params);
     println!("amount_in: {}, amount_out: {}", amount_in, amount_out);

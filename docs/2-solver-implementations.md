@@ -2,7 +2,7 @@
 
 This document describes the solver implementations currently in development.
 
-## Replicating Solver ([`replicating`](./packages/replicating/))
+## Replicating Solver ([`replicating`](../packages/replicating/))
 
 The Replicating Solver, under the `replicating` package, is the first Solver in development. It creates a market for any token pair by providing bid and ask quotes based on a Pragma oracle price feed. It allows liquidity providers to provide liquidity programmatically, without having to actively manage their positions.
 
@@ -22,7 +22,7 @@ Max skew is a new parameter that did not exist in the Replicating Strategy. It i
 
 In addition, Solvers now support two market types: (1) Private Markets, a new market type which offer more granular control for a single depositor, and (2) Public Markets, which are open to 3rd party depositors and track ERC20 vault tokens for composability.
 
-## Reversion Solver ([`reversion`](./packages/reversion/))
+## Reversion Solver ([`reversion`](../packages/reversion/))
 
 The Reversion Solver, under the `reversion` package, is the second Solver in development. It operates on a trend classification model (`Up`, `Down` or `Ranging`) to provide liquidity against the trend, capturing fees on trend reversion.
 

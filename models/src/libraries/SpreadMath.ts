@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
-import { baseToLiquidity, quoteToLiquidity } from "../math/liquidityMath";
 import { PRECISION, ROUNDING } from "../config";
+import { baseToLiquidity, quoteToLiquidity } from "../math/liquidityMath";
 import { limitToSqrtPrice, priceToLimit } from "../math/priceMath";
 
 type PositionInfo = {

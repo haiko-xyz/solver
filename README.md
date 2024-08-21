@@ -21,6 +21,13 @@ By using a stateless architecture, Solvers are:
 2. **Less error-prone**, as they do not rely on external AMM state
 3. **More flexible**, as they can be used to create markets based on any pricing formula, not just those adopting Uniswap-style liquidity
 
+In addition, our first [Replicating Solver](./packages/replicating/) introduces powerful new features for LPs:
+
+1. **Zero cost Rebalancing**: Solvers are now constant rebalanced at zero gas cost to swappers and LPs 
+2. **Impermanent Loss Caps**: pools can apply a hard cap on impermanent loss by rejecting swaps that bring the pool above its maximum allowed level portfolio skew
+3. **Private Vaults**: liquidity providers can now create Private Vaults that are closed to third party depositors and offer greater flexibility over deposit / withdrawals and other admin actions, enabling new use cases such as protocol-owned or liquidity bootstrapping pools
+4. **Pool-level Governance**: pool ownership is now tracked via an ERC20 token, enabling micro-governance amongst pool depositors to better optimise pool parameters
+
 ![solvers-vs-strategies](https://github.com/user-attachments/assets/c6d884d8-dab5-4030-b0a5-44d4a4ceea81)
 
 There are some key differences between AMM markets and Solver markets. These are summarised in the table below.

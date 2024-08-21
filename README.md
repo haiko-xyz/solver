@@ -32,12 +32,12 @@ In addition, our first [Replicating Solver](./packages/replicating/) introduces 
 
 There are some key differences between AMM markets and Solver markets. These are summarised in the table below.
 
-| Feature     | AMM / Strategies                | Solver                                                                      |
-| ----------- | ------------------------------- | --------------------------------------------------------------------------- |
-| Swap fees   | Fixed swap fee rate per market  | Charges a dynamic spread on swaps instead of an explicit swap fee rate      |
-| Tick width  | Fixed tick width per market     | Agnostic to pricing formula, can accomodate any tick width                  |
-| Price       | Stores current price            | Stateless, does not need to store current price                             |
-| Rebalancing | Uses swap hooks for rebalancing | No rebalancing needed, calculates positions on the fly at the point of swap |
+| Feature     | AMM / Strategies                | Solver                                                                                                          |
+| ----------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Swap fees   | Fixed swap fee rate per market  | Agnostic to fee formula, can charge a swap fee, add a dynamic spread on swap quotes, or use another fee formula |
+| Tick width  | Fixed tick width per market     | Can accomodate any tick width                                                                                   |
+| Price       | Stores current price            | Stateless, does not need to store current price                                                                 |
+| Rebalancing | Uses swap hooks for rebalancing | Constantly rebalanced, as positions are calculated on the fly at the point of swap                              |
 
 ## Contracts
 

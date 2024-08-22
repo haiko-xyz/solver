@@ -23,10 +23,10 @@ By using a stateless architecture, Solvers are:
 
 In addition, our first [Replicating Solver](./packages/replicating/) introduces powerful new features for LPs:
 
-1. **Zero cost Rebalancing**: Solvers are now constant rebalanced at zero gas cost to swappers and LPs 
-2. **Impermanent Loss Caps**: pools can apply a hard cap on impermanent loss by rejecting swaps that bring the pool above its maximum allowed level portfolio skew
-3. **Private Vaults**: liquidity providers can now create Private Vaults that are closed to third party depositors and offer greater flexibility over deposit / withdrawals and other admin actions, enabling new use cases such as protocol-owned or liquidity bootstrapping pools
-4. **Pool-level Governance**: pool ownership is now tracked via an ERC20 token, enabling micro-governance amongst pool depositors to better optimise pool parameters
+1. **Zero-Cost Rebalancing**: Solvers are now constantly rebalanced at zero gas cost to swappers and LPs
+2. **Impermanent Loss Caps**: pools can apply a hard cap on impermanent loss by rejecting swaps that bring the pool above its maximum allowed level of portfolio skew
+3. **Private Vaults**: liquidity providers can now create Private Vaults that are closed to third party depositors, offering greater flexibility over deposit / withdrawals and other admin actions, and enabling new use cases such as protocol-owned or liquidity bootstrapping pools (for new token issues)
+4. **Pool-level Governance**: pool ownership is now tracked via an ERC20 token, enabling micro-governance amongst pool depositors for better optimised pool parameters
 
 ![solvers-vs-strategies](https://github.com/user-attachments/assets/c6d884d8-dab5-4030-b0a5-44d4a4ceea81)
 
@@ -47,15 +47,16 @@ This monorepo contains both the core solver libraries and contracts (in package 
 
 The `SolverComponent` in the `core` package implements most of the core functionality of a `Solver` contract, including:
 
-1. Creating and managing new solver markets (which comprise of a `base_token` and `quote_token` pair and an `owner`)
+1. Creating and managing new solver markets (which comprise of a `base_token` and `quote_token` pair, an `owner` and `is_public` flag)
 2. Managing deposits and withdrawals from solver markets, which are tracked using ERC20 vault tokens for composability
 3. Swapping assets through a solver market
 4. Managing and collecting withdraw fees (if enabled)
 5. Admin actions such as pausing and unpausing, upgrading and transferring ownership of the contract
 
-Solvers currently support two market types:
-2. Public Markets, which are open to 3rd party depositors and track ERC20 vault tokens for composability
-1. Private Markets, which offer more granular control and flexible access to admin functions
+Solvers currently support two vault types:
+
+1. Public Vaults, which are open to 3rd party depositors and track ERC20 vault tokens for composability
+2. Private Vaults, which are closed to a single admin owner and offer more granular control and flexible access to admin functions
 
 A Solver implementation must:
 

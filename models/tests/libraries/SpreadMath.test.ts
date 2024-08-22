@@ -49,9 +49,12 @@ const testGetVirtualPositionCases = () => {
 };
 
 const testGetVirtualPositionRangeCases = () => {
+  const baseDecimals = 18;
+  const quoteDecimals = 18;
+
   const cases = [
-    getVirtualPositionRange(true, 0, 0, 1, 1),
-    getVirtualPositionRange(false, 0, 0, 1, 1),
+    getVirtualPositionRange(true, 0, 0, 1, 1, baseDecimals, quoteDecimals),
+    getVirtualPositionRange(false, 0, 0, 1, 1, baseDecimals, quoteDecimals),
   ];
 
   for (let i = 0; i < cases.length; i++) {

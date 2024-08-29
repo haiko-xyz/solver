@@ -82,7 +82,7 @@ Solver implementations are standalone contracts that inherits from `SolverCompon
 scarb build
 
 # Run the tests
-snforge test
+snforge test --max-n-steps 4294967295
 ```
 
 ## Version control

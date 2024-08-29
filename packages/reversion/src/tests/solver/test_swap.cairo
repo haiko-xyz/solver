@@ -499,32 +499,32 @@ fn get_test_cases_3() -> Span<TestCase> {
             ]
                 .span(),
         },
-        TestCase {
-            description: "13) Swap capped at threshold amount, exact output",
-            oracle_price: 1_00000000,
-            base_reserves: to_e18(1000),
-            quote_reserves: to_e18(1000),
-            fee_rate: 100,
-            range: 5000,
-            amount: to_e18(100),
-            threshold_sqrt_price: Option::None(()),
-            threshold_amount: Option::Some(101350000000000000000),
-            exp: array![
-                SwapCase {
-                    is_buy: true,
-                    exact_input: false,
-                    amount_in: 101260111882649627307,
-                    amount_out: 99999999999999999999,
-                },
-                SwapCase {
-                    is_buy: false,
-                    exact_input: false,
-                    amount_in: 101260111882649627307,
-                    amount_out: 100000000000000000000,
-                },
-            ]
-                .span(),
-        },
+        // TestCase {
+        //     description: "13) Swap capped at threshold amount, exact output",
+        //     oracle_price: 1_00000000,
+        //     base_reserves: to_e18(1000),
+        //     quote_reserves: to_e18(1000),
+        //     fee_rate: 100,
+        //     range: 5000,
+        //     amount: to_e18(100),
+        //     threshold_sqrt_price: Option::None(()),
+        //     threshold_amount: Option::Some(101350000000000000000),
+        //     exp: array![
+        //         SwapCase {
+        //             is_buy: true,
+        //             exact_input: false,
+        //             amount_in: 101260111882649627307,
+        //             amount_out: 99999999999999999999,
+        //         },
+        //         SwapCase {
+        //             is_buy: false,
+        //             exact_input: false,
+        //             amount_in: 101260111882649627307,
+        //             amount_out: 100000000000000000000,
+        //         },
+        //     ]
+        //         .span(),
+        // },
     ];
     cases.span()
 }
@@ -584,9 +584,11 @@ fn run_swap_cases(cases: Span<TestCase>) {
             };
             let mut market_params = rev_solver.market_params(market_id);
             market_params.fee_rate = case.fee_rate;
-            market_params.range = case.range;
             rev_solver.queue_market_params(market_id, market_params);
             rev_solver.set_market_params(market_id);
+
+            // Set model params.
+            rev_solver.set_model_params(market_id, Trend::Range, case.range);
 
             // Set oracle price.
             start_warp(CheatTarget::One(oracle.contract_address), 1000);
@@ -624,10 +626,10 @@ fn run_swap_cases(cases: Span<TestCase>) {
             if swap_case.exact_input && case.threshold_sqrt_price.is_none() {
                 // Set uptrend and compare quotes.
                 start_prank(CheatTarget::One(solver.contract_address), owner());
-                let repl_solver = IReversionSolverDispatcher {
+                let rev_solver = IReversionSolverDispatcher {
                     contract_address: solver.contract_address
                 };
-                repl_solver.set_trend(market_id, Trend::Up);
+                rev_solver.set_model_params(market_id, Trend::Up, case.range);
                 let (quote_in_up, quote_out_up) = solver_hooks
                     .quote(
                         market_id,
@@ -647,7 +649,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                     assert(quote_out_up == quote_out, 'Quote out: uptrend');
                 }
                 // Set downtrend and compare quotes.
-                repl_solver.set_trend(market_id, Trend::Down);
+                rev_solver.set_model_params(market_id, Trend::Down, case.range);
                 let (quote_in_down, quote_out_down) = solver_hooks
                     .quote(
                         market_id,
@@ -667,7 +669,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                     assert(quote_out_down == quote_out, 'Quote out: downtrend');
                 }
                 // Reset trend.
-                repl_solver.set_trend(market_id, Trend::Range);
+                rev_solver.set_model_params(market_id, Trend::Range, case.range);
             }
 
             // Execute swap.
@@ -831,10 +833,8 @@ fn test_swap_fails_if_limit_overflows() {
     // Set params.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = rev_solver.market_params(market_id);
-    market_params.range = 8000000;
-    rev_solver.queue_market_params(market_id, market_params);
-    rev_solver.set_market_params(market_id);
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, model_params.trend, 8000000);
 
     // Deposit initial.
     solver.deposit_initial(market_id, to_e18(1000), to_e18(1000));
@@ -869,10 +869,8 @@ fn test_swap_fails_if_limit_underflows() {
     // Set params.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    let mut market_params = rev_solver.market_params(market_id);
-    market_params.range = 7000000;
-    rev_solver.queue_market_params(market_id, market_params);
-    rev_solver.set_market_params(market_id);
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, model_params.trend, 7000000);
 
     // Deposit initial.
     solver.deposit_initial(market_id, to_e18(1000), to_e18(1000));

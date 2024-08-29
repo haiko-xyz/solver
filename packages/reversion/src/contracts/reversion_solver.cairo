@@ -10,7 +10,7 @@ pub mod ReversionSolver {
     use haiko_solver_core::contracts::solver::SolverComponent;
     use haiko_solver_core::interfaces::ISolver::ISolverHooks;
     use haiko_solver_reversion::libraries::{
-        swap_lib, spread_math, store_packing::{MarketParamsStorePacking, TrendStateStorePacking}
+        swap_lib, spread_math, store_packing::{MarketParamsStorePacking, ModelParamsStorePacking}
     };
     use haiko_solver_reversion::interfaces::{
         IReversionSolver::IReversionSolver,
@@ -20,7 +20,7 @@ pub mod ReversionSolver {
         },
     };
     use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
-    use haiko_solver_reversion::types::{MarketParams, TrendState, Trend};
+    use haiko_solver_reversion::types::{MarketParams, ModelParams, Trend};
 
     // Haiko imports.
     use haiko_lib::math::math;
@@ -50,14 +50,14 @@ pub mod ReversionSolver {
         solver: SolverComponent::Storage,
         // oracle for price and volatility feeds
         oracle: IOracleABIDispatcher,
-        // trend setter admin with permission to change trend
-        trend_setter: ContractAddress,
+        // admin with permission to change model params
+        model_admin: ContractAddress,
         // Indexed by market id
         market_params: LegacyMap::<felt252, MarketParams>,
         // Indexed by market id
         queued_market_params: LegacyMap::<felt252, MarketParams>,
         // Indexed by market id
-        trend_state: LegacyMap::<felt252, TrendState>,
+        model_params: LegacyMap::<felt252, ModelParams>,
         // Indexed by market id
         // timestamp when market params were queued
         queued_at: LegacyMap::<felt252, u64>,
@@ -72,21 +72,22 @@ pub mod ReversionSolver {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub(crate) enum Event {
-        SetTrend: SetTrend,
+        SetModelParams: SetModelParams,
         QueueMarketParams: QueueMarketParams,
         SetMarketParams: SetMarketParams,
         SetDelay: SetDelay,
         ChangeOracle: ChangeOracle,
-        ChangeTrendSetter: ChangeTrendSetter,
+        ChangeModelAdmin: ChangeModelAdmin,
         #[flat]
         SolverEvent: SolverComponent::Event,
     }
 
     #[derive(Drop, starknet::Event)]
-    pub(crate) struct SetTrend {
+    pub(crate) struct SetModelParams {
         #[key]
         pub market_id: felt252,
         pub trend: Trend,
+        pub range: u32,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -94,7 +95,6 @@ pub mod ReversionSolver {
         #[key]
         pub market_id: felt252,
         pub fee_rate: u16,
-        pub range: u32,
         pub base_currency_id: felt252,
         pub quote_currency_id: felt252,
         pub min_sources: u32,
@@ -106,7 +106,6 @@ pub mod ReversionSolver {
         #[key]
         pub market_id: felt252,
         pub fee_rate: u16,
-        pub range: u32,
         pub base_currency_id: felt252,
         pub quote_currency_id: felt252,
         pub min_sources: u32,
@@ -124,8 +123,8 @@ pub mod ReversionSolver {
     }
 
     #[derive(Drop, starknet::Event)]
-    pub(crate) struct ChangeTrendSetter {
-        pub trend_setter: ContractAddress,
+    pub(crate) struct ChangeModelAdmin {
+        pub admin: ContractAddress,
     }
 
     ////////////////////////////////
@@ -210,24 +209,24 @@ pub mod ReversionSolver {
             assert(self.solver.unlocked.read(), 'NotSolver');
 
             // Fetch state.
-            let mut trend_state: TrendState = self.trend_state.read(market_id);
+            let mut model_params: ModelParams = self.model_params.read(market_id);
             let oracle_output = self.get_unscaled_oracle_price(market_id);
 
             // Calculate conditions for updating cached price.
             //  1. if price trends up and price > cached price, update cached price
             //  2. if price trends down and price < cached price, update cached price
             //  3. otherwise, don't update
-            if trend_state.trend == Trend::Up
-                && oracle_output.price > trend_state.cached_price
-                    || trend_state.trend == Trend::Down
-                && oracle_output.price < trend_state.cached_price {
-                trend_state.cached_price = oracle_output.price;
-                trend_state.cached_decimals = oracle_output.decimals;
-                self.trend_state.write(market_id, trend_state);
+            if model_params.trend == Trend::Up
+                && oracle_output.price > model_params.cached_price
+                    || model_params.trend == Trend::Down
+                && oracle_output.price < model_params.cached_price {
+                model_params.cached_price = oracle_output.price;
+                model_params.cached_decimals = oracle_output.decimals;
+                self.model_params.write(market_id, model_params);
             };
 
             // Commit state.
-            self.trend_state.write(market_id, trend_state);
+            self.model_params.write(market_id, model_params);
         }
     }
 
@@ -253,20 +252,20 @@ pub mod ReversionSolver {
             self.oracle.read().contract_address
         }
 
-        // Trend setter contract address
-        fn trend_setter(self: @ContractState) -> ContractAddress {
-            self.trend_setter.read()
+        // Model admin contract address
+        fn model_admin(self: @ContractState) -> ContractAddress {
+            self.model_admin.read()
         }
 
-        // Get trend of solver market.
+        // Get model parameters of solver market.
         //
         // # Params
         // * `market_id` - market id
         //
         // # Returns
         // * `trend - market trend
-        fn trend(self: @ContractState, market_id: felt252) -> Trend {
-            self.trend_state.read(market_id).trend
+        fn model_params(self: @ContractState, market_id: felt252) -> ModelParams {
+            self.model_params.read(market_id)
         }
 
         // Get unscaled oracle price from oracle feed.
@@ -321,32 +320,35 @@ pub mod ReversionSolver {
         }
 
         // Change trend of the solver market.
-        // Only callable by market owner.
+        // Only callable by market owner or model admin.
         //
         // # Params
         // * `market_id` - market id
         // * `trend - market trend
-        fn set_trend(ref self: ContractState, market_id: felt252, trend: Trend) {
+        // * `range` - range of virtual liquidity position
+        fn set_model_params(ref self: ContractState, market_id: felt252, trend: Trend, range: u32) {
             let caller = get_caller_address();
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
-            let mut trend_state = self.trend_state.read(market_id);
-            let trend_setter = self.trend_setter.read();
+            let mut model_params = self.model_params.read(market_id);
+            let model_admin = self.model_admin.read();
 
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
-            assert(caller == market_info.owner || caller == trend_setter, 'NotApproved');
-            assert(trend_state.trend != trend, 'TrendUnchanged');
+            assert(caller == market_info.owner || caller == model_admin, 'NotApproved');
+            assert(model_params.trend != trend || model_params.range != range, 'Unchanged');
+            assert(range != 0, 'RangeZero');
 
             // Update state.
             // Whenever we update trend, we also need to update the cached price in case it is stale.
             let oracle_output = self.get_unscaled_oracle_price(market_id);
-            trend_state.trend = trend;
-            trend_state.cached_price = oracle_output.price;
-            trend_state.cached_decimals = oracle_output.decimals;
-            self.trend_state.write(market_id, trend_state);
+            model_params.trend = trend;
+            model_params.range = range;
+            model_params.cached_price = oracle_output.price;
+            model_params.cached_decimals = oracle_output.decimals;
+            self.model_params.write(market_id, model_params);
 
             // Emit event.
-            self.emit(Event::SetTrend(SetTrend { market_id, trend, }));
+            self.emit(Event::SetModelParams(SetModelParams { market_id, trend, range }));
         }
 
         // Queue change to the parameters of the solver market.
@@ -374,7 +376,6 @@ pub mod ReversionSolver {
                         QueueMarketParams {
                             market_id,
                             fee_rate: params.fee_rate,
-                            range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
                             min_sources: params.min_sources,
@@ -406,7 +407,6 @@ pub mod ReversionSolver {
                 assert(queued_at + delay <= get_block_timestamp(), 'DelayNotPassed');
             }
             assert(queued_at != 0 && queued_params != Default::default(), 'NotQueued');
-            assert(queued_params.range != 0, 'RangeZero');
             assert(queued_params.min_sources != 0, 'MinSourcesZero');
             assert(queued_params.max_age != 0, 'MaxAgeZero');
             assert(queued_params.base_currency_id != 0, 'BaseIdZero');
@@ -424,7 +424,6 @@ pub mod ReversionSolver {
                         SetMarketParams {
                             market_id,
                             fee_rate: queued_params.fee_rate,
-                            range: queued_params.range,
                             base_currency_id: queued_params.base_currency_id,
                             quote_currency_id: queued_params.quote_currency_id,
                             min_sources: queued_params.min_sources,
@@ -468,13 +467,13 @@ pub mod ReversionSolver {
         // Change the trend setter.
         //
         // # Arguments
-        // * `trend_setter` - contract address of trend setter admin
-        fn change_trend_setter(ref self: ContractState, trend_setter: ContractAddress) {
+        // * `admin` - contract address of model admin
+        fn change_model_admin(ref self: ContractState, admin: ContractAddress) {
             self.solver.assert_owner();
-            let old_trend_setter = self.trend_setter.read();
-            assert(trend_setter != old_trend_setter, 'TrendSetterUnchanged');
-            self.trend_setter.write(trend_setter);
-            self.emit(Event::ChangeTrendSetter(ChangeTrendSetter { trend_setter }));
+            let old_admin = self.model_admin.read();
+            assert(admin != old_admin, 'TrendSetterUnchanged');
+            self.model_admin.write(admin);
+            self.emit(Event::ChangeModelAdmin(ChangeModelAdmin { admin }));
         }
 
         // Get virtual liquidity positions against which swaps are executed.
@@ -491,18 +490,17 @@ pub mod ReversionSolver {
             // Fetch state.
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
             let state: MarketState = self.solver.market_state.read(market_id);
-            let params = self.market_params.read(market_id);
-            let trend_state: TrendState = self.trend_state.read(market_id);
+            let model_params: ModelParams = self.model_params.read(market_id);
 
             // Fetch oracle price and cached oracle price.
             let (oracle_price, is_valid) = self.get_oracle_price(market_id);
             assert(is_valid, 'InvalidOraclePrice');
-            let cached_price = if trend_state.cached_price == 0 {
+            let cached_price = if model_params.cached_price == 0 {
                 0
             } else {
                 self
                     .scale_oracle_price(
-                        @market_info, trend_state.cached_price, trend_state.cached_decimals
+                        @market_info, model_params.cached_price, model_params.cached_decimals
                     )
             };
 
@@ -511,7 +509,7 @@ pub mod ReversionSolver {
             let mut ask: PositionInfo = Default::default();
             let (bid_lower, bid_upper, ask_lower, ask_upper) =
                 spread_math::get_virtual_position_range(
-                trend_state.trend, params.range, cached_price, oracle_price
+                model_params.trend, model_params.range, cached_price, oracle_price
             );
             if state.quote_reserves != 0 {
                 bid =

@@ -13,7 +13,7 @@ use haiko_solver_reversion::{
     tests::{
         helpers::{
             actions::{deploy_reversion_solver, deploy_mock_pragma_oracle},
-            params::default_market_params,
+            params::{default_market_params, new_market_params},
             utils::{before, before_custom_decimals, before_skip_approve, snapshot},
         },
     },
@@ -46,14 +46,7 @@ fn test_queue_and_set_market_params_no_delay() {
 
     // Set market params.
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        fee_rate: 987,
-        range: 12345,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     rev_solver.queue_market_params(market_id, params);
     rev_solver.set_market_params(market_id);
 
@@ -62,7 +55,6 @@ fn test_queue_and_set_market_params_no_delay() {
 
     // Run checks.
     assert(market_params.fee_rate == params.fee_rate, 'Min spread');
-    assert(market_params.range == params.range, 'Range');
     assert(market_params.base_currency_id == params.base_currency_id, 'Base currency ID');
     assert(market_params.quote_currency_id == params.quote_currency_id, 'Quote currency ID');
     assert(market_params.min_sources == params.min_sources, 'Min sources');
@@ -86,14 +78,7 @@ fn test_queue_and_set_market_params_with_delay() {
 
     // Queue market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
-    let params = MarketParams {
-        fee_rate: 987,
-        range: 12345,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     rev_solver.queue_market_params(market_id, params);
 
     // Set market params.
@@ -106,7 +91,6 @@ fn test_queue_and_set_market_params_with_delay() {
 
     // Run checks.
     assert(market_params.fee_rate == params.fee_rate, 'Min spread');
-    assert(market_params.range == params.range, 'Range');
     assert(market_params.base_currency_id == params.base_currency_id, 'Base currency ID');
     assert(market_params.quote_currency_id == params.quote_currency_id, 'Quote currency ID');
     assert(market_params.min_sources == params.min_sources, 'Min sources');
@@ -135,8 +119,7 @@ fn test_queue_and_set_market_params_with_delay_first_initialisation() {
 
     // Run checks.
     let params = default_market_params();
-    assert(market_params.fee_rate == params.fee_rate, 'Min spread');
-    assert(market_params.range == params.range, 'Range');
+    assert(market_params.fee_rate == params.fee_rate, 'Fee rate');
     assert(market_params.base_currency_id == params.base_currency_id, 'Base currency ID');
     assert(market_params.quote_currency_id == params.quote_currency_id, 'Quote currency ID');
     assert(market_params.min_sources == params.min_sources, 'Min sources');
@@ -199,20 +182,12 @@ fn test_update_queued_market_params() {
 
     // Queue market params.
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        fee_rate: 987,
-        range: 12345,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     rev_solver.queue_market_params(market_id, params);
 
     // Update queued market params.
     let updated_params = MarketParams {
         fee_rate: 123,
-        range: 456,
         base_currency_id: 654321,
         quote_currency_id: 210987,
         min_sources: 20,
@@ -223,7 +198,6 @@ fn test_update_queued_market_params() {
     // Run checks.
     let queued_params = rev_solver.queued_market_params(market_id);
     assert(queued_params.fee_rate == updated_params.fee_rate, 'Min spread');
-    assert(queued_params.range == updated_params.range, 'Range');
     assert(queued_params.base_currency_id == updated_params.base_currency_id, 'Base currency ID');
     assert(
         queued_params.quote_currency_id == updated_params.quote_currency_id, 'Quote currency ID'
@@ -243,14 +217,7 @@ fn test_cancel_queued_market_params() {
 
     // Queue market params.
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        fee_rate: 987,
-        range: 12345,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     rev_solver.queue_market_params(market_id, params);
 
     // Cancel queued market params.
@@ -259,7 +226,6 @@ fn test_cancel_queued_market_params() {
     // Run checks.
     let queued_params = rev_solver.queued_market_params(market_id);
     assert(queued_params.fee_rate == 0, 'Min spread');
-    assert(queued_params.range == 0, 'Range');
     assert(queued_params.base_currency_id == 0, 'Base currency ID');
     assert(queued_params.quote_currency_id == 0, 'Quote currency ID');
     assert(queued_params.min_sources == 0, 'Min sources');
@@ -284,14 +250,7 @@ fn test_queue_market_params_emits_event() {
 
     // Queue market params.
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        fee_rate: 987,
-        range: 12345,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     rev_solver.queue_market_params(market_id, params);
 
     // Check events emitted.
@@ -304,7 +263,6 @@ fn test_queue_market_params_emits_event() {
                         ReversionSolver::QueueMarketParams {
                             market_id,
                             fee_rate: params.fee_rate,
-                            range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
                             min_sources: params.min_sources,
@@ -359,14 +317,7 @@ fn test_set_market_params_emits_event() {
 
     // Set market params.
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    let params = MarketParams {
-        fee_rate: 987,
-        range: 12345,
-        base_currency_id: 123456,
-        quote_currency_id: 789012,
-        min_sources: 10,
-        max_age: 200,
-    };
+    let params = new_market_params();
     rev_solver.queue_market_params(market_id, params);
     rev_solver.set_market_params(market_id);
 
@@ -380,7 +331,6 @@ fn test_set_market_params_emits_event() {
                         ReversionSolver::QueueMarketParams {
                             market_id,
                             fee_rate: params.fee_rate,
-                            range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
                             min_sources: params.min_sources,
@@ -394,7 +344,6 @@ fn test_set_market_params_emits_event() {
                         ReversionSolver::SetMarketParams {
                             market_id,
                             fee_rate: params.fee_rate,
-                            range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
                             min_sources: params.min_sources,
@@ -442,27 +391,6 @@ fn test_queue_market_params_fails_if_params_unchanged() {
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
     let params = rev_solver.market_params(market_id);
     rev_solver.queue_market_params(market_id, params);
-}
-
-#[test]
-#[should_panic(expected: ('RangeZero',))]
-fn test_set_market_params_fails_if_range_zero() {
-    let (
-        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
-    ) =
-        before(
-        true
-    );
-
-    // Queue market params.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    let mut params = rev_solver.market_params(market_id);
-    params.range = 0;
-    rev_solver.queue_market_params(market_id, params);
-
-    // Set market params.
-    rev_solver.set_market_params(market_id);
 }
 
 #[test]
@@ -589,7 +517,7 @@ fn test_set_market_params_fails_before_delay_complete() {
 
     // Queue new market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
-    let mut params = default_market_params();
+    let mut params = new_market_params();
     params.fee_rate = 987;
     rev_solver.queue_market_params(market_id, params);
 
@@ -637,7 +565,7 @@ fn test_set_market_params_fails_none_queued_null_params() {
 
     // Queue market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
-    let mut params = default_market_params();
+    let mut params = new_market_params();
     params.fee_rate = 987;
     rev_solver.queue_market_params(market_id, params);
 

@@ -4,7 +4,7 @@ use starknet::class_hash::ClassHash;
 
 // Local imports.
 use haiko_solver_core::types::PositionInfo;
-use haiko_solver_reversion::types::{Trend, MarketParams};
+use haiko_solver_reversion::types::{Trend, ModelParams, MarketParams};
 use haiko_solver_reversion::interfaces::pragma::PragmaPricesResponse;
 
 #[starknet::interface]
@@ -21,11 +21,11 @@ pub trait IReversionSolver<TContractState> {
     // Pragma oracle contract address
     fn oracle(self: @TContractState) -> ContractAddress;
 
-    // Trend setter contract address
-    fn trend_setter(self: @TContractState) -> ContractAddress;
+    // Model admin contract address
+    fn model_admin(self: @TContractState) -> ContractAddress;
 
-    // Get trend of solver market.
-    fn trend(self: @TContractState, market_id: felt252) -> Trend;
+    // Get model parameters of solver market.
+    fn model_params(self: @TContractState, market_id: felt252) -> ModelParams;
 
     // Get unscaled oracle price from oracle feed.
     // 
@@ -74,7 +74,8 @@ pub trait IReversionSolver<TContractState> {
     // # Params
     // * `market_id` - market id
     // * `trend - market trend
-    fn set_trend(ref self: TContractState, market_id: felt252, trend: Trend);
+    // * `range` - range of virtual liquidity position
+    fn set_model_params(ref self: TContractState, market_id: felt252, trend: Trend, range: u32);
 
     // Change the oracle contract address.
     //
@@ -82,11 +83,11 @@ pub trait IReversionSolver<TContractState> {
     // * `oracle` - contract address of oracle feed
     fn change_oracle(ref self: TContractState, oracle: ContractAddress);
 
-    // Change the trend setter.
+    // Change the model admin.
     //
     // # Arguments
-    // * `trend_setter` - contract address of trend setter admin
-    fn change_trend_setter(ref self: TContractState, trend_setter: ContractAddress);
+    // * `admin` - contract address of trend setter admin
+    fn change_model_admin(ref self: TContractState, admin: ContractAddress);
 
     // Query virtual liquidity positions against which swaps are executed.
     // 

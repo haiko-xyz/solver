@@ -1,19 +1,19 @@
-use haiko_solver_reversion::types::{MarketParams, TrendState};
+use haiko_solver_reversion::types::{MarketParams, ModelParams};
 
 #[starknet::interface]
 pub trait IStorePackingContract<TContractState> {
     fn get_market_params(self: @TContractState, market_id: felt252) -> MarketParams;
-    fn get_trend_state(self: @TContractState, market_id: felt252) -> TrendState;
+    fn get_model_params(self: @TContractState, market_id: felt252) -> ModelParams;
 
     fn set_market_params(ref self: TContractState, market_id: felt252, market_params: MarketParams);
-    fn set_trend_state(ref self: TContractState, market_id: felt252, trend_state: TrendState);
+    fn set_model_params(ref self: TContractState, market_id: felt252, model_params: ModelParams);
 }
 
 #[starknet::contract]
 pub mod StorePackingContract {
-    use haiko_solver_reversion::types::{MarketParams, TrendState};
+    use haiko_solver_reversion::types::{MarketParams, ModelParams};
     use haiko_solver_reversion::libraries::store_packing::{
-        MarketParamsStorePacking, TrendStateStorePacking
+        MarketParamsStorePacking, ModelParamsStorePacking
     };
     use super::IStorePackingContract;
 
@@ -24,7 +24,7 @@ pub mod StorePackingContract {
     #[storage]
     struct Storage {
         market_params: LegacyMap::<felt252, MarketParams>,
-        trend_state: LegacyMap::<felt252, TrendState>,
+        model_params: LegacyMap::<felt252, ModelParams>,
     }
 
     #[constructor]
@@ -40,8 +40,8 @@ pub mod StorePackingContract {
             self.market_params.read(market_id)
         }
 
-        fn get_trend_state(self: @ContractState, market_id: felt252) -> TrendState {
-            self.trend_state.read(market_id)
+        fn get_model_params(self: @ContractState, market_id: felt252) -> ModelParams {
+            self.model_params.read(market_id)
         }
 
         ////////////////////////////////
@@ -54,8 +54,10 @@ pub mod StorePackingContract {
             self.market_params.write(market_id, market_params);
         }
 
-        fn set_trend_state(ref self: ContractState, market_id: felt252, trend_state: TrendState) {
-            self.trend_state.write(market_id, trend_state);
+        fn set_model_params(
+            ref self: ContractState, market_id: felt252, model_params: ModelParams
+        ) {
+            self.model_params.write(market_id, model_params);
         }
     }
 }

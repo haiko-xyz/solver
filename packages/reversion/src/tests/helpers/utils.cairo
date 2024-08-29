@@ -20,7 +20,7 @@ use haiko_solver_reversion::{
     types::MarketParams,
     tests::helpers::{
         actions::{deploy_reversion_solver, deploy_mock_pragma_oracle},
-        params::default_market_params,
+        params::{default_market_params, default_model_params},
     },
 };
 use haiko_solver_core::{
@@ -200,6 +200,10 @@ fn _before(
     let market_params = default_market_params();
     rev_solver.queue_market_params(market_id, market_params);
     rev_solver.set_market_params(market_id);
+
+    // Set model params.
+    let model_params = default_model_params();
+    rev_solver.set_model_params(market_id, model_params.trend, model_params.range);
 
     // Set oracle price.
     start_warp(CheatTarget::One(oracle.contract_address), 1000);

@@ -61,8 +61,9 @@ fn test_solver_e2e_private_market() {
 
     // Set trend.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    repl_solver.set_trend(market_id, Trend::Down);
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, Trend::Down, model_params.range);
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -114,8 +115,9 @@ fn test_solver_e2e_public_market() {
 
     // Set trend.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let repl_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    repl_solver.set_trend(market_id, Trend::Down);
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, Trend::Down, model_params.range);
 
     // Set withdraw fee.
     start_prank(CheatTarget::One(solver.contract_address), owner());

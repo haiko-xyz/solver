@@ -3,7 +3,7 @@ use starknet::syscalls::deploy_syscall;
 use starknet::contract_address::contract_address_const;
 
 // Local imports.
-use haiko_solver_reversion::types::{MarketParams, TrendState, Trend};
+use haiko_solver_reversion::types::{MarketParams, ModelParams, Trend};
 use haiko_solver_reversion::contracts::mocks::store_packing_contract::{
     StorePackingContract, IStorePackingContractDispatcher, IStorePackingContractDispatcherTrait
 };
@@ -32,7 +32,6 @@ fn test_store_packing_market_params() {
 
     let market_params = MarketParams {
         fee_rate: 15,
-        range: 15000,
         base_currency_id: 12893128793123,
         quote_currency_id: 128931287,
         min_sources: 12,
@@ -43,7 +42,6 @@ fn test_store_packing_market_params() {
     let unpacked = store_packing_contract.get_market_params(1);
 
     assert(unpacked.fee_rate == market_params.fee_rate, 'Market params: fee rate');
-    assert(unpacked.range == market_params.range, 'Market params: range');
     assert(
         unpacked.base_currency_id == market_params.base_currency_id, 'Market params: base curr id'
     );
@@ -56,15 +54,18 @@ fn test_store_packing_market_params() {
 }
 
 #[test]
-fn test_store_packing_trend_state() {
+fn test_store_packing_model_params() {
     let store_packing_contract = before();
 
-    let trend_state = TrendState { trend: Trend::Up, cached_price: 1000, cached_decimals: 8, };
+    let model_params = ModelParams {
+        cached_price: 1000, cached_decimals: 8, range: 15000, trend: Trend::Up
+    };
 
-    store_packing_contract.set_trend_state(1, trend_state);
-    let unpacked = store_packing_contract.get_trend_state(1);
+    store_packing_contract.set_model_params(1, model_params);
+    let unpacked = store_packing_contract.get_model_params(1);
 
-    assert(unpacked.trend == trend_state.trend, 'Trend state: spread');
-    assert(unpacked.cached_price == trend_state.cached_price, 'Trend state: range');
-    assert(unpacked.cached_decimals == trend_state.cached_decimals, 'Trend state: base curr id');
+    assert(unpacked.cached_price == model_params.cached_price, 'Trend state: range');
+    assert(unpacked.cached_decimals == model_params.cached_decimals, 'Trend state: base curr id');
+    assert(unpacked.range == model_params.range, 'Trend state: range');
+    assert(unpacked.trend == model_params.trend, 'Trend state: spread');
 }

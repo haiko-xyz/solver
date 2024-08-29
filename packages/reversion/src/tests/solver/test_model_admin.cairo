@@ -36,7 +36,7 @@ use openzeppelin::token::erc20::interface::{ERC20ABIDispatcher, ERC20ABIDispatch
 ////////////////////////////////
 
 #[test]
-fn test_change_trend_setter_works() {
+fn test_change_model_admin_works() {
     let (
         _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
     ) =
@@ -44,16 +44,16 @@ fn test_change_trend_setter_works() {
         true
     );
 
-    // Set trend setter.
+    // Set model admin.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    rev_solver.change_trend_setter(alice());
+    rev_solver.change_model_admin(alice());
 
-    // Get trend setter.
-    let trend_setter = rev_solver.trend_setter();
+    // Get model admin.
+    let model_admin = rev_solver.model_admin();
 
     // Run checks.
-    assert(trend_setter == alice(), 'Trend setter');
+    assert(model_admin == alice(), 'Trend setter');
 }
 
 ////////////////////////////////
@@ -61,7 +61,7 @@ fn test_change_trend_setter_works() {
 ////////////////////////////////
 
 #[test]
-fn test_change_trend_setter_emits_event() {
+fn test_change_model_admin_emits_event() {
     let (
         _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
     ) =
@@ -74,7 +74,7 @@ fn test_change_trend_setter_emits_event() {
 
     // Set trend.
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    rev_solver.change_trend_setter(alice());
+    rev_solver.change_model_admin(alice());
 
     // Check events emitted.
     spy
@@ -82,8 +82,8 @@ fn test_change_trend_setter_emits_event() {
             @array![
                 (
                     solver.contract_address,
-                    ReversionSolver::Event::ChangeTrendSetter(
-                        ReversionSolver::ChangeTrendSetter { trend_setter: alice() }
+                    ReversionSolver::Event::ChangeModelAdmin(
+                        ReversionSolver::ChangeModelAdmin { admin: alice() }
                     )
                 )
             ]
@@ -96,7 +96,7 @@ fn test_change_trend_setter_emits_event() {
 
 #[test]
 #[should_panic(expected: ('OnlyOwner',))]
-fn test_change_trend_setter_fails_if_not_owner() {
+fn test_change_model_admin_fails_if_not_owner() {
     let (
         _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
     ) =
@@ -104,15 +104,15 @@ fn test_change_trend_setter_fails_if_not_owner() {
         true
     );
 
-    // Change trend setter.
+    // Change model admin.
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    rev_solver.change_trend_setter(alice());
+    rev_solver.change_model_admin(alice());
 }
 
 #[test]
 #[should_panic(expected: ('TrendSetterUnchanged',))]
-fn test_change_trend_setter_fails_if_trend_setter_unchanged() {
+fn test_change_model_admin_fails_if_model_admin_unchanged() {
     let (
         _base_token, _quote_token, _oracle, _vault_token_class, solver, _market_id, _vault_token_opt
     ) =
@@ -120,11 +120,11 @@ fn test_change_trend_setter_fails_if_trend_setter_unchanged() {
         true
     );
 
-    // Change trend setter.
+    // Change model admin.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
-    rev_solver.change_trend_setter(alice());
+    rev_solver.change_model_admin(alice());
 
     // Change again to same setter.
-    rev_solver.change_trend_setter(alice());
+    rev_solver.change_model_admin(alice());
 }

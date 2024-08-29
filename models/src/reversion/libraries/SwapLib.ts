@@ -1,10 +1,10 @@
 import Decimal from "decimal.js";
+import { PRECISION, ROUNDING } from "../../common/config";
+import { grossToNet, netToGross } from "../../common/math/feeMath";
 import {
   liquidityToBase,
   liquidityToQuote,
 } from "../../common/math/liquidityMath";
-import { grossToNet, netToGross } from "../../common/math/feeMath";
-import { PRECISION, ROUNDING } from "../../common/config";
 
 export const getSwapAmounts = (
   isBuy: boolean,
@@ -15,7 +15,9 @@ export const getSwapAmounts = (
   lowerSqrtPrice: Decimal.Value,
   upperSqrtPrice: Decimal.Value,
   liquidity: Decimal.Value,
-  feeRate: Decimal.Value
+  feeRate: Decimal.Value,
+  baseDecimals: number,
+  quoteDecimals: number
 ): { amountIn: Decimal.Value; amountOut: Decimal.Value } => {
   if (
     new Decimal(liquidity).isZero() ||
@@ -24,14 +26,21 @@ export const getSwapAmounts = (
     return { amountIn: "0", amountOut: "0" };
   }
 
-  const startSqrtPrice = isBuy ? lowerSqrtPrice : upperSqrtPrice;
+  const scaledLowerSqrtPrice = new Decimal(lowerSqrtPrice).mul(
+    new Decimal(10).pow((baseDecimals - quoteDecimals) / 2)
+  );
+  const scaledUpperSqrtPrice = new Decimal(upperSqrtPrice).mul(
+    new Decimal(10).pow((baseDecimals - quoteDecimals) / 2)
+  );
+
+  const startSqrtPrice = isBuy ? scaledLowerSqrtPrice : scaledUpperSqrtPrice;
   const targetSqrtPrice = isBuy
     ? thresholdSqrtPrice
-      ? Decimal.min(thresholdSqrtPrice, upperSqrtPrice)
-      : upperSqrtPrice
+      ? Decimal.min(thresholdSqrtPrice, scaledUpperSqrtPrice)
+      : scaledUpperSqrtPrice
     : thresholdSqrtPrice
-    ? Decimal.max(thresholdSqrtPrice, lowerSqrtPrice)
-    : lowerSqrtPrice;
+    ? Decimal.max(thresholdSqrtPrice, scaledLowerSqrtPrice)
+    : scaledLowerSqrtPrice;
 
   const netAmount = exactInput ? grossToNet(amount, feeRate) : amount;
   const { amountIn: netAmountIn, amountOut: netAmountOut } = computeSwapAmount(

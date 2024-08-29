@@ -1,10 +1,10 @@
 import Decimal from "decimal.js";
-import { getSwapAmounts } from "../libraries/SwapLib";
 import {
   getDelta,
   getVirtualPosition,
   getVirtualPositionRange,
 } from "../libraries/SpreadMath";
+import { getSwapAmounts } from "../libraries/SwapLib";
 
 type Case = {
   description: string;
@@ -303,6 +303,9 @@ const testSwapCases = () => {
       swapCasesOverride,
     } = cases[i];
 
+    const baseDecimals = 18;
+    const quoteDecimals = 18;
+
     console.log(`Test Case ${description}`);
     const delta = getDelta(maxDelta, baseReserves, quoteReserves, oraclePrice);
 
@@ -317,7 +320,9 @@ const testSwapCases = () => {
         minSpread,
         delta,
         range,
-        oraclePrice
+        oraclePrice,
+        baseDecimals,
+        quoteDecimals
       );
       const { lowerSqrtPrice, upperSqrtPrice, liquidity } = getVirtualPosition(
         !isBuy,
@@ -333,7 +338,9 @@ const testSwapCases = () => {
         thresholdAmount,
         lowerSqrtPrice,
         upperSqrtPrice,
-        liquidity
+        liquidity,
+        baseDecimals,
+        quoteDecimals
       );
       console.log({
         amountIn: new Decimal(amountIn).mul(1e18).toFixed(0),

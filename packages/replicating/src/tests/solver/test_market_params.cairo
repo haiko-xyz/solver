@@ -288,6 +288,41 @@ fn test_cancel_queued_market_params() {
     assert(queued_params.max_age == 0, 'Max age');
 }
 
+#[test]
+fn test_set_market_params_skips_delay_for_private_vault() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set delay.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let delay = 86400; // 24 hours
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    repl_solver.set_delay(delay);
+
+    // Queue and immediately set market params.
+    let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
+    let params = MarketParams {
+        min_spread: 987,
+        range: 12345,
+        max_delta: 676,
+        max_skew: 9989,
+        base_currency_id: 123456,
+        quote_currency_id: 789012,
+        min_sources: 10,
+        max_age: 200,
+    };
+    repl_solver.queue_market_params(market_id, params);
+    repl_solver.set_market_params(market_id);
+
+    // Run checks.
+    let market_params = repl_solver.market_params(market_id);
+    assert(market_params == params, 'Params');
+}
+
 ////////////////////////////////
 // TESTS - Events
 ////////////////////////////////

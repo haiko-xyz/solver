@@ -338,9 +338,11 @@ pub mod ReplicatingSolver {
 
             // Run checks.
             self.solver.assert_market_owner(market_id);
+            let market_info: MarketInfo = self.solver.market_info.read(market_id);
             assert(params != queued_params, 'ParamsUnchanged');
-            if params != Default::default() {
-                // Skip this check if we are initialising the market for first time.
+            // Skip this check if we are initialising the market for first time, or
+            // if the market is private.
+            if params != Default::default() && market_info.is_public {
                 assert(queued_at + delay <= get_block_timestamp(), 'DelayNotPassed');
             }
             assert(queued_at != 0 && queued_params != Default::default(), 'NotQueued');

@@ -49,6 +49,9 @@ const testGetSwapAmounts = () => {
     },
   ];
 
+  const baseDecimals = 18;
+  const quoteDecimals = 18;
+
   for (let i = 0; i < cases.length; i++) {
     const params = cases[i];
     const { amountIn, amountOut } = getSwapAmounts(
@@ -60,7 +63,9 @@ const testGetSwapAmounts = () => {
       params.lowerSqrtPrice,
       params.upperSqrtPrice,
       params.liquidity,
-      params.feeRate
+      params.feeRate,
+      baseDecimals,
+      quoteDecimals
     );
     console.log(`Case ${i + 1}`);
     console.log({

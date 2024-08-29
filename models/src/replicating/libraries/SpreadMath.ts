@@ -1,9 +1,9 @@
 import Decimal from "decimal.js";
+import { PRECISION, ROUNDING } from "../../common/config";
 import {
   baseToLiquidity,
   quoteToLiquidity,
 } from "../../common/math/liquidityMath";
-import { PRECISION, ROUNDING } from "../../common/config";
 import { limitToSqrtPrice, priceToLimit } from "../../common/math/priceMath";
 
 type PositionInfo = {
@@ -49,11 +49,16 @@ export const getVirtualPositionRange = (
   minSpread: Decimal.Value,
   delta: Decimal.Value,
   range: Decimal.Value,
-  oraclePrice: Decimal.Value
+  oraclePrice: Decimal.Value,
+  baseDecimals: number,
+  quoteDecimals: number
 ): PositionRange => {
   Decimal.set({ precision: PRECISION, rounding: ROUNDING });
 
-  let limit = priceToLimit(oraclePrice, 1, !isBid);
+  const scaledOraclePrice = new Decimal(oraclePrice).mul(
+    new Decimal(10).pow(quoteDecimals - baseDecimals)
+  );
+  let limit = priceToLimit(scaledOraclePrice, 1, !isBid);
 
   if (isBid) {
     const upperLimit = new Decimal(limit).sub(minSpread).add(delta);

@@ -16,7 +16,7 @@ export ORACLE=0x36031daa264c24520b11d93af622c848b2499b66b41d611bac95e13cfca131a
 # Vault token
 starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STARKNET_KEYSTORE '/Users/parkyeung/dev/solver/target/dev/haiko_solver_replicating_VaultToken.contract_class.json'
 
-# Solver
+# Replicating Solver
 starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STARKNET_KEYSTORE '/Users/parkyeung/dev/solver/target/dev/haiko_solver_replicating_ReplicatingSolver.contract_class.json'
 
 #############################
@@ -29,6 +29,12 @@ starkli deploy --rpc $STARKNET_RPC $REPLICATING_SOLVER_CLASS $OWNER $ORACLE $VAU
 #############################
 # Deployments
 #############################
+
+# 22 August 2024
+export REPLICATING_SOLVER_CLASS=0x0589858bd41fc0c922ff5c656f3373f7072fb8a69fcd02c8cdad0dce6666d4fb
+
+# 21 August 2024
+export REPLICATING_SOLVER_CLASS=0x058f847593deac850a96bdf55c0b60431985a7235201b3b55b96e12f4be54472
 
 # 10 July 2024
 export REPLICATING_SOLVER_CLASS=0x0082584c2a39b356c029756b15e669369cfdc00b968c2905d57cc73e08b1eb97

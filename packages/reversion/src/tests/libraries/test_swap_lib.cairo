@@ -25,7 +25,8 @@ fn test_get_swap_amounts_succeeds() {
         amount: to_e18(1),
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(())
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     let position = PositionInfo {
         lower_sqrt_price: encode_sqrt_price(8, 10),
@@ -44,7 +45,8 @@ fn test_get_swap_amounts_over_zero_liquidity() {
         amount: to_e18(1),
         exact_input: true,
         threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(())
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     let position = PositionInfo {
         lower_sqrt_price: encode_sqrt_price(1, 1),
@@ -62,7 +64,8 @@ fn test_get_swap_amounts_bid_threshold_sqrt_price() {
         amount: to_e18(10),
         exact_input: true,
         threshold_sqrt_price: Option::Some(encode_sqrt_price(95, 100)),
-        threshold_amount: Option::None(())
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     let position = PositionInfo {
         lower_sqrt_price: encode_sqrt_price(8, 10),
@@ -82,7 +85,8 @@ fn test_get_swap_amounts_ask_threshold_sqrt_price() {
         amount: to_e18(10),
         exact_input: true,
         threshold_sqrt_price: Option::Some(encode_sqrt_price(105, 100)),
-        threshold_amount: Option::None(())
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
     };
     let position = PositionInfo {
         lower_sqrt_price: encode_sqrt_price(1, 1),

@@ -109,6 +109,7 @@ Static cases
 - `Fail` Swap buy when price is at virutal ask upper
 - `Fail` Test swap fails if limit overflows
 - `Fail` Test swap fails if limit underflows
+- `Fail` Test swap fails for non solver caller
 
 Sequential cases
 

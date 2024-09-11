@@ -109,7 +109,7 @@ This event is emitted when a solver market's parameters are updated by its owner
 pub(crate) struct SetMarketParams {
     #[key]
     pub market_id: felt252,
-    pub min_spread: u32,
+    pub fee_rate: u16,
     pub range: u32,
     pub max_delta: u32,
     pub max_skew: u16,
@@ -121,7 +121,7 @@ pub(crate) struct SetMarketParams {
 ```
 
 - `market_id` is the unique id of the market (see `CreateMarket` above)
-- `min_spread` is the spread, denominated in limits (1.00001 or 0.001% tick) added to the oracle price to arrive at the bid upper or ask lower price
+- `fee_rate` is the swap fee rate deducted from swap amounts paid in (expressed in base 10000)
 - `range` is the range, denominated in limits, of the virtual liquidity position that the swap is executed over (we apply the same calculations as Uniswap liquidity positions). The bid lower price is calculated by as `bid_upper - range`, and the ask upper price is calculated as `ask_lower + range`
 - `max_delta` is a dynamic shift applied to the bid and ask prices in the event of a skew in the composition of the pool (e.g. if the pool is 90% ETH and 10% DAI, the price of ETH will be shifted by `skew * max_delta` to incentivise swappers to move the pool back to 50/50 ratio)
 - `max_skew` is a hard cap applied to the skew of the pool, above which swaps are rejected

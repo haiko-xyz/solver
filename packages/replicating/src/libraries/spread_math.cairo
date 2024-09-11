@@ -25,10 +25,8 @@ pub const DENOMINATOR: u256 = 10000;
 //
 // # Arguments
 // `is_bid` - whether to calculate bid or ask position
-// `min_spread` - minimum spread to apply
-// `delta` - inventory delta (+ve if ask spread, -ve if bid spread)
-// `range` - position range
-// `oracle_price` - current oracle price (base 10e28)
+// `lower_limit` - virtual position lower limit
+// `upper_limit` - virtual position upper limit
 // `amount` - token amount in reserve
 // 
 // # Returns
@@ -55,7 +53,6 @@ pub fn get_virtual_position(
 //
 // # Arguments
 // `is_bid` - whether to calculate bid or ask position
-// `min_spread` - minimum spread to apply
 // `delta` - inventory delta (+ve if ask spread, -ve if bid spread)
 //           note `delta` uses a custom i32 implementation that is [-4294967295, 4294967295]
 // `range` - position range
@@ -65,19 +62,11 @@ pub fn get_virtual_position(
 // `lower_limit` - virtual position lower limit
 // `upper_limit` - virtual position upper limit
 pub fn get_virtual_position_range(
-    is_bid: bool, min_spread: u32, delta: i32, range: u32, oracle_price: u256
+    is_bid: bool, delta: i32, range: u32, oracle_price: u256
 ) -> (u32, u32) {
     // Start with the oracle price, and convert it to limits.
     assert(oracle_price != 0, 'OraclePriceZero');
     let mut limit = price_math::price_to_limit(oracle_price, 1, !is_bid);
-
-    // Apply minimum spread.
-    if is_bid {
-        assert(limit >= min_spread, 'LimitUF');
-        limit -= min_spread;
-    } else {
-        limit += min_spread;
-    }
 
     // Apply delta.
     if delta.sign {

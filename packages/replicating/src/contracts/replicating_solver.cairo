@@ -80,7 +80,7 @@ pub mod ReplicatingSolver {
     pub(crate) struct QueueMarketParams {
         #[key]
         pub market_id: felt252,
-        pub min_spread: u32,
+        pub fee_rate: u16,
         pub range: u32,
         pub max_delta: u32,
         pub max_skew: u16,
@@ -94,7 +94,7 @@ pub mod ReplicatingSolver {
     pub(crate) struct SetMarketParams {
         #[key]
         pub market_id: felt252,
-        pub min_spread: u32,
+        pub fee_rate: u16,
         pub range: u32,
         pub max_delta: u32,
         pub max_skew: u16,
@@ -143,11 +143,12 @@ pub mod ReplicatingSolver {
         // * `swap_params` - swap parameters
         //
         // # Returns
-        // * `amount_in` - amount in
+        // * `amount_in` - amount in including fees
         // * `amount_out` - amount out
+        // * `fees` - fees
         fn quote(
             self: @ContractState, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256) {
+        ) -> (u256, u256, u256) {
             // Run validity checks.
             let state: MarketState = self.solver.market_state.read(market_id);
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
@@ -162,8 +163,11 @@ pub mod ReplicatingSolver {
                 bid
             };
 
-            // Calculate swap amount. 
-            let (amount_in, amount_out) = swap_lib::get_swap_amounts(swap_params, position);
+            // Calculate swap amount.
+            let params = self.market_params.read(market_id);
+            let (amount_in, amount_out, fees) = swap_lib::get_swap_amounts(
+                swap_params, params.fee_rate, position
+            );
 
             // Fetch oracle price.
             let (oracle_price, is_valid) = self.get_oracle_price(market_id);
@@ -172,11 +176,10 @@ pub mod ReplicatingSolver {
             // Check deposited amounts does not violate max skew, or if it does, that
             // the deposit reduces the extent of skew.
             let (base_reserves, quote_reserves) = if swap_params.is_buy {
-                (state.base_reserves - amount_out, state.quote_reserves + amount_in)
+                (state.base_reserves - amount_out, state.quote_reserves + amount_in - fees)
             } else {
-                (state.base_reserves + amount_in, state.quote_reserves - amount_out)
+                (state.base_reserves + amount_in - fees, state.quote_reserves - amount_out)
             };
-            let params = self.market_params.read(market_id);
             if params.max_skew != 0 {
                 let (skew_before, _) = spread_math::get_skew(
                     state.base_reserves, state.quote_reserves, oracle_price
@@ -190,7 +193,7 @@ pub mod ReplicatingSolver {
             }
 
             // Return amounts.
-            (amount_in, amount_out)
+            (amount_in, amount_out, fees)
         }
 
         // Callback function to execute any state updates after a swap is completed.
@@ -310,7 +313,7 @@ pub mod ReplicatingSolver {
                     Event::QueueMarketParams(
                         QueueMarketParams {
                             market_id,
-                            min_spread: params.min_spread,
+                            fee_rate: params.fee_rate,
                             range: params.range,
                             max_delta: params.max_delta,
                             max_skew: params.max_skew,
@@ -363,7 +366,7 @@ pub mod ReplicatingSolver {
                     Event::SetMarketParams(
                         SetMarketParams {
                             market_id,
-                            min_spread: queued_params.min_spread,
+                            fee_rate: queued_params.fee_rate,
                             range: queued_params.range,
                             max_delta: queued_params.max_delta,
                             max_skew: queued_params.max_skew,
@@ -431,10 +434,10 @@ pub mod ReplicatingSolver {
                 params.max_delta, state.base_reserves, state.quote_reserves, oracle_price
             );
             let (bid_lower, bid_upper) = spread_math::get_virtual_position_range(
-                true, params.min_spread, delta, params.range, oracle_price
+                true, delta, params.range, oracle_price
             );
             let (ask_lower, ask_upper) = spread_math::get_virtual_position_range(
-                false, params.min_spread, delta, params.range, oracle_price
+                false, delta, params.range, oracle_price
             );
 
             // Calculate and return positions.

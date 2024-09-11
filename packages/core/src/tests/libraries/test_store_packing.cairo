@@ -33,6 +33,8 @@ fn test_store_packing_market_state() {
     let market_state = MarketState {
         base_reserves: 1389123122000000000000000000000,
         quote_reserves: 2401299999999999999999999999999,
+        base_fees: 381289131303000000,
+        quote_fees: 1000000000000000000,
         is_paused: false,
         vault_token: contract_address_const::<0x123>(),
     };
@@ -42,6 +44,8 @@ fn test_store_packing_market_state() {
 
     assert(unpacked.base_reserves == market_state.base_reserves, 'Market state: base reserves');
     assert(unpacked.quote_reserves == market_state.quote_reserves, 'Market state: quote reserves');
+    assert(unpacked.base_fees == market_state.base_fees, 'Market state: base fees');
+    assert(unpacked.quote_fees == market_state.quote_fees, 'Market state: quote fees');
     assert(unpacked.is_paused == market_state.is_paused, 'Market state: is paused');
     assert(unpacked.vault_token == market_state.vault_token, 'Market state: vault token');
 }

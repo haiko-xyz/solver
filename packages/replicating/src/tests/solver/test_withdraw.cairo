@@ -4,7 +4,7 @@ use starknet::contract_address_const;
 // Local imports.
 use haiko_solver_core::{
     contracts::solver::SolverComponent,
-    interfaces::ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
+    interfaces::ISolver::{ISolverDispatcher, ISolverDispatcherTrait}, types::SwapParams,
 };
 use haiko_solver_replicating::{
     contracts::mocks::mock_pragma_oracle::{
@@ -56,30 +56,46 @@ fn test_withdraw_partial_shares_from_public_vault() {
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let (_, _, shares) = solver.deposit(market_id, base_amount, quote_amount);
 
+    // Swap.
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+
     // Snapshot before.
     let vault_token = vault_token_opt.unwrap();
     let bef = snapshot(solver, market_id, base_token, quote_token, vault_token, alice());
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_withdraw, quote_withdraw) = solver.withdraw_public(market_id, shares / 2);
+    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
+        .withdraw_public(market_id, shares / 2);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, alice());
 
     // Run checks.
-    assert(approx_eq(base_withdraw, base_amount / 2, 10), 'Base deposit');
-    assert(approx_eq(quote_withdraw, quote_amount / 2, 10), 'Quote deposit');
+    assert(approx_eq(base_withdraw, (base_amount * 2 + amount_in) / 4, 10), 'Base deposit');
+    assert(approx_eq(quote_withdraw, (quote_amount * 2 - amount_out) / 4, 10), 'Quote deposit');
+    assert(approx_eq(base_fees_withdraw, fees / 4, 10), 'Base fees withdraw');
+    assert(quote_fees_withdraw == 0, 'Quote fees withdraw');
     assert(aft.lp_base_bal == bef.lp_base_bal + base_withdraw, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal + quote_withdraw, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal - shares / 2, 'LP shares');
     assert(aft.vault_total_bal == bef.vault_total_bal - shares / 2, 'LP total shares');
     assert(
-        aft.market_state.base_reserves == bef.market_state.base_reserves - base_withdraw,
+        aft.market_state.base_reserves == bef.market_state.base_reserves
+            - (base_withdraw - base_fees_withdraw),
         'Base reserve'
     );
     assert(
-        aft.market_state.quote_reserves == bef.market_state.quote_reserves - quote_withdraw,
+        aft.market_state.quote_reserves == bef.market_state.quote_reserves
+            - (quote_withdraw - quote_fees_withdraw),
         'Quote reserve'
     );
     assert(aft.bid.lower_sqrt_price == bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
@@ -111,6 +127,17 @@ fn test_withdraw_remaining_shares_from_public_vault() {
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let (_, _, shares) = solver.deposit(market_id, base_amount, quote_amount);
 
+    // Swap.
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+
     // Withdraw owner.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     solver.withdraw_public(market_id, shares_init);
@@ -121,24 +148,29 @@ fn test_withdraw_remaining_shares_from_public_vault() {
 
     // Withdraw LP.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_withdraw, quote_withdraw) = solver.withdraw_public(market_id, shares);
+    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
+        .withdraw_public(market_id, shares);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, alice());
 
     // Run checks.
-    assert(approx_eq(base_withdraw, base_amount, 10), 'Base deposit');
-    assert(approx_eq(quote_withdraw, quote_amount, 10), 'Quote deposit');
+    assert(approx_eq(base_withdraw, (base_amount * 2 + amount_in) / 2, 1), 'Base deposit');
+    assert(approx_eq(quote_withdraw, (quote_amount * 2 - amount_out) / 2, 1), 'Quote deposit');
+    assert(approx_eq(base_fees_withdraw, fees / 2, 1), 'Base fees withdraw');
+    assert(quote_fees_withdraw == 0, 'Quote fees withdraw');
     assert(aft.lp_base_bal == bef.lp_base_bal + base_withdraw, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal + quote_withdraw, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal - shares, 'LP shares');
     assert(aft.vault_total_bal == bef.vault_total_bal - shares, 'LP total shares');
     assert(
-        aft.market_state.base_reserves == bef.market_state.base_reserves - base_withdraw,
+        aft.market_state.base_reserves == bef.market_state.base_reserves
+            - (base_withdraw - base_fees_withdraw),
         'Base reserve'
     );
     assert(
-        aft.market_state.quote_reserves == bef.market_state.quote_reserves - quote_withdraw,
+        aft.market_state.quote_reserves == bef.market_state.quote_reserves
+            - (quote_withdraw - quote_fees_withdraw),
         'Quote reserve'
     );
     assert(aft.bid.lower_sqrt_price == 0, 'Bid lower sqrt price');
@@ -200,20 +232,35 @@ fn test_withdraw_private_base_only() {
     let quote_amount = to_e18(500);
     solver.deposit_initial(market_id, base_amount, quote_amount);
 
+    // Swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in, _, fees) = solver.swap(market_id, params);
+
     // Snapshot before.
     let vault_token = contract_address_const::<0x0>();
     let bef = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_withdraw, quote_withdraw) = solver.withdraw_private(market_id, base_amount, 0);
+    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
+        .withdraw_private(market_id, base_amount + amount_in, 0);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Run checks.
-    assert(approx_eq(base_withdraw, base_amount, 10), 'Base withdraw');
+    assert(approx_eq(base_withdraw, base_amount + amount_in, 10), 'Base withdraw');
     assert(quote_withdraw == 0, 'Quote withdraw');
+    assert(approx_eq(base_fees_withdraw, fees, 10), 'Base fees withdraw');
+    assert(quote_fees_withdraw == 0, 'Quote fees withdraw');
     assert(aft.lp_base_bal == bef.lp_base_bal + base_withdraw, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal + quote_withdraw, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal, 'LP shares');
@@ -243,20 +290,35 @@ fn test_withdraw_private_quote_only() {
     let quote_amount = to_e18(500);
     solver.deposit_initial(market_id, base_amount, quote_amount);
 
+    // Swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (_, amount_out, _) = solver.swap(market_id, params);
+
     // Snapshot before.
     let vault_token = contract_address_const::<0x0>();
     let bef = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_withdraw, quote_withdraw) = solver.withdraw_private(market_id, 0, quote_amount);
+    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
+        .withdraw_private(market_id, 0, quote_amount - amount_out);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Run checks.
     assert(base_withdraw == 0, 'Base withdraw');
-    assert(approx_eq(quote_withdraw, quote_amount, 10), 'Quote withdraw');
+    assert(approx_eq(quote_withdraw, quote_amount - amount_out, 10), 'Quote withdraw');
+    assert(base_fees_withdraw == 0, 'Base fees withdraw');
+    assert(quote_fees_withdraw == 0, 'Quote fees withdraw');
     assert(aft.lp_base_bal == bef.lp_base_bal + base_withdraw, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal + quote_withdraw, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal, 'LP shares');
@@ -278,31 +340,49 @@ fn test_withdraw_private_partial_amounts() {
     let quote_amount = to_e18(500);
     solver.deposit_initial(market_id, base_amount, quote_amount);
 
+    // Swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+
     // Snapshot before.
     let vault_token = contract_address_const::<0x0>();
     let bef = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_withdraw, quote_withdraw) = solver
-        .withdraw_private(market_id, base_amount / 2, quote_amount / 2);
+    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
+        .withdraw_private(
+            market_id, (base_amount + amount_in) / 2, (quote_amount - amount_out) / 2
+        );
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Run checks.
-    assert(approx_eq(base_withdraw, base_amount / 2, 10), 'Base withdraw');
-    assert(approx_eq(quote_withdraw, quote_amount / 2, 10), 'Quote withdraw');
+    assert(approx_eq(base_withdraw, (base_amount + amount_in) / 2, 10), 'Base withdraw');
+    assert(approx_eq(quote_withdraw, (quote_amount - amount_out) / 2, 10), 'Quote withdraw');
+    assert(approx_eq(base_fees_withdraw, fees / 2, 10), 'Base fees withdraw');
+    assert(quote_fees_withdraw == 0, 'Quote fees withdraw');
     assert(aft.lp_base_bal == bef.lp_base_bal + base_withdraw, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal + quote_withdraw, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal, 'LP shares');
     assert(aft.vault_total_bal == bef.vault_total_bal, 'LP total shares');
     assert(
-        aft.market_state.base_reserves == bef.market_state.base_reserves - base_withdraw,
+        aft.market_state.base_reserves == bef.market_state.base_reserves
+            - (base_withdraw - base_fees_withdraw),
         'Base reserve'
     );
     assert(
-        aft.market_state.quote_reserves == bef.market_state.quote_reserves - quote_withdraw,
+        aft.market_state.quote_reserves == bef.market_state.quote_reserves
+            - (quote_withdraw - quote_fees_withdraw),
         'Quote reserve'
     );
     assert(aft.bid.lower_sqrt_price == bef.bid.lower_sqrt_price, 'Bid lower sqrt price');
@@ -332,31 +412,46 @@ fn test_withdraw_all_remaining_balances_from_private_vault() {
     let quote_amount = to_e18(500);
     solver.deposit_initial(market_id, base_amount, quote_amount);
 
+    // Swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
     // Snapshot before.
     let vault_token = contract_address_const::<0x0>();
     let bef = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_withdraw, quote_withdraw) = solver
-        .withdraw_private(market_id, base_amount, quote_amount);
+    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
+        .withdraw_private(market_id, base_amount + amount_in, quote_amount + amount_out);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Run checks.
-    assert(approx_eq(base_withdraw, base_amount, 10), 'Base withdraw');
-    assert(approx_eq(quote_withdraw, quote_amount, 10), 'Quote withdraw');
+    assert(approx_eq(base_withdraw, base_amount + amount_in, 10), 'Base withdraw');
+    assert(approx_eq(quote_withdraw, quote_amount - amount_out, 10), 'Quote withdraw');
+    assert(approx_eq(base_fees_withdraw, fees, 10), 'Base fees withdraw');
+    assert(quote_fees_withdraw == 0, 'Quote fees withdraw');
     assert(aft.lp_base_bal == bef.lp_base_bal + base_withdraw, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal + quote_withdraw, 'LP quote bal');
     assert(aft.vault_lp_bal == 0, 'LP shares');
     assert(aft.vault_total_bal == 0, 'LP total shares');
     assert(
-        aft.market_state.base_reserves == bef.market_state.base_reserves - base_withdraw,
+        aft.market_state.base_reserves == bef.market_state.base_reserves
+            - (base_withdraw - base_fees_withdraw),
         'Base reserve'
     );
     assert(
-        aft.market_state.quote_reserves == bef.market_state.quote_reserves - quote_withdraw,
+        aft.market_state.quote_reserves == bef.market_state.quote_reserves
+            - (quote_withdraw - quote_fees_withdraw),
         'Quote reserve'
     );
     assert(aft.bid.lower_sqrt_price == 0, 'Bid lower sqrt price');
@@ -382,12 +477,25 @@ fn test_withdraw_more_than_available_correctly_caps_amount_for_private_vault() {
     let quote_amount = to_e18(500);
     solver.deposit_initial(market_id, base_amount, quote_amount);
 
+    // Swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_withdraw, quote_withdraw) = solver
+    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
         .withdraw_private(market_id, base_amount * 2, quote_amount * 2);
 
     // Run checks.
-    assert(approx_eq(base_withdraw, base_amount, 10), 'Base withdraw');
-    assert(approx_eq(quote_withdraw, quote_amount, 10), 'Quote withdraw');
+    assert(approx_eq(base_withdraw, base_amount + amount_in, 10), 'Base withdraw');
+    assert(approx_eq(quote_withdraw, quote_amount - amount_out, 10), 'Quote withdraw');
+    assert(base_fees_withdraw == fees, 'Base fees withdraw');
+    assert(quote_fees_withdraw == 0, 'Quote fees withdraw');
 }

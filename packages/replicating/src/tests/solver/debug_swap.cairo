@@ -51,7 +51,7 @@ fn test_debug_swap() {
     let is_buy = false;
     let exact_input = false;
     let amount = 10000000000;
-    let min_spread = 25;
+    let fee_rate = 25;
     let range = 5000;
     let max_delta = 500;
     let max_skew = 6000;
@@ -77,7 +77,7 @@ fn test_debug_swap() {
     start_warp(CheatTarget::One(solver.contract_address), 1000);
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let market_params = MarketParams {
-        min_spread,
+        fee_rate,
         range,
         max_delta,
         max_skew,

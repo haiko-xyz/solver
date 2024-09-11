@@ -31,7 +31,7 @@ fn test_store_packing_market_params() {
     let store_packing_contract = before();
 
     let market_params = MarketParams {
-        min_spread: 15,
+        fee_rate: 15,
         range: 15000,
         max_delta: 2532,
         max_skew: 8888,
@@ -44,7 +44,7 @@ fn test_store_packing_market_params() {
     store_packing_contract.set_market_params(1, market_params);
     let unpacked = store_packing_contract.get_market_params(1);
 
-    assert(unpacked.min_spread == market_params.min_spread, 'Market params: min spread');
+    assert(unpacked.fee_rate == market_params.fee_rate, 'Market params: fee rate');
     assert(unpacked.range == market_params.range, 'Market params: range');
     assert(unpacked.max_delta == market_params.max_delta, 'Market params: max delta');
     assert(unpacked.max_skew == market_params.max_skew, 'Market params: max skew');

@@ -8,7 +8,7 @@ import { getSwapAmounts } from "../../src/libraries/SwapLib";
 const isBuy = false;
 const exactInput = false;
 const amount = "10000000000";
-const minSpread = 25;
+const swapFeeRate = 25;
 const range = 5000;
 const maxDelta = 500;
 const oraclePrice = "0.37067545";
@@ -18,10 +18,8 @@ const baseDecimals = 18;
 const quoteDecimals = 6;
 
 const delta = getDelta(maxDelta, baseReserves, quoteReserves, oraclePrice);
-console.log({ delta });
 const { lowerLimit, upperLimit } = getVirtualPositionRange(
   !isBuy,
-  minSpread,
   delta,
   range,
   oraclePrice,
@@ -39,6 +37,7 @@ console.log({ lowerSqrtPrice, upperSqrtPrice, liquidity });
 const { amountIn, amountOut } = getSwapAmounts(
   isBuy,
   exactInput,
+  swapFeeRate,
   amount,
   null,
   null,

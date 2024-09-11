@@ -25,7 +25,7 @@ const MASK_64: u256 = 0xffffffffffffffff;
 
 pub(crate) impl MarketParamsStorePacking of StorePacking<MarketParams, PackedMarketParams> {
     fn pack(value: MarketParams) -> PackedMarketParams {
-        let mut slab2: u256 = value.min_spread.into();
+        let mut slab2: u256 = value.fee_rate.into();
         slab2 += value.range.into() * TWO_POW_32.into();
         slab2 += value.max_delta.into() * TWO_POW_64.into();
         slab2 += value.max_skew.into() * TWO_POW_96.into();
@@ -41,7 +41,7 @@ pub(crate) impl MarketParamsStorePacking of StorePacking<MarketParams, PackedMar
 
     fn unpack(value: PackedMarketParams) -> MarketParams {
         let slab2: u256 = value.slab2.into();
-        let min_spread: u32 = (slab2 & MASK_32).try_into().unwrap();
+        let fee_rate: u16 = (slab2 & MASK_16).try_into().unwrap();
         let range: u32 = ((slab2 / TWO_POW_32.into()) & MASK_32).try_into().unwrap();
         let max_delta: u32 = ((slab2 / TWO_POW_64.into()) & MASK_32).try_into().unwrap();
         let max_skew: u16 = ((slab2 / TWO_POW_96.into()) & MASK_16).try_into().unwrap();
@@ -49,7 +49,7 @@ pub(crate) impl MarketParamsStorePacking of StorePacking<MarketParams, PackedMar
         let max_age: u64 = ((slab2 / TWO_POW_144.into()) & MASK_64).try_into().unwrap();
 
         MarketParams {
-            min_spread,
+            fee_rate,
             range,
             max_delta,
             max_skew,

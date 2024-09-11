@@ -4,10 +4,9 @@ use core::integer::{u512, u256_wide_mul};
 
 // Local imports.
 use haiko_solver_core::types::{MarketState, PositionInfo, SwapParams};
-use haiko_solver_reversion::types::MarketParams;
 
 // Haiko imports.
-use haiko_lib::math::{math, liquidity_math};
+use haiko_lib::math::{math, fee_math, liquidity_math};
 use haiko_lib::constants::{ONE, MAX_SQRT_PRICE};
 use haiko_lib::types::i128::I128Trait;
 
@@ -15,12 +14,16 @@ use haiko_lib::types::i128::I128Trait;
 //
 // # Arguments
 // `swap_params` - swap parameters
+// `fee_rate` - fee rate
 // `position` - virtual liquidity position to execute swap over
 //
 // # Returns
-// `amount_in` - amount swapped in
+// `amount_in` - amount swapped in including fees
 // `amount_out` - amount swapped out
-pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u256, u256) {
+// `fees` - amount of fees
+pub fn get_swap_amounts(
+    swap_params: SwapParams, fee_rate: u16, position: PositionInfo,
+) -> (u256, u256, u256) {
     // Define start and target prices based on swap direction.
     let start_sqrt_price = if swap_params.is_buy {
         position.lower_sqrt_price
@@ -46,15 +49,16 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
     };
 
     // Compute swap amounts.
-    let (amount_in, amount_out, _) = compute_swap_amounts(
+    let (amount_in, amount_out, fees, _) = compute_swap_amounts(
         start_sqrt_price,
         target_sqrt_price,
         position.liquidity,
         swap_params.amount,
+        fee_rate,
         swap_params.exact_input,
     );
 
-    (amount_in, amount_out)
+    (amount_in + fees, amount_out, fees)
 }
 
 // Compute amounts swapped and new price after swapping between two prices.
@@ -64,19 +68,22 @@ pub fn get_swap_amounts(swap_params: SwapParams, position: PositionInfo,) -> (u2
 // * `target_sqrt_price` - target sqrt price
 // * `liquidity` - current liquidity
 // * `amount` - amount remaining to be swapped
+// * `fee_rate` - fee rate
 // * `exact_input` - whether swap amount is exact input or output
 //  
 // # Returns
 // * `amount_in` - amount of tokens swapped in
 // * `amount_out` - amount of tokens swapped out
+// * `fee_amount` - amount of fees
 // * `next_sqrt_price` - next sqrt price
 pub fn compute_swap_amounts(
     curr_sqrt_price: u256,
     target_sqrt_price: u256,
     liquidity: u128,
     amount: u256,
+    fee_rate: u16,
     exact_input: bool,
-) -> (u256, u256, u256) {
+) -> (u256, u256, u256, u256) {
     // Determine whether swap is a buy or sell.
     let is_buy = target_sqrt_price > curr_sqrt_price;
 
@@ -100,8 +107,9 @@ pub fn compute_swap_amounts(
         .val;
 
     // Calculate next sqrt price.
+    let amount_less_fee = fee_math::gross_to_net(amount, fee_rate);
     let filled_max = if exact_input {
-        amount < amount_in
+        amount_less_fee < amount_in
     } else {
         amount < amount_out
     };
@@ -110,7 +118,7 @@ pub fn compute_swap_amounts(
         target_sqrt_price
     } else {
         if exact_input {
-            next_sqrt_price_input(curr_sqrt_price, liquidity, amount, is_buy)
+            next_sqrt_price_input(curr_sqrt_price, liquidity, amount_less_fee, is_buy)
         } else {
             next_sqrt_price_output(curr_sqrt_price, liquidity, amount, is_buy)
         }
@@ -122,7 +130,7 @@ pub fn compute_swap_amounts(
     if filled_max {
         amount_in =
             if exact_input {
-                amount
+                amount_less_fee
             } else {
                 if is_buy {
                     liquidity_math::liquidity_to_quote(
@@ -152,8 +160,15 @@ pub fn compute_swap_amounts(
             };
     }
 
+    // Calculate fees. 
+    // Amount in is net of fees because we capped amounts by net amount remaining.
+    // Fees are rounded down by default to prevent overflow when transferring amounts.
+    // Note that in Uniswap, if target price is not reached, LP takes the remainder 
+    // of the maximum input as fee. We don't do that here.
+    let fees = fee_math::net_to_fee(amount_in, fee_rate);
+
     // Return amounts.
-    (amount_in, amount_out, next_sqrt_price)
+    (amount_in, amount_out, fees, next_sqrt_price)
 }
 
 // Calculates next sqrt price after swapping in certain amount of tokens at given starting 

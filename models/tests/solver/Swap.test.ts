@@ -11,7 +11,7 @@ type Case = {
   oraclePrice: Decimal.Value;
   baseReserves: Decimal.Value;
   quoteReserves: Decimal.Value;
-  minSpread: Decimal.Value;
+  feeRate: Decimal.Value;
   range: Decimal.Value;
   maxDelta: Decimal.Value;
   maxSkew: Decimal.Value;
@@ -51,11 +51,11 @@ const getSwapCases = (): SwapCase[] => {
 const testSwapCases = () => {
   const cases: Case[] = [
     {
-      description: "1) Full range liq, price 1, no spread",
+      description: "1) Full range liq, price 1, no fees",
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 0,
+      feeRate: 0,
       range: 7906625,
       maxDelta: 0,
       maxSkew: 0,
@@ -64,11 +64,11 @@ const testSwapCases = () => {
       thresholdAmount: null,
     },
     {
-      description: "2) Full range liq, price 0.1, no spread",
+      description: "2) Full range liq, price 0.1, no fees",
       oraclePrice: 0.1,
       baseReserves: 100,
       quoteReserves: 1000,
-      minSpread: 0,
+      feeRate: 0,
       range: 7676365,
       maxDelta: 0,
       maxSkew: 0,
@@ -77,11 +77,11 @@ const testSwapCases = () => {
       thresholdAmount: null,
     },
     {
-      description: "3) Full range liq, price 10, no spread",
+      description: "3) Full range liq, price 10, no fees",
       oraclePrice: 10,
       baseReserves: 1000,
       quoteReserves: 100,
-      minSpread: 0,
+      feeRate: 0,
       range: 7676365,
       maxDelta: 0,
       maxSkew: 0,
@@ -90,11 +90,11 @@ const testSwapCases = () => {
       thresholdAmount: null,
     },
     {
-      description: "4) Concentrated liq, price 1, no spread",
+      description: "4) Concentrated liq, price 1, no fees",
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 0,
+      feeRate: 0,
       range: 5000,
       maxDelta: 0,
       maxSkew: 0,
@@ -103,11 +103,11 @@ const testSwapCases = () => {
       thresholdAmount: null,
     },
     {
-      description: "5) Concentrated liq, price 1, 100 spread",
+      description: "5) Concentrated liq, price 1, 100 fees",
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 100,
       range: 5000,
       maxDelta: 0,
       maxSkew: 0,
@@ -116,11 +116,11 @@ const testSwapCases = () => {
       thresholdAmount: null,
     },
     {
-      description: "6) Concentrated liq, price 10, 50000 spread",
+      description: "6) Concentrated liq, price 10, 5000 fees",
       oraclePrice: 10,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 50000,
+      feeRate: 5000,
       range: 5000,
       maxDelta: 0,
       maxSkew: 0,
@@ -129,11 +129,11 @@ const testSwapCases = () => {
       thresholdAmount: null,
     },
     {
-      description: "7) Concentrated liq, price 1, 100 spread, 500 max delta",
+      description: "7) Concentrated liq, price 1, 100 fees, 500 max delta",
       oraclePrice: 1,
       baseReserves: 500,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 100,
       range: 5000,
       maxDelta: 500,
       maxSkew: 0,
@@ -142,12 +142,11 @@ const testSwapCases = () => {
       thresholdAmount: null,
     },
     {
-      description:
-        "8) Concentrated liq, price 0.1, 100 spread, 20000 max delta",
+      description: "8) Concentrated liq, price 0.1, 100 fees, 20000 max delta",
       oraclePrice: 0.1,
       baseReserves: 500,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 100,
       range: 5000,
       maxDelta: 20000,
       maxSkew: 0,
@@ -160,7 +159,7 @@ const testSwapCases = () => {
       oraclePrice: 1,
       baseReserves: 100,
       quoteReserves: 100,
-      minSpread: 100,
+      feeRate: 100,
       range: 5000,
       maxDelta: 0,
       maxSkew: 0,
@@ -173,7 +172,7 @@ const testSwapCases = () => {
       oraclePrice: 1000000000000000,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 100,
       range: 5000,
       maxDelta: 0,
       maxSkew: 0,
@@ -186,7 +185,7 @@ const testSwapCases = () => {
       oraclePrice: "0.00000001",
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 100,
       range: 5000,
       maxDelta: 0,
       maxSkew: 0,
@@ -199,7 +198,7 @@ const testSwapCases = () => {
       oraclePrice: 1,
       baseReserves: 100,
       quoteReserves: 100,
-      minSpread: 100,
+      feeRate: 100,
       range: 50000,
       maxDelta: 0,
       maxSkew: 0,
@@ -222,7 +221,7 @@ const testSwapCases = () => {
       oraclePrice: 1,
       baseReserves: 100,
       quoteReserves: 100,
-      minSpread: 100,
+      feeRate: 100,
       range: 50000,
       maxDelta: 0,
       maxSkew: 0,
@@ -245,13 +244,13 @@ const testSwapCases = () => {
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 100,
       range: 5000,
       maxDelta: 0,
       maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
-      thresholdAmount: "0.99650000000000000000",
+      thresholdAmount: "0.98750000000000000000",
       swapCasesOverride: [
         {
           isBuy: true,
@@ -268,13 +267,13 @@ const testSwapCases = () => {
       oraclePrice: 1,
       baseReserves: 1000,
       quoteReserves: 1000,
-      minSpread: 100,
+      feeRate: 100,
       range: 5000,
       maxDelta: 0,
       maxSkew: 0,
       amount: 100,
       thresholdSqrtPrice: null,
-      thresholdAmount: "1.00350000000000000000",
+      thresholdAmount: "101.5",
       swapCasesOverride: [
         {
           isBuy: true,
@@ -294,7 +293,7 @@ const testSwapCases = () => {
       oraclePrice,
       baseReserves,
       quoteReserves,
-      minSpread,
+      feeRate,
       range,
       maxDelta,
       amount,
@@ -317,7 +316,6 @@ const testSwapCases = () => {
       );
       const { lowerLimit, upperLimit } = getVirtualPositionRange(
         !isBuy,
-        minSpread,
         delta,
         range,
         oraclePrice,
@@ -330,10 +328,11 @@ const testSwapCases = () => {
         upperLimit,
         isBuy ? baseReserves : quoteReserves
       );
-      const { amountIn, amountOut } = getSwapAmounts(
+      const { amountIn, amountOut, fees } = getSwapAmounts(
         isBuy,
         exactInput,
         amount,
+        Number(feeRate) / 10000,
         thresholdSqrtPrice,
         thresholdAmount,
         lowerSqrtPrice,
@@ -345,6 +344,7 @@ const testSwapCases = () => {
       console.log({
         amountIn: new Decimal(amountIn).mul(1e18).toFixed(0),
         amountOut: new Decimal(amountOut).mul(1e18).toFixed(0),
+        fees: new Decimal(fees).mul(1e18).toFixed(0),
       });
       j++;
     }

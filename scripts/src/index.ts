@@ -280,7 +280,7 @@ const execute = async (configs: RunnerConfigs) => {
       );
       try {
         const marketParams = {
-          min_spread: market.min_spread,
+          fee_rate: market.fee_rate,
           range: market.range,
           max_delta: market.max_delta,
           max_skew: market.max_skew,

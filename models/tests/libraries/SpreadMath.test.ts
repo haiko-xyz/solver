@@ -53,19 +53,86 @@ const testGetVirtualPositionRangeCases = () => {
   const quoteDecimals = 18;
 
   const cases = [
-    getVirtualPositionRange(true, 0, 0, 1, 1, baseDecimals, quoteDecimals),
-    getVirtualPositionRange(false, 0, 0, 1, 1, baseDecimals, quoteDecimals),
+    {
+      delta: 0,
+      range: 1,
+      oraclePrice: 1,
+    },
+    {
+      delta: 0,
+      range: 1000,
+      oraclePrice: 1,
+    },
+    {
+      delta: -100,
+      range: 1000,
+      oraclePrice: 1,
+    },
+    {
+      delta: 100,
+      range: 1000,
+      oraclePrice: 1,
+    },
+    {
+      delta: -5000,
+      range: 1000,
+      oraclePrice: 1,
+    },
+    {
+      delta: 5000,
+      range: 1000,
+      oraclePrice: 1,
+    },
+    {
+      delta: -7905625,
+      range: 1000,
+      oraclePrice: 1,
+    },
+    {
+      delta: 7905625,
+      range: 1000,
+      oraclePrice: 1,
+    },
+    {
+      delta: 0,
+      range: 1000,
+      oraclePrice: "0.0000000000000000000000000001",
+    },
+    {
+      delta: 0,
+      range: 1000,
+      oraclePrice:
+        "21445968470833706281754813411422482.6295263805072231182393896500",
+    },
   ];
 
   for (let i = 0; i < cases.length; i++) {
-    const pos = cases[i];
+    const c = cases[i];
     console.log(`Case ${i + 1}`);
+    const bid = getVirtualPositionRange(
+      true,
+      c.delta,
+      c.range,
+      c.oraclePrice,
+      baseDecimals,
+      quoteDecimals
+    );
+    const ask = getVirtualPositionRange(
+      false,
+      c.delta,
+      c.range,
+      c.oraclePrice,
+      baseDecimals,
+      quoteDecimals
+    );
     console.log({
-      lowerLimit: new Decimal(pos.lowerLimit).toFixed(0),
-      upperLimit: new Decimal(pos.upperLimit).toFixed(0),
+      bidLower: new Decimal(bid.lowerLimit).toFixed(0),
+      bidUpper: new Decimal(bid.upperLimit).toFixed(0),
+      askLower: new Decimal(ask.lowerLimit).toFixed(0),
+      askUpper: new Decimal(ask.upperLimit).toFixed(0),
     });
   }
 };
 
-testGetVirtualPositionCases();
-// testGetVirtualPositionRangeCases();
+// testGetVirtualPositionCases();
+testGetVirtualPositionRangeCases();

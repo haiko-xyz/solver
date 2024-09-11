@@ -1,11 +1,13 @@
 import Decimal from "decimal.js";
 import { PRECISION, ROUNDING } from "../config";
 import { liquidityToBase, liquidityToQuote } from "../math/liquidityMath";
+import { grossToNet, netToFee } from "../math/feeMath";
 
 export const getSwapAmounts = (
   isBuy: boolean,
   exactInput: boolean,
   amount: Decimal.Value,
+  swapFeeRate: Decimal.Value,
   thresholdSqrtPrice: Decimal.Value | null,
   thresholdAmount: Decimal.Value | null,
   lowerSqrtPrice: Decimal.Value,
@@ -13,7 +15,11 @@ export const getSwapAmounts = (
   liquidity: Decimal.Value,
   baseDecimals: number,
   quoteDecimals: number
-): { amountIn: Decimal.Value; amountOut: Decimal.Value } => {
+): {
+  amountIn: Decimal.Value;
+  amountOut: Decimal.Value;
+  fees: Decimal.Value;
+} => {
   const scaledLowerSqrtPrice = new Decimal(lowerSqrtPrice).mul(
     new Decimal(10).pow((baseDecimals - quoteDecimals) / 2)
   );
@@ -30,11 +36,12 @@ export const getSwapAmounts = (
     ? Decimal.max(thresholdSqrtPrice, scaledLowerSqrtPrice)
     : scaledLowerSqrtPrice;
 
-  const { amountIn, amountOut, nextSqrtPrice } = computeSwapAmount(
+  const { amountIn, amountOut, fees, nextSqrtPrice } = computeSwapAmount(
     startSqrtPrice,
     targetSqrtPrice,
     liquidity,
     amount,
+    swapFeeRate,
     exactInput
   );
 
@@ -48,7 +55,7 @@ export const getSwapAmounts = (
     }
   }
 
-  return { amountIn, amountOut };
+  return { amountIn: new Decimal(amountIn).add(fees), amountOut, fees };
 };
 
 export const computeSwapAmount = (
@@ -56,6 +63,7 @@ export const computeSwapAmount = (
   targetSqrtPrice: Decimal.Value,
   liquidity: Decimal.Value,
   amountRem: Decimal.Value,
+  swapFeeRate: Decimal.Value,
   exactInput: boolean
 ) => {
   Decimal.set({ precision: PRECISION, rounding: ROUNDING });
@@ -63,18 +71,20 @@ export const computeSwapAmount = (
   let amountIn: Decimal.Value = "0";
   let amountOut: Decimal.Value = "0";
   let nextSqrtPrice: Decimal.Value = "0";
+  let fees: Decimal.Value = "0";
 
   if (exactInput) {
+    const amountRemainingLessFee = grossToNet(amountRem, swapFeeRate);
     amountIn = isBuy
       ? liquidityToQuote(currSqrtPrice, targetSqrtPrice, liquidity)
       : liquidityToBase(targetSqrtPrice, currSqrtPrice, liquidity);
-    if (new Decimal(amountRem).gte(amountIn)) {
+    if (new Decimal(amountRemainingLessFee).gte(amountIn)) {
       nextSqrtPrice = targetSqrtPrice;
     } else {
       nextSqrtPrice = nextSqrtPriceAmountIn(
         currSqrtPrice,
         liquidity,
-        amountRem,
+        amountRemainingLessFee,
         isBuy
       );
     }
@@ -118,7 +128,9 @@ export const computeSwapAmount = (
 
   // In Uniswap, if target price is not reached, LP takes the remainder of the maximum input as fee.
   // We don't do that here.
-  return { amountIn, amountOut, nextSqrtPrice };
+  fees = netToFee(amountIn, swapFeeRate);
+
+  return { amountIn, amountOut, fees, nextSqrtPrice };
 };
 
 export const nextSqrtPriceAmountIn = (

@@ -63,11 +63,11 @@ pub trait ISolverHooks<TContractState> {
 
 ### `ReplicatingSolver`
 
-The Replicating Solver is a simple Solver that replicates an oracle price feed, plus a spread, to generate bid / ask quotes for a given token pair.
+The Replicating Solver is a simple Solver that replicates an oracle price feed, plus a dynamic spread, to generate bid / ask quotes for a given token pair.
 
 It allows setting a number of configurable parameters for each solver market, including:
 
-1. `min_spread`: a fixed spread added to the oracle price to generate the bid and ask quote
+1. `fee_rate`: swap fee rate applied to swaps (base 10000)
 2. `range` : the range of the virtual liquidity position (denominated in number of limits or ticks) used to construct the swap quote, based on Uniswap liquidity formulae
 3. `max_delta` : inventory delta, or the single-sided spread applied to an imbalanced portfolio, with the aim of incentivising swappers to rebalance the solver market back to a 50/50 ratio
 4. `max_skew` : the maximum allowable skew of base / quote reserves in the solver market, beyond which the solver will not allow swaps unless they improve skew

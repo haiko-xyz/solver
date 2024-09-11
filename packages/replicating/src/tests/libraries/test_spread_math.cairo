@@ -30,7 +30,6 @@ struct PositionTestCase {
 
 #[derive(Drop, Copy)]
 struct PositionRangeTestCase {
-    min_spread: u32,
     delta: i32,
     range: u32,
     oracle_price: u256,
@@ -188,9 +187,8 @@ fn test_get_virtual_position_cases() {
 fn test_get_virtual_position_range_cases() {
     // Define test cases.
     let cases: Span<PositionRangeTestCase> = array![
-        // Case 1: No min spread, no delta, range 1
+        // Case 1: No delta, range 1
         PositionRangeTestCase {
-            min_spread: 0,
             delta: I32Trait::new(0, false),
             range: 1,
             oracle_price: to_e28(1),
@@ -199,126 +197,95 @@ fn test_get_virtual_position_range_cases() {
             ask_lower_exp: 7906625,
             ask_upper_exp: 7906626,
         },
-        // Case 2: 500 min spread, no delta, range 1000
+        // Case 2: No delta, range 1000
         PositionRangeTestCase {
-            min_spread: 500,
             delta: I32Trait::new(0, false),
             range: 1000,
             oracle_price: to_e28(1),
-            bid_lower_exp: 7905125,
-            bid_upper_exp: 7906125,
-            ask_lower_exp: 7907125,
-            ask_upper_exp: 7908125,
+            bid_lower_exp: 7905625,
+            bid_upper_exp: 7906625,
+            ask_lower_exp: 7906625,
+            ask_upper_exp: 7907625,
         },
-        // Case 3: 100000 min spread, no delta, range 1000
+        // Case 3: 100 bid delta, range 1000
         PositionRangeTestCase {
-            min_spread: 100000,
-            delta: I32Trait::new(0, false),
-            range: 1000,
-            oracle_price: to_e28(1),
-            bid_lower_exp: 7805625,
-            bid_upper_exp: 7806625,
-            ask_lower_exp: 8006625,
-            ask_upper_exp: 8007625,
-        },
-        // Case 4: Max min spread, no delta, range 1000
-        PositionRangeTestCase {
-            min_spread: 7905625,
-            delta: I32Trait::new(0, false),
-            range: 1000,
-            oracle_price: to_e28(1),
-            bid_lower_exp: 0,
-            bid_upper_exp: 1000,
-            ask_lower_exp: MAX_LIMIT_SHIFTED - 1000,
-            ask_upper_exp: MAX_LIMIT_SHIFTED,
-        },
-        // Case 5: 500 min spread, 100 bid delta, range 1000
-        PositionRangeTestCase {
-            min_spread: 500,
             delta: I32Trait::new(100, true),
             range: 1000,
             oracle_price: to_e28(1),
-            bid_lower_exp: 7905025,
-            bid_upper_exp: 7906025,
-            ask_lower_exp: 7907025,
-            ask_upper_exp: 7908025,
+            bid_lower_exp: 7905525,
+            bid_upper_exp: 7906525,
+            ask_lower_exp: 7906525,
+            ask_upper_exp: 7907525,
         },
-        // Case 6: 500 min spread, 100 ask delta, range 1000
+        // Case 4: 100 ask delta, range 1000
         PositionRangeTestCase {
-            min_spread: 500,
             delta: I32Trait::new(100, false),
             range: 1000,
             oracle_price: to_e28(1),
-            bid_lower_exp: 7905225,
-            bid_upper_exp: 7906225,
-            ask_lower_exp: 7907225,
-            ask_upper_exp: 7908225,
+            bid_lower_exp: 7905725,
+            bid_upper_exp: 7906725,
+            ask_lower_exp: 7906725,
+            ask_upper_exp: 7907725,
         },
-        // Case 7: 500 min spread, 5000 bid delta, range 1000
+        // Case 5: 5000 bid delta, range 1000
         PositionRangeTestCase {
-            min_spread: 500,
             delta: I32Trait::new(5000, true),
             range: 1000,
             oracle_price: to_e28(1),
-            bid_lower_exp: 7900125,
-            bid_upper_exp: 7901125,
-            ask_lower_exp: 7902125,
-            ask_upper_exp: 7903125,
+            bid_lower_exp: 7900625,
+            bid_upper_exp: 7901625,
+            ask_lower_exp: 7901625,
+            ask_upper_exp: 7902625,
         },
-        // Case 8: 500 min spread, 5000 ask delta, range 1000
+        // Case 6: 5000 ask delta, range 1000
         PositionRangeTestCase {
-            min_spread: 500,
             delta: I32Trait::new(5000, false),
             range: 1000,
             oracle_price: to_e28(1),
-            bid_lower_exp: 7910125,
-            bid_upper_exp: 7911125,
-            ask_lower_exp: 7912125,
-            ask_upper_exp: 7913125,
+            bid_lower_exp: 7910625,
+            bid_upper_exp: 7911625,
+            ask_lower_exp: 7911625,
+            ask_upper_exp: 7912625,
         },
-        // Case 9: 500 min spread, max bid delta (7905125), range 1000
+        // Case 7: max bid delta (7905625), range 1000
         PositionRangeTestCase {
-            min_spread: 500,
-            delta: I32Trait::new(7905125, true),
+            delta: I32Trait::new(7905625, true),
             range: 1000,
             oracle_price: to_e28(1),
             bid_lower_exp: 0,
             bid_upper_exp: 1000,
-            ask_lower_exp: 2000,
-            ask_upper_exp: 3000,
+            ask_lower_exp: 1000,
+            ask_upper_exp: 2000,
         },
-        // Case 10: 500 min spread, max ask delta (7905125), range 1000
+        // Case 8: Max ask delta (7905625), range 1000
         PositionRangeTestCase {
-            min_spread: 500,
-            delta: I32Trait::new(7905125, false),
+            delta: I32Trait::new(7905625, false),
             range: 1000,
             oracle_price: to_e28(1),
-            bid_lower_exp: MAX_LIMIT_SHIFTED - 3000,
-            bid_upper_exp: MAX_LIMIT_SHIFTED - 2000,
+            bid_lower_exp: MAX_LIMIT_SHIFTED - 2000,
+            bid_upper_exp: MAX_LIMIT_SHIFTED - 1000,
             ask_lower_exp: MAX_LIMIT_SHIFTED - 1000,
             ask_upper_exp: MAX_LIMIT_SHIFTED,
         },
-        // Case 11: 500 min spread, no delta, range 1000, very small oracle price
+        // Case 9: no delta, range 1000, very small oracle price
         PositionRangeTestCase {
-            min_spread: 500,
             delta: I32Trait::new(0, false),
             range: 1000,
             oracle_price: 1, // limit: 1459354
-            bid_lower_exp: 1457854,
-            bid_upper_exp: 1458854,
-            ask_lower_exp: 1459855,
-            ask_upper_exp: 1460855,
+            bid_lower_exp: 1458354,
+            bid_upper_exp: 1459354,
+            ask_lower_exp: 1459355,
+            ask_upper_exp: 1460355,
         },
-        // Case 12: 500 min spread, no delta, range 1000, very large oracle price
+        // Case 10: no delta, range 1000, very large oracle price
         PositionRangeTestCase {
-            min_spread: 500,
             delta: I32Trait::new(0, false),
             range: 1000,
             oracle_price: 214459684708337062817548134114224826295263805072231182393896500, // limit: 7905125 (roundup)
-            bid_lower_exp: MAX_LIMIT_SHIFTED - 3000,
-            bid_upper_exp: MAX_LIMIT_SHIFTED - 2000,
-            ask_lower_exp: MAX_LIMIT_SHIFTED - 1000,
-            ask_upper_exp: MAX_LIMIT_SHIFTED,
+            bid_lower_exp: MAX_LIMIT_SHIFTED - 2501,
+            bid_upper_exp: MAX_LIMIT_SHIFTED - 1501,
+            ask_lower_exp: MAX_LIMIT_SHIFTED - 1500,
+            ask_upper_exp: MAX_LIMIT_SHIFTED - 500,
         },
     ]
         .span();
@@ -331,10 +298,10 @@ fn test_get_virtual_position_range_cases() {
         }
         let case = *cases.at(i);
         let (bid_lower, bid_upper) = get_virtual_position_range(
-            true, case.min_spread, case.delta, case.range, case.oracle_price
+            true, case.delta, case.range, case.oracle_price
         );
         let (ask_lower, ask_upper) = get_virtual_position_range(
-            false, case.min_spread, case.delta, case.range, case.oracle_price
+            false, case.delta, case.range, case.oracle_price
         );
         if (!approx_eq(bid_lower.into(), case.bid_lower_exp.into(), 1)) {
             panic!("Bid lower {}: {} (act), {} (exp)", i + 1, bid_lower, case.bid_lower_exp);
@@ -355,7 +322,7 @@ fn test_get_virtual_position_range_cases() {
 #[test]
 #[should_panic(expected: ('LimitUF',))]
 fn test_get_virtual_position_range_bid_limit_underflow() {
-    get_virtual_position_range(true, 0, I32Trait::new(0, false), 2000000, 1);
+    get_virtual_position_range(true, I32Trait::new(0, false), 2000000, 1);
 }
 
 #[test]
@@ -363,7 +330,6 @@ fn test_get_virtual_position_range_bid_limit_underflow() {
 fn test_get_virtual_position_range_ask_limit_overflow() {
     get_virtual_position_range(
         false,
-        10,
         I32Trait::new(0, false),
         0,
         217702988461462792141570404997617821806367875652638254199700027
@@ -373,7 +339,7 @@ fn test_get_virtual_position_range_ask_limit_overflow() {
 #[test]
 #[should_panic(expected: ('OraclePriceZero',))]
 fn test_get_virtual_position_range_oracle_price_zero() {
-    get_virtual_position_range(true, 0, I32Trait::new(0, false), 0, 0);
+    get_virtual_position_range(true, I32Trait::new(0, false), 0, 0);
 }
 
 #[test]
@@ -381,7 +347,6 @@ fn test_get_virtual_position_range_oracle_price_zero() {
 fn test_get_virtual_position_range_oracle_price_overflow() {
     get_virtual_position_range(
         true,
-        0,
         I32Trait::new(0, false),
         0,
         217713873828591030783410061480731509152483726437928216295905367

@@ -43,6 +43,7 @@ pub struct Swap {
   pub exact_input: bool,
   pub amount_in: u256,
   pub amount_out: u256,
+  pub fees: u256,
 }
 ```
 

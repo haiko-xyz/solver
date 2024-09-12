@@ -45,17 +45,19 @@ export const getSwapAmounts = (
     exactInput
   );
 
+  const grossAmountIn = new Decimal(amountIn).add(fees);
+
   if (thresholdAmount) {
     if (exactInput) {
       if (amountOut < thresholdAmount)
         throw new Error("Threshold amount not met");
     } else {
-      if (amountIn > thresholdAmount)
+      if (grossAmountIn > thresholdAmount)
         throw new Error("Threshold amount exceeded");
     }
   }
 
-  return { amountIn: new Decimal(amountIn).add(fees), amountOut, fees };
+  return { amountIn: grossAmountIn, amountOut, fees };
 };
 
 export const computeSwapAmount = (

@@ -13,7 +13,7 @@ use haiko_solver_core::{
 // Haiko imports.
 use haiko_lib::math::math;
 use haiko_lib::helpers::params::{owner, alice, bob};
-use haiko_lib::helpers::utils::{to_e18, approx_eq};
+use haiko_lib::helpers::utils::{to_e18, approx_eq, approx_eq_pct};
 
 // External imports.
 use snforge_std::{
@@ -108,7 +108,7 @@ fn test_get_user_balances() {
         'Quote owner'
     );
     assert(bal_owner.base_fees == 0, 'Base fees owner');
-    assert(approx_eq(bal_owner.quote_fees, swap.fees * 2 / 3, 1), 'Quote fees owner');
+    assert(approx_eq_pct(bal_owner.quote_fees, swap.fees * 2 / 3, 10), 'Quote fees owner');
     assert(
         approx_eq(bal_alice.base_amount, base_deposit_alice - swap.amount_out / 3, 1), 'Base alice'
     );
@@ -119,5 +119,5 @@ fn test_get_user_balances() {
         'Quote alice'
     );
     assert(bal_alice.base_fees == 0, 'Base fees alice');
-    assert(approx_eq(bal_alice.quote_fees, swap.fees / 3, 1), 'Quote fees alice');
+    assert(approx_eq_pct(bal_alice.quote_fees, swap.fees / 3, 10), 'Quote fees alice');
 }

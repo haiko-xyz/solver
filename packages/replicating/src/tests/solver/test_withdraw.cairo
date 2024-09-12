@@ -79,14 +79,17 @@ fn test_withdraw_partial_shares_from_public_vault() {
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, alice());
 
     // Run checks.
-    assert(approx_eq(wd.base_amount, (base_amount * 2 + swap.amount_in) / 4, 10), 'Base deposit');
+    assert(
+        approx_eq(wd.base_amount, (base_amount * 2 + swap.amount_in - swap.fees) / 4, 10),
+        'Base deposit'
+    );
     assert(
         approx_eq(wd.quote_amount, (quote_amount * 2 - swap.amount_out) / 4, 10), 'Quote deposit'
     );
-    assert(approx_eq(wd.base_fees, swap.fees / 4, 10), 'Base fees withdraw');
+    assert(approx_eq(wd.base_fees, swap.fees / 2, 10), 'Base fees withdraw');
     assert(wd.quote_fees == 0, 'Quote fees withdraw');
-    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount, 'LP base bal');
-    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount, 'LP quote bal');
+    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount + wd.base_fees, 'LP base bal');
+    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount + wd.quote_fees, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal - dep.shares / 2, 'LP shares');
     assert(aft.vault_total_bal == bef.vault_total_bal - dep.shares / 2, 'LP total shares');
     assert(
@@ -153,14 +156,17 @@ fn test_withdraw_remaining_shares_from_public_vault() {
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, alice());
 
     // Run checks.
-    assert(approx_eq(wd.base_amount, (base_amount * 2 + swap.amount_in) / 2, 1), 'Base deposit');
+    assert(
+        approx_eq(wd.base_amount, (base_amount * 2 + swap.amount_in - swap.fees) / 2, 1),
+        'Base deposit'
+    );
     assert(
         approx_eq(wd.quote_amount, (quote_amount * 2 - swap.amount_out) / 2, 1), 'Quote deposit'
     );
     assert(approx_eq(wd.base_fees, swap.fees / 2, 1), 'Base fees withdraw');
     assert(wd.quote_fees == 0, 'Quote fees withdraw');
-    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount, 'LP base bal');
-    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount, 'LP quote bal');
+    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount + wd.base_fees, 'LP base bal');
+    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount + wd.quote_fees, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal - dep.shares, 'LP shares');
     assert(aft.vault_total_bal == bef.vault_total_bal - dep.shares, 'LP total shares');
     assert(
@@ -254,12 +260,14 @@ fn test_withdraw_private_base_only() {
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Run checks.
-    assert(approx_eq(wd.base_amount, base_amount + swap.amount_in, 10), 'Base withdraw');
+    assert(
+        approx_eq(wd.base_amount, base_amount + swap.amount_in - swap.fees, 10), 'Base withdraw'
+    );
     assert(wd.quote_amount == 0, 'Quote withdraw');
     assert(approx_eq(wd.base_fees, swap.fees, 10), 'Base fees withdraw');
     assert(wd.quote_fees == 0, 'Quote fees withdraw');
-    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount, 'LP base bal');
-    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount, 'LP quote bal');
+    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount + wd.base_fees, 'LP base bal');
+    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount + wd.quote_fees, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal, 'LP shares');
     assert(aft.vault_total_bal == bef.vault_total_bal, 'LP total shares');
 }
@@ -313,10 +321,10 @@ fn test_withdraw_private_quote_only() {
     // Run checks.
     assert(wd.base_amount == 0, 'Base withdraw');
     assert(approx_eq(wd.quote_amount, quote_amount - swap.amount_out, 10), 'Quote withdraw');
-    assert(wd.base_fees == 0, 'Base fees withdraw');
+    assert(approx_eq(wd.base_fees, swap.fees, 10), 'Base fees withdraw');
     assert(wd.quote_fees == 0, 'Quote fees withdraw');
-    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount, 'LP base bal');
-    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount, 'LP quote bal');
+    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount + wd.base_fees, 'LP base bal');
+    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount + wd.quote_fees, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal, 'LP shares');
     assert(aft.vault_total_bal == bef.vault_total_bal, 'LP total shares');
 }
@@ -356,19 +364,24 @@ fn test_withdraw_private_partial_amounts() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let wd = solver
         .withdraw_private(
-            market_id, (base_amount + swap.amount_in) / 2, (quote_amount - swap.amount_out) / 2
+            market_id,
+            (base_amount + swap.amount_in - swap.fees) / 2,
+            (quote_amount - swap.amount_out) / 2
         );
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Run checks.
-    assert(approx_eq(wd.base_amount, (base_amount + swap.amount_in) / 2, 10), 'Base withdraw');
+    assert(
+        approx_eq(wd.base_amount, (base_amount + swap.amount_in - swap.fees) / 2, 10),
+        'Base withdraw'
+    );
     assert(approx_eq(wd.quote_amount, (quote_amount - swap.amount_out) / 2, 10), 'Quote withdraw');
-    assert(approx_eq(wd.base_fees, swap.fees / 2, 10), 'Base fees withdraw');
+    assert(approx_eq(wd.base_fees, swap.fees, 10), 'Base fees withdraw');
     assert(wd.quote_fees == 0, 'Quote fees withdraw');
-    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount, 'LP base bal');
-    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount, 'LP quote bal');
+    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount + wd.base_fees, 'LP base bal');
+    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount + wd.quote_fees, 'LP quote bal');
     assert(aft.vault_lp_bal == bef.vault_lp_bal, 'LP shares');
     assert(aft.vault_total_bal == bef.vault_total_bal, 'LP total shares');
     assert(
@@ -430,12 +443,14 @@ fn test_withdraw_all_remaining_balances_from_private_vault() {
     let aft = snapshot(solver, market_id, _base_token, _quote_token, vault_token, owner());
 
     // Run checks.
-    assert(approx_eq(wd.base_amount, base_amount + swap.amount_in, 10), 'Base withdraw');
+    assert(
+        approx_eq(wd.base_amount, base_amount + swap.amount_in - swap.fees, 10), 'Base withdraw'
+    );
     assert(approx_eq(wd.quote_amount, quote_amount - swap.amount_out, 10), 'Quote withdraw');
     assert(approx_eq(wd.base_fees, swap.fees, 10), 'Base fees withdraw');
     assert(wd.quote_fees == 0, 'Quote fees withdraw');
-    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount, 'LP base bal');
-    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount, 'LP quote bal');
+    assert(aft.lp_base_bal == bef.lp_base_bal + wd.base_amount + wd.base_fees, 'LP base bal');
+    assert(aft.lp_quote_bal == bef.lp_quote_bal + wd.quote_amount + wd.quote_fees, 'LP quote bal');
     assert(aft.vault_lp_bal == 0, 'LP shares');
     assert(aft.vault_total_bal == 0, 'LP total shares');
     assert(
@@ -485,7 +500,9 @@ fn test_withdraw_more_than_available_correctly_caps_amount_for_private_vault() {
     let wd = solver.withdraw_private(market_id, base_amount * 2, quote_amount * 2);
 
     // Run checks.
-    assert(approx_eq(wd.base_amount, base_amount + swap.amount_in, 10), 'Base withdraw');
+    assert(
+        approx_eq(wd.base_amount, base_amount + swap.amount_in - swap.fees, 10), 'Base withdraw'
+    );
     assert(approx_eq(wd.quote_amount, quote_amount - swap.amount_out, 10), 'Quote withdraw');
     assert(wd.base_fees == swap.fees, 'Base fees withdraw');
     assert(wd.quote_fees == 0, 'Quote fees withdraw');

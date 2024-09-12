@@ -84,15 +84,6 @@ pub fn compute_swap_amounts(
     fee_rate: u16,
     exact_input: bool,
 ) -> (u256, u256, u256, u256) {
-    println!(
-        "curr_sqrt_price: {}, target_sqrt_price: {}, liquidity: {}, amount: {}, fee_rate: {}, exact_input: {}",
-        curr_sqrt_price,
-        target_sqrt_price,
-        liquidity,
-        amount,
-        fee_rate,
-        exact_input
-    );
     // Determine whether swap is a buy or sell.
     let is_buy = target_sqrt_price > curr_sqrt_price;
 

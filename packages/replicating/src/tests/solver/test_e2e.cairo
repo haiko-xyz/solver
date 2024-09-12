@@ -99,10 +99,7 @@ fn test_solver_e2e_private_market() {
         'Quote reserves'
     );
     assert(wd.base_fees == 0, 'Base fees');
-    assert(
-        approx_eq(wd.quote_fees, swap.fees * to_e18(300) / (to_e18(1500) + swap.amount_in), 1),
-        'Quote fees'
-    );
+    assert(approx_eq_pct(wd.quote_fees, swap.fees, 10), 'Quote fees');
     assert(dep_init.shares == 0, 'Shares init');
     assert(dep.shares == 0, 'Shares');
 }
@@ -158,26 +155,13 @@ fn test_solver_e2e_public_market() {
     let quote_deposit_exp = to_e18(500);
     assert(dep.base_amount == base_deposit_exp, 'Base deposit');
     assert(dep.quote_amount == quote_deposit_exp, 'Quote deposit');
+    assert(approx_eq(wd.base_amount, base_deposit_exp - swap.amount_out / 3, 10), 'Base withdraw');
     assert(
-        approx_eq(
-            wd.base_amount,
-            math::mul_div(base_deposit_exp - swap.amount_out / 3, 995, 1000, false),
-            10
-        ),
-        'Base withdraw'
-    );
-    assert(
-        approx_eq(
-            wd.quote_amount,
-            math::mul_div(quote_deposit_exp + swap.amount_in / 3, 995, 1000, false),
-            10
-        ),
+        approx_eq(wd.quote_amount, quote_deposit_exp + (swap.amount_in - swap.fees) / 3, 10),
         'Quote withdraw'
     );
     assert(wd.base_fees == 0, 'Base fees');
-    assert(
-        approx_eq(wd.quote_fees, math::mul_div(swap.fees / 3, 995, 1000, false), 10), 'Quote fees'
-    );
+    assert(approx_eq(wd.quote_fees, swap.fees / 3, 10), 'Quote fees');
     assert(dep.shares == dep_init.shares / 2, 'Shares');
     assert(
         approx_eq(

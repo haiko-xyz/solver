@@ -265,6 +265,20 @@ pub mod SolverComponent {
             self.queued_owner.read()
         }
 
+        // Fees per share for a given market
+        fn fees_per_share(
+            self: @ComponentState<TContractState>, market_id: felt252
+        ) -> FeesPerShare {
+            self.fees_per_share.read(market_id)
+        }
+
+        // Fees per share for a given market and user
+        fn user_fees_per_share(
+            self: @ComponentState<TContractState>, market_id: felt252, user: ContractAddress
+        ) -> FeesPerShare {
+            self.user_fees_per_share.read((market_id, user))
+        }
+
         // Withdraw fee rate for a given market
         fn withdraw_fee_rate(self: @ComponentState<TContractState>, market_id: felt252) -> u16 {
             self.withdraw_fee_rate.read(market_id)
@@ -824,13 +838,14 @@ pub mod SolverComponent {
             ref self: ComponentState<TContractState>, market_id: felt252, shares: u256
         ) -> Amounts {
             // Fetch state.
-            let market_info = self.market_info.read(market_id);
+            let market_info: MarketInfo = self.market_info.read(market_id);
             let mut state: MarketState = self.market_state.read(market_id);
 
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
             assert(shares != 0, 'SharesZero');
             assert(market_info.is_public, 'UseWithdrawPrivate');
+
             let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
             let caller = get_caller_address();
             assert(shares <= vault_token.balanceOf(caller), 'InsuffShares');
@@ -841,6 +856,8 @@ pub mod SolverComponent {
             let (base_fees, quote_fees) = self._collect_fees(market_id);
 
             // Burn shares.
+            // Must refetch market state here after fees are collected.
+            state = self.market_state.read(market_id);
             IVaultTokenDispatcher { contract_address: state.vault_token }.burn(caller, shares);
 
             // Calculate share of reserves to withdraw. Commit state changes.
@@ -876,8 +893,7 @@ pub mod SolverComponent {
             quote_amount: u256
         ) -> Amounts {
             // Fetch state.
-            let market_info = self.market_info.read(market_id);
-            let mut state: MarketState = self.market_state.read(market_id);
+            let market_info: MarketInfo = self.market_info.read(market_id);
 
             // Run checks.
             assert(market_info.base_token != contract_address_const::<0x0>(), 'MarketNull');
@@ -888,6 +904,8 @@ pub mod SolverComponent {
             let (base_fees, quote_fees) = self._collect_fees(market_id);
 
             // Cap withdraw amount at available. Commit state changes.
+            // Must fetch market state here after fees are collected.
+            let mut state: MarketState = self.market_state.read(market_id);
             let base_withdraw = min(base_amount, state.base_reserves);
             let quote_withdraw = min(quote_amount, state.quote_reserves);
 
@@ -1131,7 +1149,7 @@ pub mod SolverComponent {
             // Calculate accrued fee balances.
             let mut base_fees = 0;
             let mut quote_fees = 0;
-            if market_state.is_public {
+            if market_info.is_public {
                 let vault_token = ERC20ABIDispatcher { contract_address: market_state.vault_token };
                 let user_shares = vault_token.balanceOf(user);
                 let user_fps: FeesPerShare = self.user_fees_per_share.read((market_id, user));
@@ -1147,12 +1165,10 @@ pub mod SolverComponent {
                 }
 
                 // Accrued fee balances exist, calculate fee balances to collect.
-                base_fees = math::mul_div(
-                    user_shares, fps.base_fps - user_fps.base_fps, ONE, false
-                );
-                quote_fees = math::mul_div(
-                    user_shares, fps.quote_fps - user_fps.quote_fps, ONE, false
-                );
+                base_fees =
+                    math::mul_div(user_shares, fps.base_fps - user_fps.base_fps, ONE, false);
+                quote_fees =
+                    math::mul_div(user_shares, fps.quote_fps - user_fps.quote_fps, ONE, false);
             } else {
                 base_fees = market_state.base_fees;
                 quote_fees = market_state.quote_fees;

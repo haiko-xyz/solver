@@ -146,7 +146,7 @@ fn test_deposit_initial_private_both_tokens() {
     // Run checks.
     assert(res.base_amount == base_amount, 'Base deposit');
     assert(res.quote_amount == quote_amount, 'Quote deposit');
-    assert(res.shares != 0, 'Shares');
+    assert(res.shares == 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
@@ -167,15 +167,17 @@ fn test_deposit_initial_private_base_token_only() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
     let quote_amount = 0;
-    let res = solver.deposit_initial(market_id, base_amount, quote_amount);
+    let dep_init = solver.deposit_initial(market_id, base_amount, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
 
     // Run checks.
-    assert(res.base_amount == base_amount, 'Base deposit');
-    assert(res.quote_amount == quote_amount, 'Quote deposit');
-    assert(res.shares != 0, 'Shares');
+    assert(dep_init.base_amount == base_amount, 'Base deposit');
+    assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
+    assert(dep_init.shares == 0, 'Shares');
+    assert(dep_init.base_fees == 0, 'Base fees');
+    assert(dep_init.quote_fees == 0, 'Quote fees');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
@@ -204,7 +206,7 @@ fn test_deposit_initial_private_quote_token_only() {
     // Run checks.
     assert(res.base_amount == base_amount, 'Base deposit');
     assert(res.quote_amount == quote_amount, 'Quote deposit');
-    assert(res.shares != 0, 'Shares');
+    assert(res.shares == 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');

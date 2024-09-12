@@ -195,7 +195,7 @@ fn test_deposit_initial_private_both_tokens() {
     // Run checks.
     assert(dep_init.base_amount == base_amount, 'Base deposit');
     assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
-    assert(dep_init.shares != 0, 'Shares');
+    assert(dep_init.shares == 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
@@ -243,7 +243,7 @@ fn test_deposit_initial_private_base_token_only() {
     // Run checks.
     assert(dep_init.base_amount == base_amount, 'Base deposit');
     assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
-    assert(dep_init.shares != 0, 'Shares');
+    assert(dep_init.shares == 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
@@ -291,7 +291,7 @@ fn test_deposit_initial_private_quote_token_only() {
     // Run checks.
     assert(dep_init.base_amount == base_amount, 'Base deposit');
     assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
-    assert(dep_init.shares != 0, 'Shares');
+    assert(dep_init.shares == 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');

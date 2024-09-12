@@ -41,7 +41,7 @@ pub struct MarketState {
 //
 // * `base_fps` - base fees per share
 // * `quote_fps` - quote fees per share
-#[derive(Drop, Copy, Serde)]
+#[derive(Drop, Copy, Serde, Default, PartialEq)]
 pub struct FeesPerShare {
     pub base_fps: u256,
     pub quote_fps: u256,

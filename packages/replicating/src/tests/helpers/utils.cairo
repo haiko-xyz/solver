@@ -222,6 +222,12 @@ fn _before(
         approve(base_token, alice(), solver.contract_address, base_amount);
         approve(quote_token, alice(), solver.contract_address, quote_amount);
     }
+    fund(base_token, bob(), base_amount);
+    fund(quote_token, bob(), quote_amount);
+    if approve_solver {
+        approve(base_token, bob(), solver.contract_address, base_amount);
+        approve(quote_token, bob(), solver.contract_address, quote_amount);
+    }
 
     (
         base_token,

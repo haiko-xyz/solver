@@ -4,7 +4,8 @@ use starknet::class_hash::ClassHash;
 
 // Local imports.
 use haiko_solver_core::types::{
-    MarketState, MarketInfo, PositionInfo, SwapParams, Amounts, AmountsWithShares, SwapAmounts
+    MarketState, MarketInfo, PositionInfo, SwapParams, Amounts, AmountsWithShares, SwapAmounts,
+    FeesPerShare
 };
 
 #[starknet::interface]
@@ -38,6 +39,14 @@ pub trait ISolver<TContractState> {
 
     // Queued contract owner, used for ownership transfers
     fn queued_owner(self: @TContractState) -> ContractAddress;
+
+    // Fees per share for a given market
+    fn fees_per_share(self: @TContractState, market_id: felt252) -> FeesPerShare;
+
+    // Fees per share for a given market and user
+    fn user_fees_per_share(
+        self: @TContractState, market_id: felt252, user: ContractAddress
+    ) -> FeesPerShare;
 
     // Withdraw fee rate for a given market
     fn withdraw_fee_rate(self: @TContractState, market_id: felt252) -> u16;

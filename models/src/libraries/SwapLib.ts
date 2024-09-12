@@ -3,19 +3,31 @@ import { PRECISION, ROUNDING } from "../config";
 import { liquidityToBase, liquidityToQuote } from "../math/liquidityMath";
 import { grossToNet, netToFee } from "../math/feeMath";
 
-export const getSwapAmounts = (
-  isBuy: boolean,
-  exactInput: boolean,
-  amount: Decimal.Value,
-  swapFeeRate: Decimal.Value,
-  thresholdSqrtPrice: Decimal.Value | null,
-  thresholdAmount: Decimal.Value | null,
-  lowerSqrtPrice: Decimal.Value,
-  upperSqrtPrice: Decimal.Value,
-  liquidity: Decimal.Value,
-  baseDecimals: number,
-  quoteDecimals: number
-): {
+export const getSwapAmounts = ({
+  isBuy,
+  exactInput,
+  amount,
+  swapFeeRate,
+  thresholdSqrtPrice,
+  thresholdAmount,
+  lowerSqrtPrice,
+  upperSqrtPrice,
+  liquidity,
+  baseDecimals,
+  quoteDecimals,
+}: {
+  isBuy: boolean;
+  exactInput: boolean;
+  amount: Decimal.Value;
+  swapFeeRate: Decimal.Value;
+  thresholdSqrtPrice: Decimal.Value | null;
+  thresholdAmount: Decimal.Value | null;
+  lowerSqrtPrice: Decimal.Value;
+  upperSqrtPrice: Decimal.Value;
+  liquidity: Decimal.Value;
+  baseDecimals: number;
+  quoteDecimals: number;
+}): {
   amountIn: Decimal.Value;
   amountOut: Decimal.Value;
   fees: Decimal.Value;
@@ -36,14 +48,14 @@ export const getSwapAmounts = (
     ? Decimal.max(thresholdSqrtPrice, scaledLowerSqrtPrice)
     : scaledLowerSqrtPrice;
 
-  const { amountIn, amountOut, fees, nextSqrtPrice } = computeSwapAmount(
-    startSqrtPrice,
+  const { amountIn, amountOut, fees, nextSqrtPrice } = computeSwapAmount({
+    currSqrtPrice: startSqrtPrice,
     targetSqrtPrice,
     liquidity,
-    amount,
+    amountRem: amount,
     swapFeeRate,
-    exactInput
-  );
+    exactInput,
+  });
 
   const grossAmountIn = new Decimal(amountIn).add(fees);
 
@@ -60,14 +72,21 @@ export const getSwapAmounts = (
   return { amountIn: grossAmountIn, amountOut, fees };
 };
 
-export const computeSwapAmount = (
-  currSqrtPrice: Decimal.Value,
-  targetSqrtPrice: Decimal.Value,
-  liquidity: Decimal.Value,
-  amountRem: Decimal.Value,
-  swapFeeRate: Decimal.Value,
-  exactInput: boolean
-) => {
+export const computeSwapAmount = ({
+  currSqrtPrice,
+  targetSqrtPrice,
+  liquidity,
+  amountRem,
+  swapFeeRate,
+  exactInput,
+}: {
+  currSqrtPrice: Decimal.Value;
+  targetSqrtPrice: Decimal.Value;
+  liquidity: Decimal.Value;
+  amountRem: Decimal.Value;
+  swapFeeRate: Decimal.Value;
+  exactInput: boolean;
+}) => {
   Decimal.set({ precision: PRECISION, rounding: ROUNDING });
   const isBuy = new Decimal(targetSqrtPrice).gt(currSqrtPrice);
   let amountIn: Decimal.Value = "0";

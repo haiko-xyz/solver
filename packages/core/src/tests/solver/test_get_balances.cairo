@@ -49,14 +49,14 @@ fn test_get_balances() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Get balances.
-    let (base_amount, quote_amount, base_fees, quote_fees) = solver.get_balances(market_id);
-    assert(base_amount == base_owner - amount_out, 'Base amount');
-    assert(quote_amount == quote_owner + amount_in - fees, 'Quote amount');
-    assert(base_fees == 0, 'Base fees');
-    assert(quote_fees == fees, 'Quote fees');
+    let bal = solver.get_balances(market_id);
+    assert(bal.base_amount == base_owner - swap.amount_out, 'Base amount');
+    assert(bal.quote_amount == quote_owner + swap.amount_in - swap.fees, 'Quote amount');
+    assert(bal.base_fees == 0, 'Base fees');
+    assert(bal.quote_fees == swap.fees, 'Quote fees');
 }
 
 #[test]
@@ -88,25 +88,36 @@ fn test_get_user_balances() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Get balances.
-    let (base_owner, quote_owner, base_fees_owner, quote_fees_owner) = solver
-        .get_user_balances(owner(), market_id);
-    let (base_alice, quote_alice, base_fees_alice, quote_fees_alice) = solver
-        .get_user_balances(alice(), market_id);
+    let bal_owner = solver.get_user_balances(owner(), market_id);
+    let bal_alice = solver.get_user_balances(alice(), market_id);
 
     // Run checks.
-    assert(amount_in == params.amount, 'Amount in');
-    assert(fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
-    assert(approx_eq(base_owner, base_deposit_owner - amount_out * 2 / 3, 1), 'Base owner');
+    assert(swap.amount_in == params.amount, 'Amount in');
+    assert(swap.fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
     assert(
-        approx_eq(quote_owner, quote_deposit_owner + (amount_in - fees) * 2 / 3, 1), 'Quote owner'
+        approx_eq(bal_owner.base_amount, base_deposit_owner - swap.amount_out * 2 / 3, 1),
+        'Base owner'
     );
-    assert(base_fees_owner == 0, 'Base fees owner');
-    assert(approx_eq(quote_fees_owner, fees * 2 / 3, 1), 'Quote fees owner');
-    assert(approx_eq(base_alice, base_deposit_alice - amount_out / 3, 1), 'Base alice');
-    assert(approx_eq(quote_alice, quote_deposit_alice + (amount_in - fees) / 3, 1), 'Quote alice');
-    assert(base_fees_alice == 0, 'Base fees alice');
-    assert(approx_eq(quote_fees_alice, fees / 3, 1), 'Quote fees alice');
+    assert(
+        approx_eq(
+            bal_owner.quote_amount, quote_deposit_owner + (swap.amount_in - swap.fees) * 2 / 3, 1
+        ),
+        'Quote owner'
+    );
+    assert(bal_owner.base_fees == 0, 'Base fees owner');
+    assert(approx_eq(bal_owner.quote_fees, swap.fees * 2 / 3, 1), 'Quote fees owner');
+    assert(
+        approx_eq(bal_alice.base_amount, base_deposit_alice - swap.amount_out / 3, 1), 'Base alice'
+    );
+    assert(
+        approx_eq(
+            bal_alice.quote_amount, quote_deposit_alice + (swap.amount_in - swap.fees) / 3, 1
+        ),
+        'Quote alice'
+    );
+    assert(bal_alice.base_fees == 0, 'Base fees alice');
+    assert(approx_eq(bal_alice.quote_fees, swap.fees / 3, 1), 'Quote fees alice');
 }

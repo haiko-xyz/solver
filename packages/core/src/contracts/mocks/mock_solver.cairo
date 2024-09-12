@@ -41,7 +41,7 @@ pub mod MockSolver {
     use haiko_solver_core::contracts::solver::SolverComponent;
     use haiko_solver_core::libraries::math::fast_sqrt;
     use haiko_solver_core::interfaces::ISolver::ISolverHooks;
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
+    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, SwapAmounts};
 
     // Haiko imports.
     use haiko_lib::math::{math, fee_math};
@@ -114,7 +114,7 @@ pub mod MockSolver {
         // * `fees` - fees
         fn quote(
             self: @ContractState, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256, u256) {
+        ) -> SwapAmounts {
             // Run validity checks.
             let state: MarketState = self.solver.market_state.read(market_id);
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
@@ -165,7 +165,9 @@ pub mod MockSolver {
             };
             let fees_capped = fee_math::calc_fee(amount_in_capped, fee_rate);
 
-            (amount_in_capped, amount_out_capped, fees_capped)
+            SwapAmounts {
+                amount_in: amount_in_capped, amount_out: amount_out_capped, fees: fees_capped,
+            }
         }
 
         // Initial token supply to mint when first depositing to a market.

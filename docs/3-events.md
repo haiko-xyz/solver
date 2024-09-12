@@ -53,6 +53,7 @@ pub struct Swap {
 - `exact_input` is a boolean indicating if the swap amount was specified as input or output
 - `amount_in` is the amount of the input token swapped in
 - `amount_out` is the amount of the output token swapped out
+- `fees` is the amount of fees (denominated in the input token) paid for the swap
 
 ### `Deposit` / `Withdraw`
 
@@ -66,6 +67,20 @@ pub struct Deposit {
     pub market_id: felt252,
     pub base_amount: u256,
     pub quote_amount: u256,
+    pub base_fees: u256,
+    pub quote_fees: u256,
+    pub shares: u256,
+}
+
+pub struct Withdraw {
+    #[key]
+    pub caller: ContractAddress,
+    #[key]
+    pub market_id: felt252,
+    pub base_amount: u256,
+    pub quote_amount: u256,
+    pub base_fees: u256,
+    pub quote_fees: u256,
     pub shares: u256,
 }
 ```
@@ -74,7 +89,11 @@ pub struct Deposit {
 - `market_id` is the unique id of the market (see `CreateMarket` above)
 - `base_amount` is the amount of base tokens deposited
 - `quote_amount` is the amount of quote tokens deposited
+- `base_fees` is the amount fees collected in base tokens
+- `quote_fees` is the amount of fees collected in quote tokens
 - `shares` is the amount of LP shares minted or burned
+
+Any deposit or withdraw action triggers a fee withdrawal, which is why these events emits collected fees.
 
 ### `Pause` / `Unpause`
 

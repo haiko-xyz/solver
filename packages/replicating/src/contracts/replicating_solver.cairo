@@ -19,7 +19,7 @@ pub mod ReplicatingSolver {
             IOracleABIDispatcherTrait
         },
     };
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
+    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, SwapAmounts};
     use haiko_solver_replicating::types::MarketParams;
 
     // Haiko imports.
@@ -148,7 +148,7 @@ pub mod ReplicatingSolver {
         // * `fees` - fees
         fn quote(
             self: @ContractState, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256, u256) {
+        ) -> SwapAmounts {
             // Run validity checks.
             let state: MarketState = self.solver.market_state.read(market_id);
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
@@ -193,7 +193,7 @@ pub mod ReplicatingSolver {
             }
 
             // Return amounts.
-            (amount_in, amount_out, fees)
+            SwapAmounts { amount_in, amount_out, fees }
         }
 
         // Callback function to execute any state updates after a swap is completed.

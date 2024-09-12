@@ -759,7 +759,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
             // Obtain quotes and execute swaps.
             start_prank(CheatTarget::One(solver.contract_address), alice());
             let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
-            let (quote_in, quote_out, quote_fees) = solver_hooks
+            let quote = solver_hooks
                 .quote(
                     market_id,
                     SwapParams {
@@ -773,7 +773,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                 );
 
             // Execute swap.
-            let (amount_in, amount_out, fees) = solver
+            let swap = solver
                 .swap(
                     market_id,
                     SwapParams {
@@ -787,51 +787,57 @@ fn run_swap_cases(cases: Span<TestCase>) {
                 );
 
             // Check results.
-            println!("amount in: {}, amount out: {}, fees: {}", amount_in, amount_out, fees);
-            if !(approx_eq_pct(amount_in, swap_case.amount_in, 10)
-                || approx_eq(amount_in, swap_case.amount_in, 1000)) {
+            println!(
+                "amount in: {}, amount out: {}, fees: {}",
+                swap.amount_in,
+                swap.amount_out,
+                swap.fees
+            );
+            if !(approx_eq_pct(swap.amount_in, swap_case.amount_in, 10)
+                || approx_eq(swap.amount_in, swap_case.amount_in, 1000)) {
                 panic(
                     array![
                         'Amount in',
                         i.into() + 1,
                         j.into() + 1,
-                        amount_in.low.into(),
-                        amount_in.high.into(),
+                        swap.amount_in.low.into(),
+                        swap.amount_in.high.into(),
                         swap_case.amount_in.low.into(),
                         swap_case.amount_in.high.into()
                     ]
                 );
             }
-            if !(approx_eq_pct(amount_out, swap_case.amount_out, 10)
-                || approx_eq(amount_out, swap_case.amount_out, 1000)) {
+            if !(approx_eq_pct(swap.amount_out, swap_case.amount_out, 10)
+                || approx_eq(swap.amount_out, swap_case.amount_out, 1000)) {
                 panic(
                     array![
                         'Amount out',
                         i.into() + 1,
                         j.into() + 1,
-                        amount_out.low.into(),
-                        amount_out.high.into(),
+                        swap.amount_out.low.into(),
+                        swap.amount_out.high.into(),
                         swap_case.amount_out.low.into(),
                         swap_case.amount_out.high.into()
                     ]
                 );
             }
-            if !(approx_eq_pct(fees, swap_case.fees, 10) || approx_eq(fees, swap_case.fees, 1000)) {
+            if !(approx_eq_pct(swap.fees, swap_case.fees, 10)
+                || approx_eq(swap.fees, swap_case.fees, 1000)) {
                 panic(
                     array![
                         'Fees',
                         i.into() + 1,
                         j.into() + 1,
-                        fees.low.into(),
-                        fees.high.into(),
+                        swap.fees.low.into(),
+                        swap.fees.high.into(),
                         swap_case.fees.low.into(),
                         swap_case.fees.high.into()
                     ]
                 );
             }
-            assert(amount_in == quote_in, 'Quote in');
-            assert(amount_out == quote_out, 'Quote out');
-            assert(fees == quote_fees, 'Quote fees');
+            assert(swap.amount_in == quote.amount_in, 'Quote in');
+            assert(swap.amount_out == quote.amount_out, 'Quote out');
+            assert(swap.fees == quote.fees, 'Quote fees');
             j += 1;
         };
 

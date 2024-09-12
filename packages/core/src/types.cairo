@@ -37,6 +37,16 @@ pub struct MarketState {
     pub vault_token: ContractAddress,
 }
 
+// Fees per share.
+//
+// * `base_fps` - base fees per share
+// * `quote_fps` - quote fees per share
+#[derive(Drop, Copy, Serde)]
+pub struct FeesPerShare {
+    pub base_fps: u256,
+    pub quote_fps: u256,
+}
+
 // Information about a swap.
 //
 // * `is_buy` - whether swap is buy or sell
@@ -53,6 +63,50 @@ pub struct SwapParams {
     pub threshold_sqrt_price: Option<u256>,
     pub threshold_amount: Option<u256>,
     pub deadline: Option<u64>,
+}
+
+// Token amounts (function response).
+//
+// * `base_amount` - base amount deposited
+// * `quote_amount` - quote amount deposited
+// * `base_fees` - base fees collected at deposit
+// * `quote_fees` - quote fees collected at deposit
+#[derive(Copy, Drop, Serde, Default)]
+pub struct Amounts {
+    pub base_amount: u256,
+    pub quote_amount: u256,
+    pub base_fees: u256,
+    pub quote_fees: u256,
+}
+
+// Token amounts with shares (function response).
+//
+// * `base_amount` - base amount deposited
+// * `quote_amount` - quote amount deposited
+// * `base_fees` - base fees collected at deposit
+// * `quote_fees` - quote fees collected at deposit
+// * `shares` - number of shares minted
+#[derive(Copy, Drop, Serde)]
+pub struct AmountsWithShares {
+    pub base_amount: u256,
+    pub quote_amount: u256,
+    pub base_fees: u256,
+    pub quote_fees: u256,
+    pub shares: u256,
+}
+
+// Swap amounts (function response).
+//
+// * `base_amount` - base amount deposited
+// * `quote_amount` - quote amount deposited
+// * `base_fees` - base fees collected at deposit
+// * `quote_fees` - quote fees collected at deposit
+// * `shares` - number of shares minted
+#[derive(Copy, Drop, Serde)]
+pub struct SwapAmounts {
+    pub amount_in: u256,
+    pub amount_out: u256,
+    pub fees: u256,
 }
 
 // Virtual liquidity position.
@@ -104,4 +158,14 @@ pub struct PackedMarketState {
     pub slab3: felt252,
     pub slab4: felt252,
     pub slab5: felt252,
+}
+
+// Packed fees per share.
+//
+// * `slab0` - base fees per share (coerced to felt252)
+// * `slab1` - quote fees per share (coerced to felt252)
+#[derive(starknet::Store)]
+pub struct PackedFeesPerShare {
+    pub slab0: felt252,
+    pub slab1: felt252,
 }

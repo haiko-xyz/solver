@@ -2,7 +2,7 @@
 use starknet::storage_access::StorePacking;
 
 // Local imports.
-use haiko_solver_core::types::{MarketState, PackedMarketState};
+use haiko_solver_core::types::{MarketState, FeesPerShare, PackedMarketState, PackedFeesPerShare};
 
 ////////////////////////////////
 // IMPLS
@@ -27,6 +27,20 @@ pub(crate) impl MarketStateStorePacking of StorePacking<MarketState, PackedMarke
             quote_fees: value.slab3.try_into().unwrap(),
             vault_token: value.slab4.try_into().unwrap(),
             is_paused: felt_to_bool(value.slab5),
+        }
+    }
+}
+
+pub(crate) impl FeesPerShareStorePacking of StorePacking<FeesPerShare, PackedFeesPerShare> {
+    fn pack(value: FeesPerShare) -> PackedFeesPerShare {
+        let slab0: felt252 = value.base_fps.try_into().unwrap();
+        let slab1: felt252 = value.quote_fps.try_into().unwrap();
+        PackedFeesPerShare { slab0, slab1 }
+    }
+
+    fn unpack(value: PackedFeesPerShare) -> FeesPerShare {
+        FeesPerShare {
+            base_fps: value.slab0.try_into().unwrap(), quote_fps: value.slab1.try_into().unwrap(),
         }
     }
 }

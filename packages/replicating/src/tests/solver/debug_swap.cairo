@@ -50,21 +50,21 @@ fn test_debug_swap() {
     // Hard code params.
     let is_buy = false;
     let exact_input = false;
-    let amount = 10000000000;
-    let fee_rate = 25;
-    let range = 5000;
-    let max_delta = 500;
+    let amount = 1000000000000000000;
+    let fee_rate = 30;
+    let range = 11400;
+    let max_delta = 0;
     let max_skew = 6000;
     let base_currency_id = 1398035019;
-    let quote_currency_id = 1431520323;
-    let min_sources = 2;
-    let max_age = 1000;
-    let oracle_price = 37067545;
+    let quote_currency_id = 4543560;
+    let min_sources = 3;
+    let max_age = 600;
+    let oracle_price = 16718;
     let oracle_decimals = 8;
-    let base_reserves = 268762195878807302077639;
-    let quote_reserves = 96834519855;
+    let base_reserves = 100000000000000000000000;
+    let quote_reserves = 16707738619115042000;
     let base_decimals = 18;
-    let quote_decimals = 6;
+    let quote_decimals = 18;
 
     let (
         _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
@@ -110,6 +110,6 @@ fn test_debug_swap() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
-    println!("amount_in: {}, amount_out: {}", amount_in, amount_out);
+    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    println!("amount_in: {}, amount_out: {}, fees: {}", amount_in, amount_out, fees);
 }

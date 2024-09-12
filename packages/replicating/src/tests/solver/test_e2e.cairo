@@ -62,11 +62,10 @@ fn test_solver_e2e_private_market() {
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_deposit_init, quote_deposit_init, shares_init) = solver
-        .deposit_initial(market_id, to_e18(100), to_e18(1000));
+    let dep_init = solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
 
     // Deposit.
-    let (base_deposit, quote_deposit, shares) = solver.deposit(market_id, to_e18(100), to_e18(500));
+    let dep = solver.deposit(market_id, to_e18(100), to_e18(500));
 
     // Swap.
     let params = SwapParams {
@@ -77,36 +76,35 @@ fn test_solver_e2e_private_market() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Withdraw.
-    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
-        .withdraw_private(market_id, to_e18(50), to_e18(300));
+    let wd = solver.withdraw_private(market_id, to_e18(50), to_e18(300));
 
     // Run checks.
-    let (base_reserves, quote_reserves, _, _) = solver.get_balances(market_id);
+    let res = solver.get_balances(market_id);
     assert(
-        base_reserves == base_deposit
-            + base_deposit_init
-            - amount_out
-            - (base_withdraw - base_fees_withdraw),
+        res.base_amount == dep.base_amount
+            + dep_init.base_amount
+            - swap.amount_out
+            - wd.base_amount,
         'Base reserves'
     );
     assert(
-        quote_reserves == quote_deposit
-            + quote_deposit_init
-            + amount_in
-            - fees
-            - (quote_withdraw - quote_fees_withdraw),
+        res.quote_amount == dep.quote_amount
+            + dep_init.quote_amount
+            + swap.amount_in
+            - swap.fees
+            - wd.quote_amount,
         'Quote reserves'
     );
-    assert(base_fees_withdraw == 0, 'Base fees');
+    assert(wd.base_fees == 0, 'Base fees');
     assert(
-        approx_eq(quote_fees_withdraw, fees * to_e18(300) / (to_e18(1500) + amount_in), 1),
+        approx_eq(wd.quote_fees, swap.fees * to_e18(300) / (to_e18(1500) + swap.amount_in), 1),
         'Quote fees'
     );
-    assert(shares_init == 0, 'Shares init');
-    assert(shares == 0, 'Shares');
+    assert(dep_init.shares == 0, 'Shares init');
+    assert(dep.shares == 0, 'Shares');
 }
 
 #[test]
@@ -125,13 +123,11 @@ fn test_solver_e2e_public_market() {
     solver.set_withdraw_fee(market_id, 50);
 
     // Deposit initial.
-    let (base_deposit_init, quote_deposit_init, shares_init) = solver
-        .deposit_initial(market_id, to_e18(100), to_e18(1000));
+    let dep_init = solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
 
     // Deposit as LP.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_deposit, quote_deposit, shares) = solver
-        .deposit(market_id, to_e18(50), to_e18(600)); // Contains extra, should coerce.
+    let dep = solver.deposit(market_id, to_e18(50), to_e18(600)); // Contains extra, should coerce.
 
     // Swap.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -143,12 +139,11 @@ fn test_solver_e2e_public_market() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw) = solver
-        .withdraw_public(market_id, shares);
+    let wd = solver.withdraw_public(market_id, dep.shares);
 
     // Collect withdraw fees.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -158,49 +153,58 @@ fn test_solver_e2e_public_market() {
         .collect_withdraw_fees(solver.contract_address, quote_token.contract_address);
 
     // Run checks.
-    let (base_reserves, quote_reserves, base_fee_reserves, quote_fee_reserves) = solver
-        .get_balances(market_id);
+    let res = solver.get_balances(market_id);
     let base_deposit_exp = to_e18(50);
     let quote_deposit_exp = to_e18(500);
-    assert(base_deposit == base_deposit_exp, 'Base deposit');
-    assert(quote_deposit == quote_deposit_exp, 'Quote deposit');
+    assert(dep.base_amount == base_deposit_exp, 'Base deposit');
+    assert(dep.quote_amount == quote_deposit_exp, 'Quote deposit');
     assert(
         approx_eq(
-            base_withdraw, math::mul_div(base_deposit_exp - amount_out / 3, 995, 1000, false), 10
+            wd.base_amount,
+            math::mul_div(base_deposit_exp - swap.amount_out / 3, 995, 1000, false),
+            10
         ),
         'Base withdraw'
     );
     assert(
         approx_eq(
-            quote_withdraw, math::mul_div(quote_deposit_exp + amount_in / 3, 995, 1000, false), 10
+            wd.quote_amount,
+            math::mul_div(quote_deposit_exp + swap.amount_in / 3, 995, 1000, false),
+            10
         ),
         'Quote withdraw'
     );
-    assert(base_fees_withdraw == 0, 'Base fees');
+    assert(wd.base_fees == 0, 'Base fees');
     assert(
-        approx_eq(quote_fees_withdraw, math::mul_div(fees / 3, 995, 1000, false), 10), 'Quote fees'
+        approx_eq(wd.quote_fees, math::mul_div(swap.fees / 3, 995, 1000, false), 10), 'Quote fees'
     );
-    assert(shares == shares_init / 2, 'Shares');
+    assert(dep.shares == dep_init.shares / 2, 'Shares');
     assert(
-        approx_eq(base_reserves, (base_deposit_init + base_deposit_exp - amount_out) * 2 / 3, 10),
+        approx_eq(
+            res.base_amount, (dep_init.base_amount + base_deposit_exp - swap.amount_out) * 2 / 3, 10
+        ),
         'Base reserves'
     );
     assert(
         approx_eq(
-            quote_reserves, (quote_deposit_init + quote_deposit_exp + amount_in - fees) * 2 / 3, 10
+            res.quote_amount,
+            (dep_init.quote_amount + quote_deposit_exp + swap.amount_in - swap.fees) * 2 / 3,
+            10
         ),
         'Quote reserves'
     );
     assert(
         approx_eq(
-            base_withdraw_fees, math::mul_div(base_deposit_exp - amount_out / 3, 5, 1000, false), 10
+            base_withdraw_fees,
+            math::mul_div(base_deposit_exp - swap.amount_out / 3, 5, 1000, false),
+            10
         ),
         'Base withdraw fees'
     );
     assert(
         approx_eq(
             quote_withdraw_fees,
-            math::mul_div(quote_deposit_exp + amount_in / 3, 5, 1000, false),
+            math::mul_div(quote_deposit_exp + swap.amount_in / 3, 5, 1000, false),
             10
         ),
         'Quote withdraw fees'

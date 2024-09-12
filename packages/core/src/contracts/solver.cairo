@@ -12,13 +12,16 @@ pub mod SolverComponent {
 
     // Local imports.
     use haiko_solver_core::libraries::{
-        id, erc20_versioned_call, store_packing::MarketStateStorePacking
+        id, erc20_versioned_call, store_packing::{MarketStateStorePacking, FeesPerShareStorePacking}
     };
     use haiko_solver_core::interfaces::{
         ISolver::{ISolver, ISolverHooksDispatcher, ISolverHooksDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     };
-    use haiko_solver_core::types::{MarketInfo, MarketState, PositionInfo, SwapParams};
+    use haiko_solver_core::types::{
+        MarketInfo, MarketState, FeesPerShare, PositionInfo, SwapParams, Amounts, AmountsWithShares,
+        SwapAmounts
+    };
 
     // Haiko imports.
     use haiko_lib::{math::{math, fee_math}, constants::{ONE, LOG2_1_00001, MAX_FEE_RATE}};
@@ -47,6 +50,10 @@ pub mod SolverComponent {
         market_info: LegacyMap::<felt252, MarketInfo>,
         // Indexed by market id
         market_state: LegacyMap::<felt252, MarketState>,
+        // Indexed by market id
+        fees_per_share: LegacyMap::<felt252, FeesPerShare>,
+        // Indexed by (market_id, user)
+        user_fees_per_share: LegacyMap::<(felt252, ContractAddress), FeesPerShare>,
         // Indexed by market_id
         withdraw_fee_rate: LegacyMap::<felt252, u16>,
         // Indexed by asset
@@ -111,6 +118,8 @@ pub mod SolverComponent {
         pub market_id: felt252,
         pub base_amount: u256,
         pub quote_amount: u256,
+        pub base_fees: u256,
+        pub quote_fees: u256,
         pub shares: u256,
     }
 
@@ -276,11 +285,14 @@ pub mod SolverComponent {
         // * `quote_amount` - total quote tokens owned
         // * `base_fees` - total base fees owned
         // * `quote_fees` - total quote fees owned
-        fn get_balances(
-            self: @ComponentState<TContractState>, market_id: felt252
-        ) -> (u256, u256, u256, u256) {
+        fn get_balances(self: @ComponentState<TContractState>, market_id: felt252) -> Amounts {
             let state: MarketState = self.market_state.read(market_id);
-            (state.base_reserves, state.quote_reserves, state.base_fees, state.quote_fees)
+            Amounts {
+                base_amount: state.base_reserves,
+                quote_amount: state.quote_reserves,
+                base_fees: state.base_fees,
+                quote_fees: state.quote_fees
+            }
         }
 
         // Get user token balances held in solver market.
@@ -296,27 +308,39 @@ pub mod SolverComponent {
         // * `quote_fees` - quote fees owned by user
         fn get_user_balances(
             self: @ComponentState<TContractState>, user: ContractAddress, market_id: felt252
-        ) -> (u256, u256, u256, u256) {
+        ) -> Amounts {
             let state: MarketState = self.market_state.read(market_id);
             // Handle non-existent vault token.
             if state.vault_token == contract_address_const::<0x0>() {
-                return (0, 0, 0, 0);
+                return Default::default();
             }
             // Handle divison by 0 case.
             let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
             let total_shares = vault_token.totalSupply();
             if total_shares == 0 {
-                return (0, 0, 0, 0);
+                return Default::default();
             }
-            // Calculate balances and shares
+            // Calculate user balances
             let user_shares = vault_token.balanceOf(user);
-            let (base_balance, quote_balance, base_fees, quote_fees) = self.get_balances(market_id);
-            let user_base = math::mul_div(base_balance, user_shares, total_shares, false);
-            let user_quote = math::mul_div(quote_balance, user_shares, total_shares, false);
-            let user_base_fees = math::mul_div(base_fees, user_shares, total_shares, false);
-            let user_quote_fees = math::mul_div(quote_fees, user_shares, total_shares, false);
+            let res = self.get_balances(market_id);
+            let base_amount = math::mul_div(res.base_amount, user_shares, total_shares, false);
+            let quote_amount = math::mul_div(res.quote_amount, user_shares, total_shares, false);
 
-            (user_base, user_quote, user_base_fees, user_quote_fees)
+            // Calculate user fee balances
+            let market_fps: FeesPerShare = self.fees_per_share.read(market_id);
+            let user_fps: FeesPerShare = self.user_fees_per_share.read((market_id, user));
+            let base_fees = if user_shares == 0 || market_fps.base_fps == user_fps.base_fps {
+                0
+            } else {
+                math::mul_div(user_shares, market_fps.base_fps - user_fps.base_fps, ONE, false)
+            };
+            let quote_fees = if user_shares == 0 || market_fps.quote_fps == user_fps.quote_fps {
+                0
+            } else {
+                math::mul_div(user_shares, market_fps.quote_fps - user_fps.quote_fps, ONE, false)
+            };
+
+            Amounts { base_amount, quote_amount, base_fees, quote_fees }
         }
 
         // Create market for solver.
@@ -395,7 +419,7 @@ pub mod SolverComponent {
         // * `fees` - fees
         fn swap(
             ref self: ComponentState<TContractState>, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256, u256) {
+        ) -> SwapAmounts {
             // Run validity checks.
             let state: MarketState = self.market_state.read(market_id);
             let market_info: MarketInfo = self.market_info.read(market_id);
@@ -407,7 +431,8 @@ pub mod SolverComponent {
 
             // Get amounts.
             let solver_hooks = ISolverHooksDispatcher { contract_address: get_contract_address() };
-            let (amount_in, amount_out, fees) = solver_hooks.quote(market_id, swap_params);
+            let SwapAmounts { amount_in, amount_out, fees } = solver_hooks
+                .quote(market_id, swap_params);
 
             // Check amounts non-zero and satisfy threshold amounts.
             assert(amount_in != 0 && amount_out != 0, 'AmountZero');
@@ -421,6 +446,17 @@ pub mod SolverComponent {
                     panic(array!['ThresholdAmount', amount_in.low.into(), amount_in.high.into()]);
                 }
             }
+
+            // Update fees per share.
+            let mut market_fps: FeesPerShare = self.fees_per_share.read(market_id);
+            let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
+            let total_supply = vault_token.totalSupply();
+            if swap_params.is_buy {
+                market_fps.quote_fps += math::mul_div(fees, ONE, total_supply, false);
+            } else {
+                market_fps.base_fps += math::mul_div(fees, ONE, total_supply, false);
+            }
+            self.fees_per_share.write(market_id, market_fps);
 
             // Transfer tokens.
             let market_info: MarketInfo = self.market_info.read(market_id);
@@ -470,7 +506,7 @@ pub mod SolverComponent {
                     )
                 );
 
-            (amount_in, amount_out, fees)
+            SwapAmounts { amount_in, amount_out, fees }
         }
 
         // Deposit initial liquidity to market.
@@ -485,13 +521,15 @@ pub mod SolverComponent {
         // # Returns
         // * `base_deposit` - base asset deposited
         // * `quote_deposit` - quote asset deposited
+        // * `base_fees` - base fees withdrawn (gross of withdraw fees)
+        // * `quote_fees` - quote fees withdrawn (gross of withdraw fees)
         // * `shares` - pool shares minted in the form of liquidity
         fn deposit_initial(
             ref self: ComponentState<TContractState>,
             market_id: felt252,
             base_amount: u256,
             quote_amount: u256
-        ) -> (u256, u256, u256) {
+        ) -> AmountsWithShares {
             // Fetch market info and state.
             let market_info = self.market_info.read(market_id);
             let mut state: MarketState = self.market_state.read(market_id);
@@ -503,6 +541,9 @@ pub mod SolverComponent {
             if !market_info.is_public {
                 self.assert_market_owner(market_id);
             }
+
+            // Collect fees (if any) and set / reset fee per share values.
+            let (base_fees, quote_fees) = self._collect_fees(market_id);
 
             // Cap deposit at available.
             let caller = get_caller_address();
@@ -554,12 +595,20 @@ pub mod SolverComponent {
                             caller,
                             base_amount: base_deposit,
                             quote_amount: quote_deposit,
+                            base_fees,
+                            quote_fees,
                             shares
                         }
                     )
                 );
 
-            (base_deposit, quote_deposit, shares)
+            AmountsWithShares {
+                base_amount: base_deposit,
+                quote_amount: quote_deposit,
+                base_fees,
+                quote_fees,
+                shares
+            }
         }
 
         // Same as `deposit_initial`, but with a referrer.
@@ -573,6 +622,8 @@ pub mod SolverComponent {
         // # Returns
         // * `base_deposit` - base asset deposited
         // * `quote_deposit` - quote asset deposited
+        // * `base_fees` - base fees withdrawn (gross of withdraw fees)
+        // * `quote_fees` - quote fees withdrawn (gross of withdraw fees)
         // * `shares` - pool shares minted in the form of liquidity
         fn deposit_initial_with_referrer(
             ref self: ComponentState<TContractState>,
@@ -580,7 +631,7 @@ pub mod SolverComponent {
             base_amount: u256,
             quote_amount: u256,
             referrer: ContractAddress
-        ) -> (u256, u256, u256) {
+        ) -> AmountsWithShares {
             // Check referrer is non-null.
             assert(referrer != contract_address_const::<0x0>(), 'ReferrerZero');
 
@@ -607,13 +658,15 @@ pub mod SolverComponent {
         // # Returns
         // * `base_deposit` - base asset deposited
         // * `quote_deposit` - quote asset deposited
+        // * `base_fees` - base fees withdrawn (gross of withdraw fees)
+        // * `quote_fees` - quote fees withdrawn (gross of withdraw fees)
         // * `shares` - pool shares minted
         fn deposit(
             ref self: ComponentState<TContractState>,
             market_id: felt252,
             base_amount: u256,
             quote_amount: u256
-        ) -> (u256, u256, u256) {
+        ) -> AmountsWithShares {
             // Fetch market info and state.
             let market_info = self.market_info.read(market_id);
             let mut state: MarketState = self.market_state.read(market_id);
@@ -625,6 +678,9 @@ pub mod SolverComponent {
             if !market_info.is_public {
                 self.assert_market_owner(market_id);
             }
+
+            // Collect fees (if any) and set / reset fee per share values.
+            let (base_fees, quote_fees) = self._collect_fees(market_id);
 
             // Evaluate the lower of requested and available balances.
             let caller = get_caller_address();
@@ -670,6 +726,9 @@ pub mod SolverComponent {
             }
 
             // Mint shares.
+            // If the market has existing accrued swap fees, we will be buying into a portion of those
+            // fees, so the minted shares must be calculated as a portion of total reserves, inclusive
+            // of accrued fees. We add 
             let mut shares = 0;
             if market_info.is_public {
                 let total_supply = ERC20ABIDispatcher { contract_address: state.vault_token }
@@ -697,12 +756,20 @@ pub mod SolverComponent {
                             caller,
                             base_amount: base_deposit,
                             quote_amount: quote_deposit,
+                            base_fees,
+                            quote_fees,
                             shares,
                         }
                     )
                 );
 
-            (base_deposit, quote_deposit, shares)
+            AmountsWithShares {
+                base_amount: base_deposit,
+                quote_amount: quote_deposit,
+                base_fees,
+                quote_fees,
+                shares
+            }
         }
 
         // Same as `deposit`, but with a referrer.
@@ -716,6 +783,8 @@ pub mod SolverComponent {
         // # Returns
         // * `base_deposit` - base asset deposited
         // * `quote_deposit` - quote asset deposited
+        // * `base_fees` - base fees withdrawn (gross of withdraw fees)
+        // * `quote_fees` - quote fees withdrawn (gross of withdraw fees)
         // * `shares` - pool shares minted
         fn deposit_with_referrer(
             ref self: ComponentState<TContractState>,
@@ -723,7 +792,7 @@ pub mod SolverComponent {
             base_amount: u256,
             quote_amount: u256,
             referrer: ContractAddress
-        ) -> (u256, u256, u256) {
+        ) -> AmountsWithShares {
             // Check referrer is non-null.
             assert(referrer != contract_address_const::<0x0>(), 'ReferrerZero');
 
@@ -745,13 +814,13 @@ pub mod SolverComponent {
         // * `shares` - pool shares to burn
         //
         // # Returns
-        // * `base_amount` - base asset withdrawn, including fees
-        // * `quote_amount` - quote asset withdrawn, including fees
+        // * `base_amount` - base asset withdrawn, excluding fees
+        // * `quote_amount` - quote asset withdrawn, excluding fees
         // * `base_fees` - base fees withdrawn
         // * `quote_fees` - quote fees withdrawn
         fn withdraw_public(
             ref self: ComponentState<TContractState>, market_id: felt252, shares: u256
-        ) -> (u256, u256, u256, u256) {
+        ) -> Amounts {
             // Fetch state.
             let market_info = self.market_info.read(market_id);
             let mut state: MarketState = self.market_state.read(market_id);
@@ -766,22 +835,23 @@ pub mod SolverComponent {
             let total_supply = vault_token.totalSupply();
             assert(total_supply != 0, 'SupplyZero');
 
+            // Collect fees (if any) and set / reset fee per share values.
+            let (base_fees, quote_fees) = self._collect_fees(market_id);
+
             // Burn shares.
             IVaultTokenDispatcher { contract_address: state.vault_token }.burn(caller, shares);
 
             // Calculate share of reserves to withdraw. Commit state changes.
             let base_amount = math::mul_div(state.base_reserves, shares, total_supply, false);
             let quote_amount = math::mul_div(state.quote_reserves, shares, total_supply, false);
-            let base_fees = math::mul_div(state.base_fees, shares, total_supply, false);
-            let quote_fees = math::mul_div(state.quote_fees, shares, total_supply, false);
             state.base_reserves -= base_amount;
             state.quote_reserves -= quote_amount;
-            state.base_fees -= base_fees;
-            state.quote_fees -= quote_fees;
             self.market_state.write(market_id, state);
 
             // Deduct applicable fees, emit events and return withdrawn amounts.
-            self._withdraw(market_id, base_amount, quote_amount, base_fees, quote_fees, shares)
+            self._withdraw(market_id, base_amount, quote_amount, base_fees, quote_fees, shares);
+
+            Amounts { base_amount, quote_amount, base_fees, quote_fees }
         }
 
         // Withdraw exact token amounts from market.
@@ -793,8 +863,8 @@ pub mod SolverComponent {
         // * `quote_amount` - quote amount requested
         //
         // # Returns
-        // * `base_amount` - base asset withdrawn, including fees
-        // * `quote_amount` - quote asset withdrawn, including fees
+        // * `base_amount` - base asset withdrawn, excluding fees
+        // * `quote_amount` - quote asset withdrawn, excluding fees
         // * `base_fees` - base fees withdrawn
         // * `quote_fees` - quote fees withdrawn
         fn withdraw_private(
@@ -802,7 +872,7 @@ pub mod SolverComponent {
             market_id: felt252,
             base_amount: u256,
             quote_amount: u256
-        ) -> (u256, u256, u256, u256) {
+        ) -> Amounts {
             // Fetch state.
             let market_info = self.market_info.read(market_id);
             let mut state: MarketState = self.market_state.read(market_id);
@@ -812,43 +882,24 @@ pub mod SolverComponent {
             assert(!market_info.is_public, 'UseWithdrawPublic');
             self.assert_market_owner(market_id);
 
+            // Collect fees (if any) and set / reset fee per share values.
+            let (base_fees, quote_fees) = self._collect_fees(market_id);
+
             // Cap withdraw amount at available. Commit state changes.
-            let base_withdraw = min(base_amount, state.base_reserves + state.base_fees);
-            let quote_withdraw = min(quote_amount, state.quote_reserves + state.quote_fees);
-            let base_fees_withdraw = if base_withdraw < state.base_reserves + state.base_fees {
-                math::mul_div(
-                    state.base_fees, base_withdraw, state.base_reserves + state.base_fees, false
-                )
-            } else {
-                state.base_fees
-            };
-            let quote_fees_withdraw = if quote_withdraw < state.quote_reserves + state.quote_fees {
-                math::mul_div(
-                    state.quote_fees, quote_withdraw, state.quote_reserves + state.quote_fees, false
-                )
-            } else {
-                state.quote_fees
-            };
-            let base_withdraw_excl_fees = base_withdraw - base_fees_withdraw;
-            let quote_withdraw_excl_fees = quote_withdraw - quote_fees_withdraw;
+            let base_withdraw = min(base_amount, state.base_reserves);
+            let quote_withdraw = min(quote_amount, state.quote_reserves);
 
             // Commit state updates.
-            state.base_reserves -= base_withdraw_excl_fees;
-            state.quote_reserves -= quote_withdraw_excl_fees;
-            state.base_fees -= base_fees_withdraw;
-            state.quote_fees -= quote_fees_withdraw;
+            state.base_reserves -= base_withdraw;
+            state.quote_reserves -= quote_withdraw;
             self.market_state.write(market_id, state);
 
             // Deduct applicable fees, emit events and return withdrawn amounts.
-            self
-                ._withdraw(
-                    market_id,
-                    base_withdraw_excl_fees,
-                    quote_withdraw_excl_fees,
-                    base_fees_withdraw,
-                    quote_fees_withdraw,
-                    0
-                )
+            self._withdraw(market_id, base_withdraw, quote_withdraw, base_fees, quote_fees, 0);
+
+            Amounts {
+                base_amount: base_withdraw, quote_amount: quote_withdraw, base_fees, quote_fees
+            }
         }
 
         // Collect withdrawal fees.
@@ -1058,22 +1109,95 @@ pub mod SolverComponent {
             token
         }
 
+        // Internal function to collect outstanding fee balances (if any) and update fee per share values.
+        // Returned amounts are gross of withdraw fees.
+        // 
+        // # Arguments
+        // * `market_id` - market id
+        //
+        // # Returns
+        // * `base_fees` - collected base fees
+        // * `quote_fees` - collected quote fees
+        fn _collect_fees(
+            ref self: ComponentState<TContractState>, market_id: felt252,
+        ) -> (u256, u256) {
+            // Check if user has accrued fee balances.
+            let user = get_caller_address();
+            let market_info: MarketInfo = self.market_info.read(market_id);
+            let mut market_state: MarketState = self.market_state.read(market_id);
+            let vault_token = ERC20ABIDispatcher { contract_address: market_state.vault_token };
+            let user_shares = vault_token.balanceOf(user);
+            let user_fps: FeesPerShare = self.user_fees_per_share.read((market_id, user));
+            let fps: FeesPerShare = self.fees_per_share.read(market_id);
+
+            // No accrued fee balances exist. Set user fps to pool fps and return.
+            if user_shares == 0
+                || (user_fps.base_fps == fps.base_fps && user_fps.quote_fps == fps.quote_fps) {
+                self.user_fees_per_share.write((market_id, user), fps);
+                return (0, 0);
+            }
+
+            // Accrued fee balances exist, calculate fee balances to collect.
+            let base_fees = math::mul_div(
+                user_shares, fps.base_fps - user_fps.base_fps, ONE, false
+            );
+            let quote_fees = math::mul_div(
+                user_shares, fps.quote_fps - user_fps.quote_fps, ONE, false
+            );
+
+            // Update fee reserves and commit state changes.
+            market_state.base_fees -= base_fees;
+            market_state.quote_fees -= quote_fees;
+            self.market_state.write(market_id, market_state);
+
+            // Calculate withdraw fees.
+            let withdraw_fee_rate = self.withdraw_fee_rate.read(market_id);
+            let mut base_withdraw_fees = 0;
+            let mut quote_withdraw_fees = 0;
+            if withdraw_fee_rate != 0 {
+                base_withdraw_fees = fee_math::calc_fee(base_fees, withdraw_fee_rate);
+                quote_withdraw_fees = fee_math::calc_fee(quote_fees, withdraw_fee_rate);
+            }
+
+            // Update withdraw fee balances.
+            if base_withdraw_fees != 0 {
+                let mut base_withdraw_fees_bal = self.withdraw_fees.read(market_info.base_token);
+                base_withdraw_fees_bal += base_withdraw_fees;
+                self.withdraw_fees.write(market_info.base_token, base_withdraw_fees_bal);
+            }
+            if quote_withdraw_fees != 0 {
+                let mut quote_withdraw_fees_bal = self.withdraw_fees.read(market_info.quote_token);
+                quote_withdraw_fees_bal += quote_withdraw_fees;
+                self.withdraw_fees.write(market_info.quote_token, quote_withdraw_fees_bal);
+            }
+
+            // Transfer fees (net of withdraw fees) to user.
+            if base_fees != 0 {
+                let base_token = ERC20ABIDispatcher { contract_address: market_info.base_token };
+                base_token.transfer(user, base_fees - base_withdraw_fees);
+            }
+            if quote_fees != 0 {
+                let quote_token = ERC20ABIDispatcher { contract_address: market_info.quote_token };
+                quote_token.transfer(user, quote_fees - quote_withdraw_fees);
+            }
+
+            // Set user fps to pool fps.
+            self.user_fees_per_share.write((market_id, user), fps);
+
+            // Return collected fees gross of withdraw fees.
+            (base_fees, quote_fees)
+        }
+
         // Internal function to withdraw funds from market.
         // Amounts passed in should be before deducting applicable withdraw fees.
         // 
         // # Arguments
         // * `market_id` - market id
-        // * `base_amount` - amount of base assets to withdraw, excluding earned swap fees and withdraw fees
-        // * `quote_amount` - amount of quote assets to withdraw, excluding earned swap fees and withdraw fees
-        // * `base_fees` - amount of earned base fees, gross of withdraw fees
-        // * `quote_fees` - amount of earned quote fees, gross of withdraw fees
+        // * `base_amount` - amount of base assets to withdraw, excluding swap fees and gross of withdraw fees
+        // * `quote_amount` - amount of quote assets to withdraw, excluding swap fees and gross of withdraw fees
+        // * `base_fees` - earned base fees, gross of withdraw fees
+        // * `quote_fees` - earned quote fees, gross of withdraw fees
         // * `shares` - pool shares to burn for public vaults, or 0 for private vaults
-        //
-        // # Returns
-        // * `base_withdraw` - base assets withdrawn, including fees
-        // * `quote_withdraw` - quote assets withdrawn, including fees
-        // * `base_fees` - base fees withdrawn
-        // * `quote_fees` - quote fees withdrawn
         fn _withdraw(
             ref self: ComponentState<TContractState>,
             market_id: felt252,
@@ -1082,12 +1206,10 @@ pub mod SolverComponent {
             base_fees: u256,
             quote_fees: u256,
             shares: u256
-        ) -> (u256, u256, u256, u256) {
+        ) {
             // Initialise values.
-            let mut base_withdraw = base_amount + base_fees;
-            let mut quote_withdraw = quote_amount + quote_fees;
-            let mut base_fees_withdraw = base_fees;
-            let mut quote_fees_withdraw = quote_fees;
+            let mut base_withdraw = base_amount;
+            let mut quote_withdraw = quote_amount;
             let mut base_withdraw_fees = 0;
             let mut quote_withdraw_fees = 0;
 
@@ -1098,8 +1220,6 @@ pub mod SolverComponent {
                 quote_withdraw_fees = fee_math::calc_fee(quote_withdraw, withdraw_fee_rate);
                 base_withdraw -= base_withdraw_fees;
                 quote_withdraw -= quote_withdraw_fees;
-                base_fees_withdraw -= fee_math::calc_fee(base_fees, withdraw_fee_rate);
-                quote_fees_withdraw -= fee_math::calc_fee(quote_fees, withdraw_fee_rate);
             }
 
             // Transfer tokens to caller.
@@ -1169,9 +1289,6 @@ pub mod SolverComponent {
                         )
                     );
             }
-
-            // Return withdrawn amounts.
-            (base_withdraw, quote_withdraw, base_fees_withdraw, quote_fees_withdraw)
         }
     }
 }

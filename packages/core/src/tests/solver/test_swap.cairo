@@ -55,12 +55,12 @@ fn test_swap_buy_exact_in() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
-    assert(amount_in == params.amount, 'Amount in');
-    assert(amount_out == 995000000000000000, 'Amount out');
-    assert(fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
+    assert(swap.amount_in == params.amount, 'Amount in');
+    assert(swap.amount_out == 995000000000000000, 'Amount out');
+    assert(swap.fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
 }
 
 #[test]
@@ -89,12 +89,12 @@ fn test_swap_sell_exact_in() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
-    assert(amount_in == params.amount, 'Amount in');
-    assert(amount_out == 4975000000000000000, 'Amount out');
-    assert(fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
+    assert(swap.amount_in == params.amount, 'Amount in');
+    assert(swap.amount_out == 4975000000000000000, 'Amount out');
+    assert(swap.fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
 }
 
 #[test]
@@ -123,12 +123,12 @@ fn test_swap_buy_exact_out() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
-    assert(approx_eq(amount_in, math::mul_div(to_e18(5), 10000, 9950, true), 1), 'Amount in');
-    assert(amount_out == params.amount, 'Amount out');
-    assert(approx_eq(fees, math::mul_div(to_e18(5), 50, 9950, true), 1), 'Fees');
+    assert(approx_eq(swap.amount_in, math::mul_div(to_e18(5), 10000, 9950, true), 1), 'Amount in');
+    assert(swap.amount_out == params.amount, 'Amount out');
+    assert(approx_eq(swap.fees, math::mul_div(to_e18(5), 50, 9950, true), 1), 'Fees');
 }
 
 #[test]
@@ -157,12 +157,12 @@ fn test_swap_sell_exact_out() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
-    assert(approx_eq(amount_in, math::mul_div(to_e18(1), 10000, 9950, true), 1), 'Amount in');
-    assert(amount_out == params.amount, 'Amount out');
-    assert(approx_eq(fees, math::mul_div(to_e18(1), 50, 9950, true), 1), 'Fees');
+    assert(approx_eq(swap.amount_in, math::mul_div(to_e18(1), 10000, 9950, true), 1), 'Amount in');
+    assert(swap.amount_out == params.amount, 'Amount out');
+    assert(approx_eq(swap.fees, math::mul_div(to_e18(1), 50, 9950, true), 1), 'Fees');
 }
 
 ////////////////////////////////
@@ -193,7 +193,7 @@ fn test_swap_should_emit_event() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out, fees) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Check events emitted.
     spy
@@ -205,9 +205,9 @@ fn test_swap_should_emit_event() {
                         SolverComponent::Swap {
                             market_id,
                             caller: alice(),
-                            amount_in,
-                            amount_out,
-                            fees,
+                            amount_in: swap.amount_in,
+                            amount_out: swap.amount_out,
+                            fees: swap.fees,
                             is_buy: params.is_buy,
                             exact_input: params.exact_input
                         }

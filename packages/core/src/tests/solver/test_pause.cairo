@@ -40,7 +40,7 @@ fn test_pause_allows_withdraws() {
 
     // Deposit.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (_, _, shares) = solver.deposit(market_id, to_e18(100), to_e18(500));
+    let dep = solver.deposit(market_id, to_e18(100), to_e18(500));
 
     // Pause.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -48,7 +48,7 @@ fn test_pause_allows_withdraws() {
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    solver.withdraw_public(market_id, shares);
+    solver.withdraw_public(market_id, dep.shares);
 }
 
 #[test]

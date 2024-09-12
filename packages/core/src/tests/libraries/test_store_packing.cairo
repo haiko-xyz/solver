@@ -3,7 +3,7 @@ use starknet::syscalls::deploy_syscall;
 use starknet::contract_address::contract_address_const;
 
 // Local imports.
-use haiko_solver_core::types::MarketState;
+use haiko_solver_core::types::{MarketState, FeesPerShare};
 use haiko_solver_core::contracts::mocks::store_packing_contract::{
     StorePackingContract, IStorePackingContractDispatcher, IStorePackingContractDispatcherTrait
 };
@@ -25,7 +25,7 @@ fn before() -> IStorePackingContractDispatcher {
 ////////////////////////////////
 // TESTS
 ////////////////////////////////
-/// 
+
 #[test]
 fn test_store_packing_market_state() {
     let store_packing_contract = before();
@@ -48,4 +48,19 @@ fn test_store_packing_market_state() {
     assert(unpacked.quote_fees == market_state.quote_fees, 'Market state: quote fees');
     assert(unpacked.is_paused == market_state.is_paused, 'Market state: is paused');
     assert(unpacked.vault_token == market_state.vault_token, 'Market state: vault token');
+}
+
+#[test]
+fn test_store_packing_fees_per_share() {
+    let store_packing_contract = before();
+
+    let fees_per_share = FeesPerShare {
+        base_fps: 1389123122000000000, quote_fps: 240129999999999999,
+    };
+
+    store_packing_contract.set_fees_per_share(1, fees_per_share);
+    let unpacked = store_packing_contract.get_fees_per_share(1);
+
+    assert(unpacked.base_fps == fees_per_share.base_fps, 'Fees per share: base fps');
+    assert(unpacked.quote_fps == fees_per_share.quote_fps, 'Fees per share: quote fps');
 }

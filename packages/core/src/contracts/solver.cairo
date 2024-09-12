@@ -447,16 +447,18 @@ pub mod SolverComponent {
                 }
             }
 
-            // Update fees per share.
-            let mut market_fps: FeesPerShare = self.fees_per_share.read(market_id);
-            let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
-            let total_supply = vault_token.totalSupply();
-            if swap_params.is_buy {
-                market_fps.quote_fps += math::mul_div(fees, ONE, total_supply, false);
-            } else {
-                market_fps.base_fps += math::mul_div(fees, ONE, total_supply, false);
+            // Update fees per share if this is a public market.
+            if market_info.is_public {
+                let mut market_fps: FeesPerShare = self.fees_per_share.read(market_id);
+                let vault_token = ERC20ABIDispatcher { contract_address: state.vault_token };
+                let total_supply = vault_token.totalSupply();
+                if swap_params.is_buy {
+                    market_fps.quote_fps += math::mul_div(fees, ONE, total_supply, false);
+                } else {
+                    market_fps.base_fps += math::mul_div(fees, ONE, total_supply, false);
+                }
+                self.fees_per_share.write(market_id, market_fps);
             }
-            self.fees_per_share.write(market_id, market_fps);
 
             // Transfer tokens.
             let market_info: MarketInfo = self.market_info.read(market_id);
@@ -1125,25 +1127,36 @@ pub mod SolverComponent {
             let user = get_caller_address();
             let market_info: MarketInfo = self.market_info.read(market_id);
             let mut market_state: MarketState = self.market_state.read(market_id);
-            let vault_token = ERC20ABIDispatcher { contract_address: market_state.vault_token };
-            let user_shares = vault_token.balanceOf(user);
-            let user_fps: FeesPerShare = self.user_fees_per_share.read((market_id, user));
-            let fps: FeesPerShare = self.fees_per_share.read(market_id);
 
-            // No accrued fee balances exist. Set user fps to pool fps and return.
-            if user_shares == 0
-                || (user_fps.base_fps == fps.base_fps && user_fps.quote_fps == fps.quote_fps) {
+            // Calculate accrued fee balances.
+            let mut base_fees = 0;
+            let mut quote_fees = 0;
+            if market_state.is_public {
+                let vault_token = ERC20ABIDispatcher { contract_address: market_state.vault_token };
+                let user_shares = vault_token.balanceOf(user);
+                let user_fps: FeesPerShare = self.user_fees_per_share.read((market_id, user));
+                let fps: FeesPerShare = self.fees_per_share.read(market_id);
+
+                // Update user fps.
                 self.user_fees_per_share.write((market_id, user), fps);
-                return (0, 0);
-            }
 
-            // Accrued fee balances exist, calculate fee balances to collect.
-            let base_fees = math::mul_div(
-                user_shares, fps.base_fps - user_fps.base_fps, ONE, false
-            );
-            let quote_fees = math::mul_div(
-                user_shares, fps.quote_fps - user_fps.quote_fps, ONE, false
-            );
+                // No accrued fee balances exist. Set user fps to pool fps and return.
+                if user_shares == 0
+                    || (user_fps.base_fps == fps.base_fps && user_fps.quote_fps == fps.quote_fps) {
+                    return (0, 0);
+                }
+
+                // Accrued fee balances exist, calculate fee balances to collect.
+                base_fees = math::mul_div(
+                    user_shares, fps.base_fps - user_fps.base_fps, ONE, false
+                );
+                quote_fees = math::mul_div(
+                    user_shares, fps.quote_fps - user_fps.quote_fps, ONE, false
+                );
+            } else {
+                base_fees = market_state.base_fees;
+                quote_fees = market_state.quote_fees;
+            }
 
             // Update fee reserves and commit state changes.
             market_state.base_fees -= base_fees;
@@ -1180,9 +1193,6 @@ pub mod SolverComponent {
                 let quote_token = ERC20ABIDispatcher { contract_address: market_info.quote_token };
                 quote_token.transfer(user, quote_fees - quote_withdraw_fees);
             }
-
-            // Set user fps to pool fps.
-            self.user_fees_per_share.write((market_id, user), fps);
 
             // Return collected fees gross of withdraw fees.
             (base_fees, quote_fees)

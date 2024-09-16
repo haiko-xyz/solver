@@ -41,7 +41,8 @@ pub trait ISolverHooks<TContractState> {
   // # Returns
   // * `amount_in` - amount in
   // * `amount_out` - amount out
-  fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
+  // * `fees` - fees
+  fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> SwapAmounts;
 
   // Get the initial token supply to mint when first depositing to a market.
   //
@@ -63,11 +64,11 @@ pub trait ISolverHooks<TContractState> {
 
 ### `ReplicatingSolver`
 
-The Replicating Solver is a simple Solver that replicates an oracle price feed, plus a spread, to generate bid / ask quotes for a given token pair.
+The Replicating Solver is a simple Solver that replicates an oracle price feed, plus a dynamic spread, to generate bid / ask quotes for a given token pair.
 
 It allows setting a number of configurable parameters for each solver market, including:
 
-1. `min_spread`: a fixed spread added to the oracle price to generate the bid and ask quote
+1. `fee_rate`: swap fee rate applied to swaps (base 10000)
 2. `range` : the range of the virtual liquidity position (denominated in number of limits or ticks) used to construct the swap quote, based on Uniswap liquidity formulae
 3. `max_delta` : inventory delta, or the single-sided spread applied to an imbalanced portfolio, with the aim of incentivising swappers to rebalance the solver market back to a 50/50 ratio
 4. `max_skew` : the maximum allowable skew of base / quote reserves in the solver market, beyond which the solver will not allow swaps unless they improve skew
@@ -132,10 +133,12 @@ Liquidity providers can deposit to a solver market by calling `deposit()` (or `d
 // # Returns
 // * `base_deposit` - base asset deposited
 // * `quote_deposit` - quote asset deposited
+// * `base_fees` - base asset fees
+// * `quote_fees` - quote asset fees
 // * `shares` - pool shares minted in the form of liquidity
 fn deposit_initial(
     ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
-) -> (u256, u256, u256);
+) -> AmountsWithShares;
 
 // Deposit liquidity to market.
 //
@@ -147,10 +150,12 @@ fn deposit_initial(
 // # Returns
 // * `base_deposit` - base asset deposited
 // * `quote_deposit` - quote asset deposited
+// * `base_fees` - base asset fees
+// * `quote_fees` - quote asset fees
 // * `shares` - pool shares minted
 fn deposit(
     ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
-) -> (u256, u256, u256);
+) -> AmountsWithShares;
 ```
 
 Withdrawals can be made either by calling `withdraw_public()` to withdraw from a public vault, or `withdraw_private()` to withdraw an arbitrary amounts from a private vault (available to the vault owner only).
@@ -166,9 +171,11 @@ Withdrawals can be made either by calling `withdraw_public()` to withdraw from a
 // # Returns
 // * `base_amount` - base asset withdrawn
 // * `quote_amount` - quote asset withdrawn
+// * `base_fees` - base asset fees
+// * `quote_fees` - quote asset fees
 fn withdraw_public(
     ref self: TContractState, market_id: felt252, shares: u256
-) -> (u256, u256);
+) -> Amounts;
 
 // Withdraw exact token amounts from market.
 // Called for private vaults. For public vaults, use `withdraw_public`.
@@ -181,9 +188,11 @@ fn withdraw_public(
 // # Returns
 // * `base_amount` - base asset withdrawn
 // * `quote_amount` - quote asset withdrawn
+// * `base_fees` - base asset fees
+// * `quote_fees` - quote asset fees
 fn withdraw_private(
     ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
-) -> (u256, u256);
+) -> Amounts;
 ```
 
 ### Swapping and quoting
@@ -202,18 +211,20 @@ The `quote()` function is part of the `SolverHooks` interface and should be impl
 // # Returns
 // * `amount_in` - amount in
 // * `amount_out` - amount out
-fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
+// * `fees` - fees
+fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> SwapAmounts;
 
 // Swap through a market.
-  //
-  // # Arguments
-  // * `market_id` - market id
-  // * `swap_params` - swap parameters
-  //
-  // # Returns
-  // * `amount_in` - amount in
-  // * `amount_out` - amount out
-  fn swap(ref self: TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
+//
+// # Arguments
+// * `market_id` - market id
+// * `swap_params` - swap parameters
+//
+// # Returns
+// * `amount_in` - amount in
+// * `amount_out` - amount out
+// * `fees` - fees
+fn swap(ref self: TContractState, market_id: felt252, swap_params: SwapParams,) -> SwapAmounts;
 
 // Information about a swap.
 //
@@ -240,6 +251,9 @@ Solvers are deployed with a contract `owner` that has permission to set and coll
 // # Arguments
 // * `receiver` - address to receive fees
 // * `token` - token to collect fees for
+//
+// # Returns
+// * `amount` - amount of fees collected
 fn collect_withdraw_fees(
     ref self: TContractState, receiver: ContractAddress, token: ContractAddress
 ) -> u256;

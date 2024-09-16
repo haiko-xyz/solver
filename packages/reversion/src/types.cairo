@@ -20,7 +20,7 @@ pub enum Trend {
 
 // Solver market parameters.
 //
-// * `spread` - default spread between reference price and bid/ask price
+// * `fee_rate` - swap fee rate applied to swap amounts
 // * `range` - default range of spread applied on an imbalanced portfolio
 // * `base_currency_id` - Pragma oracle base currency id
 // * `quote_currency_id` - Pragma oracle quote currency id
@@ -28,7 +28,7 @@ pub enum Trend {
 // * `max_age` - maximum age of quoted oracle price
 #[derive(Drop, Copy, Serde, PartialEq)]
 pub struct MarketParams {
-    pub spread: u32,
+    pub fee_rate: u16,
     pub range: u32,
     // Oracle params
     pub base_currency_id: felt252,
@@ -60,7 +60,7 @@ pub struct TrendState {
 //
 // * `slab0` - base currency id
 // * `slab1` - quote currency id
-// * `slab2` - `spread` + `range` + `min_sources` + `max_age`
+// * `slab2` - `fee_rate` + `range` + `min_sources` + `max_age`
 #[derive(starknet::Store)]
 pub struct PackedMarketParams {
     pub slab0: felt252,

@@ -14,6 +14,7 @@ use haiko_solver_core::{
 };
 
 // Haiko imports.
+use haiko_lib::math::math;
 use haiko_lib::helpers::params::{owner, alice};
 use haiko_lib::helpers::utils::{to_e18, to_e28, approx_eq, approx_eq_pct};
 use haiko_lib::helpers::actions::token::{fund, approve};
@@ -54,11 +55,12 @@ fn test_swap_buy_exact_in() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
-    assert(amount_in == params.amount, 'Amount in');
-    assert(amount_out == to_e18(1), 'Amount out');
+    assert(swap.amount_in == params.amount, 'Amount in');
+    assert(swap.amount_out == 995000000000000000, 'Amount out');
+    assert(swap.fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
 }
 
 #[test]
@@ -87,11 +89,12 @@ fn test_swap_sell_exact_in() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
-    assert(amount_in == params.amount, 'Amount in');
-    assert(amount_out == to_e18(5), 'Amount out');
+    assert(swap.amount_in == params.amount, 'Amount in');
+    assert(swap.amount_out == 4975000000000000000, 'Amount out');
+    assert(swap.fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
 }
 
 #[test]
@@ -108,7 +111,7 @@ fn test_swap_buy_exact_out() {
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.deposit_initial(market_id, to_e18(5), to_e18(25));
+    solver.deposit_initial(market_id, to_e18(25), to_e18(25));
 
     // Swap buy.
     start_prank(CheatTarget::One(solver.contract_address), alice());
@@ -120,11 +123,12 @@ fn test_swap_buy_exact_out() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
-    assert(amount_in == to_e18(5), 'Amount in');
-    assert(amount_out == params.amount, 'Amount out');
+    assert(approx_eq(swap.amount_in, math::mul_div(to_e18(5), 10000, 9950, true), 1), 'Amount in');
+    assert(swap.amount_out == params.amount, 'Amount out');
+    assert(approx_eq(swap.fees, math::mul_div(to_e18(5), 50, 9950, true), 1), 'Fees');
 }
 
 #[test]
@@ -141,7 +145,7 @@ fn test_swap_sell_exact_out() {
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    solver.deposit_initial(market_id, to_e18(5), to_e18(25));
+    solver.deposit_initial(market_id, to_e18(50), to_e18(250));
 
     // Swap buy.
     start_prank(CheatTarget::One(solver.contract_address), alice());
@@ -153,11 +157,12 @@ fn test_swap_sell_exact_out() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
-    assert(amount_in == to_e18(1), 'Amount in');
-    assert(amount_out == params.amount, 'Amount out');
+    assert(approx_eq(swap.amount_in, math::mul_div(to_e18(1), 10000, 9950, true), 1), 'Amount in');
+    assert(swap.amount_out == params.amount, 'Amount out');
+    assert(approx_eq(swap.fees, math::mul_div(to_e18(1), 50, 9950, true), 1), 'Fees');
 }
 
 ////////////////////////////////
@@ -188,7 +193,7 @@ fn test_swap_should_emit_event() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Check events emitted.
     spy
@@ -200,8 +205,9 @@ fn test_swap_should_emit_event() {
                         SolverComponent::Swap {
                             market_id,
                             caller: alice(),
-                            amount_in,
-                            amount_out,
+                            amount_in: swap.amount_in,
+                            amount_out: swap.amount_out,
+                            fees: swap.fees,
                             is_buy: params.is_buy,
                             exact_input: params.exact_input
                         }
@@ -394,7 +400,7 @@ fn test_swap_fails_if_swap_sell_with_zero_liquidity() {
 }
 
 #[test]
-#[should_panic(expected: ('ThresholdAmount', 10000000000000000000, 0))]
+#[should_panic(expected: ('ThresholdAmount', 9950000000000000000, 0))]
 fn test_swap_fails_if_swap_buy_below_threshold_amount() {
     let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
@@ -419,7 +425,7 @@ fn test_swap_fails_if_swap_buy_below_threshold_amount() {
 }
 
 #[test]
-#[should_panic(expected: ('ThresholdAmount', 10000000000000000000, 0))]
+#[should_panic(expected: ('ThresholdAmount', 9950000000000000000, 0))]
 fn test_swap_fails_if_swap_sell_below_threshold_amount() {
     let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(

@@ -43,6 +43,7 @@ pub struct Swap {
   pub exact_input: bool,
   pub amount_in: u256,
   pub amount_out: u256,
+  pub fees: u256,
 }
 ```
 
@@ -52,6 +53,7 @@ pub struct Swap {
 - `exact_input` is a boolean indicating if the swap amount was specified as input or output
 - `amount_in` is the amount of the input token swapped in
 - `amount_out` is the amount of the output token swapped out
+- `fees` is the amount of fees (denominated in the input token) paid for the swap
 
 ### `Deposit` / `Withdraw`
 
@@ -65,6 +67,20 @@ pub struct Deposit {
     pub market_id: felt252,
     pub base_amount: u256,
     pub quote_amount: u256,
+    pub base_fees: u256,
+    pub quote_fees: u256,
+    pub shares: u256,
+}
+
+pub struct Withdraw {
+    #[key]
+    pub caller: ContractAddress,
+    #[key]
+    pub market_id: felt252,
+    pub base_amount: u256,
+    pub quote_amount: u256,
+    pub base_fees: u256,
+    pub quote_fees: u256,
     pub shares: u256,
 }
 ```
@@ -73,7 +89,11 @@ pub struct Deposit {
 - `market_id` is the unique id of the market (see `CreateMarket` above)
 - `base_amount` is the amount of base tokens deposited
 - `quote_amount` is the amount of quote tokens deposited
+- `base_fees` is the amount fees collected in base tokens
+- `quote_fees` is the amount of fees collected in quote tokens
 - `shares` is the amount of LP shares minted or burned
+
+Any deposit or withdraw action triggers a fee withdrawal, which is why these events emits collected fees.
 
 ### `Pause` / `Unpause`
 
@@ -109,7 +129,7 @@ This event is emitted when a solver market's parameters are updated by its owner
 pub(crate) struct SetMarketParams {
     #[key]
     pub market_id: felt252,
-    pub min_spread: u32,
+    pub fee_rate: u16,
     pub range: u32,
     pub max_delta: u32,
     pub max_skew: u16,
@@ -121,7 +141,7 @@ pub(crate) struct SetMarketParams {
 ```
 
 - `market_id` is the unique id of the market (see `CreateMarket` above)
-- `min_spread` is the spread, denominated in limits (1.00001 or 0.001% tick) added to the oracle price to arrive at the bid upper or ask lower price
+- `fee_rate` is the swap fee rate deducted from swap amounts paid in (expressed in base 10000)
 - `range` is the range, denominated in limits, of the virtual liquidity position that the swap is executed over (we apply the same calculations as Uniswap liquidity positions). The bid lower price is calculated by as `bid_upper - range`, and the ask upper price is calculated as `ask_lower + range`
 - `max_delta` is a dynamic shift applied to the bid and ask prices in the event of a skew in the composition of the pool (e.g. if the pool is 90% ETH and 10% DAI, the price of ETH will be shifted by `skew * max_delta` to incentivise swappers to move the pool back to 50/50 ratio)
 - `max_skew` is a hard cap applied to the skew of the pool, above which swaps are rejected

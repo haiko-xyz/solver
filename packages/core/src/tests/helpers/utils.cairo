@@ -168,6 +168,9 @@ fn _before(
     let mock_solver = IMockSolverDispatcher { contract_address: solver.contract_address };
     mock_solver.set_price(market_id, ONE);
 
+    // Set fee rate.
+    mock_solver.set_fee_rate(market_id, 50);
+
     // Fund owner with initial token balances and approve strategy and market manager as spenders.
     let base_amount = to_e18(10000000000000000000000);
     let quote_amount = to_e18(10000000000000000000000);

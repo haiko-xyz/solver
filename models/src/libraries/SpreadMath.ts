@@ -43,7 +43,6 @@ export const getVirtualPosition = (
 
 export const getVirtualPositionRange = (
   isBid: boolean,
-  minSpread: Decimal.Value,
   delta: Decimal.Value,
   range: Decimal.Value,
   oraclePrice: Decimal.Value,
@@ -58,11 +57,11 @@ export const getVirtualPositionRange = (
   let limit = priceToLimit(scaledOraclePrice, 1, !isBid);
 
   if (isBid) {
-    const upperLimit = new Decimal(limit).sub(minSpread).add(delta);
+    const upperLimit = new Decimal(limit).add(delta);
     const lowerLimit = upperLimit.sub(range);
     return { lowerLimit, upperLimit };
   } else {
-    const lowerLimit = new Decimal(limit).add(minSpread).add(delta);
+    const lowerLimit = new Decimal(limit).add(delta);
     const upperLimit = lowerLimit.add(range);
     return { lowerLimit, upperLimit };
   }

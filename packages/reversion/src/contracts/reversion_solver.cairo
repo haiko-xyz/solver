@@ -81,7 +81,7 @@ pub mod ReversionSolver {
     pub(crate) struct SetMarketParams {
         #[key]
         pub market_id: felt252,
-        pub spread: u32,
+        pub fee_rate: u16,
         pub range: u32,
         pub base_currency_id: felt252,
         pub quote_currency_id: felt252,
@@ -123,11 +123,12 @@ pub mod ReversionSolver {
         // * `swap_params` - swap parameters
         //
         // # Returns
-        // * `amount_in` - amount in
+        // * `amount_in` - amount in including fees
         // * `amount_out` - amount out
+        // * `fees` - amount of fees
         fn quote(
             self: @ContractState, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256) {
+        ) -> (u256, u256, u256) {
             // Run validity checks.
             let state: MarketState = self.solver.market_state.read(market_id);
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
@@ -139,7 +140,8 @@ pub mod ReversionSolver {
             let position = if swap_params.is_buy { ask } else { bid };
 
             // Calculate and return swap amounts.
-            swap_lib::get_swap_amounts(swap_params, position)
+            let market_params = self.market_params.read(market_id);
+            swap_lib::get_swap_amounts(swap_params, market_params.fee_rate, position)
         }
 
         // Get the initial token supply to mint when first depositing to a market.
@@ -304,7 +306,7 @@ pub mod ReversionSolver {
                     Event::SetMarketParams(
                         SetMarketParams {
                             market_id,
-                            spread: params.spread,
+                            fee_rate: params.fee_rate,
                             range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
@@ -360,7 +362,7 @@ pub mod ReversionSolver {
             let mut bid: PositionInfo = Default::default();
             let mut ask: PositionInfo = Default::default();
             let (bid_lower, bid_upper, ask_lower, ask_upper) = spread_math::get_virtual_position_range(
-                trend_state.trend, params.spread, params.range, cached_price, oracle_price
+                trend_state.trend, params.range, cached_price, oracle_price
             );
             if state.quote_reserves != 0 {
                 bid =

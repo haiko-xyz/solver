@@ -7,7 +7,7 @@ use starknet::ContractAddress;
 
 // Solver market parameters.
 //
-// * `min_spread` - default spread between reference price and bid/ask price
+// * `fee_rate` - swap fee rate (base 10000)
 // * `range` - default range of spread applied on an imbalanced portfolio
 // * `max_delta` - inventory delta, or the max additional single-sided spread applied on an imbalanced portfolio
 // * `max_skew` - max skew of the portfolio (out of 10000)
@@ -17,7 +17,7 @@ use starknet::ContractAddress;
 // * `max_age` - maximum age of quoted oracle price
 #[derive(Drop, Copy, Serde, PartialEq, Default)]
 pub struct MarketParams {
-    pub min_spread: u32,
+    pub fee_rate: u16,
     pub range: u32,
     pub max_delta: u32,
     pub max_skew: u16,
@@ -36,7 +36,7 @@ pub struct MarketParams {
 //
 // * `slab0` - base currency id
 // * `slab1` - quote currency id
-// * `slab2` - `min_spread` + `range` + `max_delta` + `max_skew` + `min_sources` + `max_age`
+// * `slab2` - `fee_rate` + `range` + `max_delta` + `max_skew` + `min_sources` + `max_age`
 #[derive(starknet::Store)]
 pub struct PackedMarketParams {
     pub slab0: felt252,

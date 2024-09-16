@@ -13,7 +13,7 @@ It is designed as a singleton contract supporting multiple solver markets, each 
 The solver market configs are as follows:
 
 1. Owner: address that controls market configurations, pausing, and ownership transfers
-2. Min spread: spread applied to the oracle price to calculate the bid and ask prices
+2. Swap fee: swap fee applied to amounts swapped into the market
 3. Range: the range of the virtual liquidity position, which affects the execution slippage of the swap
 4. Max delta: the delta (or offset) applied to bid and ask prices to correct for inventory skew
 5. Max skew: the maximum portfolio skew of the market, above which swaps will be rejected

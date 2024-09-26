@@ -93,8 +93,20 @@ pub fn get_virtual_position_range(
     let ask_upper = cached_limit + range;
 
     println!("oracle_limit: {}, cached_limit: {}", oracle_limit, cached_limit);
-    println!("new_bid_lower: {}, new_bid_upper: {}, new_ask_lower: {}, new_ask_upper: {}", new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper);
-    println!("bid_lower: {}, bid_upper: {}, ask_lower: {}, ask_upper: {}", bid_lower, bid_upper, ask_lower, ask_upper);
+    println!(
+        "new_bid_lower: {}, new_bid_upper: {}, new_ask_lower: {}, new_ask_upper: {}",
+        new_bid_lower,
+        new_bid_upper,
+        new_ask_lower,
+        new_ask_upper
+    );
+    println!(
+        "bid_lower: {}, bid_upper: {}, ask_lower: {}, ask_upper: {}",
+        bid_lower,
+        bid_upper,
+        ask_lower,
+        ask_upper
+    );
 
     // Otherwise, cap bid upper or ask lower at oracle price and apply conditions for 
     // quoting single sided liquidity.
@@ -119,10 +131,21 @@ pub fn get_virtual_position_range(
             } else {
                 // Handle special case: oracle limit + spread can exceed bid upper, so disable ask
                 if new_ask_lower >= bid_upper {
-                    println!("[case U3] new_bid_upper: {}, new_ask_lower: {}, bid_upper: {}", new_bid_upper, new_ask_lower, bid_upper);
+                    println!(
+                        "[case U3] new_bid_upper: {}, new_ask_lower: {}, bid_upper: {}",
+                        new_bid_upper,
+                        new_ask_lower,
+                        bid_upper
+                    );
                     (bid_lower, new_bid_upper, 0, 0)
                 } else {
-                    println!("[case U4] bid_lower: {}, new_bid_upper: {}, new_ask_lower: {}, bid_upper: {}", bid_lower, new_bid_upper, new_ask_lower, bid_upper);
+                    println!(
+                        "[case U4] bid_lower: {}, new_bid_upper: {}, new_ask_lower: {}, bid_upper: {}",
+                        bid_lower,
+                        new_bid_upper,
+                        new_ask_lower,
+                        bid_upper
+                    );
                     (bid_lower, new_bid_upper, new_ask_lower, bid_upper)
                 }
             }
@@ -137,16 +160,30 @@ pub fn get_virtual_position_range(
             } else {
                 // Handle special case: oracle limit - spread can be less than ask lower, disable bid
                 if new_bid_upper <= ask_lower {
-                    println!("[case D3] new_bid_upper: {}, ask_lower: {}", new_bid_upper, ask_lower);
+                    println!(
+                        "[case D3] new_bid_upper: {}, ask_lower: {}", new_bid_upper, ask_lower
+                    );
                     (0, 0, new_ask_lower, ask_upper)
                 } else {
-                    println!("[case D4] ask_lower: {}, ask_upper: {}, new_bid_upper: {}, new_ask_lower: {}", ask_lower, ask_upper, new_bid_upper, new_ask_lower);
+                    println!(
+                        "[case D4] ask_lower: {}, ask_upper: {}, new_bid_upper: {}, new_ask_lower: {}",
+                        ask_lower,
+                        ask_upper,
+                        new_bid_upper,
+                        new_ask_lower
+                    );
                     (ask_lower, new_bid_upper, new_ask_lower, ask_upper)
                 }
             }
         },
         Trend::Range => {
-            println!("[case R] new_bid_lower: {}, new_bid_upper: {}, new_ask_lower: {}, new_ask_upper: {}", new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper);
+            println!(
+                "[case R] new_bid_lower: {}, new_bid_upper: {}, new_ask_lower: {}, new_ask_upper: {}",
+                new_bid_lower,
+                new_bid_upper,
+                new_ask_lower,
+                new_ask_upper
+            );
             (new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper)
         },
     }

@@ -10,20 +10,24 @@ export const getSwapAmounts = (
   isBuy: boolean,
   exactInput: boolean,
   amount: Decimal.Value,
+  swapFeeRate: Decimal.Value,
   thresholdSqrtPrice: Decimal.Value | null,
   thresholdAmount: Decimal.Value | null,
   lowerSqrtPrice: Decimal.Value,
   upperSqrtPrice: Decimal.Value,
   liquidity: Decimal.Value,
-  feeRate: Decimal.Value,
   baseDecimals: number,
   quoteDecimals: number
-): { amountIn: Decimal.Value; amountOut: Decimal.Value } => {
+): {
+  amountIn: Decimal.Value;
+  amountOut: Decimal.Value;
+  fees: Decimal.Value;
+} => {
   if (
     new Decimal(liquidity).isZero() ||
     new Decimal(lowerSqrtPrice).eq(upperSqrtPrice)
   ) {
-    return { amountIn: "0", amountOut: "0" };
+    return { amountIn: "0", amountOut: "0", fees: "0" };
   }
 
   const scaledLowerSqrtPrice = new Decimal(lowerSqrtPrice).mul(
@@ -42,7 +46,7 @@ export const getSwapAmounts = (
     ? Decimal.max(thresholdSqrtPrice, scaledLowerSqrtPrice)
     : scaledLowerSqrtPrice;
 
-  const netAmount = exactInput ? grossToNet(amount, feeRate) : amount;
+  const netAmount = exactInput ? grossToNet(amount, swapFeeRate) : amount;
   const { amountIn: netAmountIn, amountOut: netAmountOut } = computeSwapAmount(
     startSqrtPrice,
     targetSqrtPrice,
@@ -51,8 +55,9 @@ export const getSwapAmounts = (
     exactInput
   );
 
-  const amountIn = netToGross(netAmountIn, feeRate);
+  const amountIn = netToGross(netAmountIn, swapFeeRate);
   const amountOut = netAmountOut;
+  const fees = new Decimal(amountIn).sub(netAmountIn);
 
   if (thresholdAmount) {
     if (exactInput) {
@@ -68,7 +73,7 @@ export const getSwapAmounts = (
     }
   }
 
-  return { amountIn, amountOut };
+  return { amountIn, amountOut, fees };
 };
 
 export const computeSwapAmount = (

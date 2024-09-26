@@ -54,13 +54,6 @@ pub fn get_swap_amounts(
         }
     };
 
-    // Deduct swap fee.
-    let net_amount = if swap_params.exact_input {
-        fee_math::gross_to_net(swap_params.amount, fee_rate)
-    } else {
-        swap_params.amount
-    };
-
     // Compute swap amounts.
     let (amount_in, amount_out, fees, _) = compute_swap_amounts(
         start_sqrt_price,

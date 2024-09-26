@@ -95,7 +95,6 @@ pub mod ReversionSolver {
         #[key]
         pub market_id: felt252,
         pub fee_rate: u16,
-        pub range: u32,
         pub base_currency_id: felt252,
         pub quote_currency_id: felt252,
         pub min_sources: u32,
@@ -385,7 +384,6 @@ pub mod ReversionSolver {
                         QueueMarketParams {
                             market_id,
                             fee_rate: params.fee_rate,
-                            range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
                             min_sources: params.min_sources,

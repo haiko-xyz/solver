@@ -34,7 +34,6 @@ pub impl TrendDisplay of Display<Trend> {
 // Solver market parameters.
 //
 // * `fee_rate` - swap fee rate applied to swap amounts
-// * `range` - default range of spread applied on an imbalanced portfolio
 // * `base_currency_id` - Pragma oracle base currency id
 // * `quote_currency_id` - Pragma oracle quote currency id
 // * `min_sources` - minimum number of oracle data sources aggregated
@@ -42,7 +41,6 @@ pub impl TrendDisplay of Display<Trend> {
 #[derive(Drop, Copy, Serde, PartialEq, Default)]
 pub struct MarketParams {
     pub fee_rate: u16,
-    pub range: u32,
     // Oracle params
     pub base_currency_id: felt252,
     pub quote_currency_id: felt252,

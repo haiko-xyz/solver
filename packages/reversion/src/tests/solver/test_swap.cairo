@@ -66,6 +66,7 @@ struct SwapCase {
     pub exact_input: bool,
     pub amount_in: u256,
     pub amount_out: u256,
+    pub fees: u256,
 }
 
 fn get_test_cases_1() -> Span<TestCase> {
@@ -85,25 +86,29 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 90909090909090909146
+                    amount_out: 90909090909090909146,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 90909090909090909146
+                    amount_out: 90909090909090909146,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 111111111111111111027,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 111111111111111111027,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -123,25 +128,29 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(10),
-                    amount_out: 50000084852067677296
+                    amount_out: 50000084852067677296,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(10),
-                    amount_out: 998997611702025557
+                    amount_out: 998997611702025557,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 1111107339914503129,
-                    amount_out: to_e18(10)
+                    amount_out: to_e18(10),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 101010443847319896836,
-                    amount_out: to_e18(10)
+                    amount_out: to_e18(10),
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -161,25 +170,29 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 9901054856275659172
+                    amount_out: 9901054856275659172,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 90909036314998803578
+                    amount_out: 90909036314998803578,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 1111103771282806034735,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 466588818773133962045136853193659825,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -199,25 +212,29 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 99753708432456984326
+                    amount_out: 99753708432456984326,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 99753708432456984326
+                    amount_out: 99753708432456984326,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 100247510763823131034,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 100247510763823131034,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -243,25 +260,29 @@ fn get_test_cases_2() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 98758603689263513299
+                    amount_out: 98758603689263513299,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 98758603689263513299
+                    amount_out: 98758603689263513299,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 101260111882649627307,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 101260111882649627307,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -281,25 +302,29 @@ fn get_test_cases_2() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 4999415848330513296
+                    amount_out: 4999415848330513296,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 493899555720718382442
+                    amount_out: 493899555720718382442,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 2004936970885156305832,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 20049634597552599158,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount    
                 },
             ]
                 .span(),
@@ -319,25 +344,29 @@ fn get_test_cases_2() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: 103567170945545576580,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 103567170945545576580,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 103567170945545576580,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 103567170945545576580,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -354,25 +383,32 @@ fn get_test_cases_2() -> Span<TestCase> {
             threshold_amount: Option::None(()),
             exp: array![
                 SwapCase {
-                    is_buy: true, exact_input: true, amount_in: to_e18(100), amount_out: 99000,
+                    is_buy: true,
+                    exact_input: true,
+                    amount_in: to_e18(100),
+                    amount_out: 99000,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 1035681,
                     amount_out: 999999999999999999999,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 101259191588416392788627371401827001,
                     amount_out: 100000000000000000000,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 101261,
                     amount_out: 100000000000000000000,
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -399,24 +435,28 @@ fn get_test_cases_3() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: 10356643015690,
                     amount_out: 999999999999999999999,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 100000000000000000000,
                     amount_out: 989992918767,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 1012593875957,
                     amount_out: 99999999999999999999,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 10126083617468551702944516926,
                     amount_out: 100000000000000000000,
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -437,12 +477,14 @@ fn get_test_cases_3() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: 22288543558601668321,
                     amount_out: 21038779527378539768,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 22288543558601668321,
                     amount_out: 21038779527378539768,
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -463,12 +505,14 @@ fn get_test_cases_3() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: 24701345711211794538,
                     amount_out: 23199416574442336449,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 24701345711211794538,
                     amount_out: 23199416574442336449,
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
@@ -489,42 +533,46 @@ fn get_test_cases_3() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: 99999999999999999999,
                     amount_out: 98758603689263513299,
+                    fees: 0, // TODO: fix amount
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 100000000000000000000,
                     amount_out: 98758603689263513299,
+                    fees: 0, // TODO: fix amount
                 },
             ]
                 .span(),
         },
-        // TestCase {
-        //     description: "13) Swap capped at threshold amount, exact output",
-        //     oracle_price: 1_00000000,
-        //     base_reserves: to_e18(1000),
-        //     quote_reserves: to_e18(1000),
-        //     fee_rate: 100,
-        //     range: 5000,
-        //     amount: to_e18(100),
-        //     threshold_sqrt_price: Option::None(()),
-        //     threshold_amount: Option::Some(101350000000000000000),
-        //     exp: array![
-        //         SwapCase {
-        //             is_buy: true,
-        //             exact_input: false,
-        //             amount_in: 101260111882649627307,
-        //             amount_out: 99999999999999999999,
-        //         },
-        //         SwapCase {
-        //             is_buy: false,
-        //             exact_input: false,
-        //             amount_in: 101260111882649627307,
-        //             amount_out: 100000000000000000000,
-        //         },
-        //     ]
-        //         .span(),
-        // },
+    // TestCase {
+    //     description: "13) Swap capped at threshold amount, exact output",
+    //     oracle_price: 1_00000000,
+    //     base_reserves: to_e18(1000),
+    //     quote_reserves: to_e18(1000),
+    //     fee_rate: 100,
+    //     range: 5000,
+    //     amount: to_e18(100),
+    //     threshold_sqrt_price: Option::None(()),
+    //     threshold_amount: Option::Some(101350000000000000000),
+    //     exp: array![
+    //         SwapCase {
+    //             is_buy: true,
+    //             exact_input: false,
+    //             amount_in: 101260111882649627307,
+    //             amount_out: 99999999999999999999,
+    //             fees: 0, // TODO: fix amount
+    //         },
+    //         SwapCase {
+    //             is_buy: false,
+    //             exact_input: false,
+    //             amount_in: 101260111882649627307,
+    //             amount_out: 100000000000000000000,
+    //             fees: 0, // TODO: fix amount
+    //         },
+    //     ]
+    //         .span(),
+    // },
     ];
     cases.span()
 }
@@ -609,7 +657,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
             // Obtain quotes and execute swaps.
             start_prank(CheatTarget::One(solver.contract_address), alice());
             let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
-            let (quote_in, quote_out) = solver_hooks
+            let quote = solver_hooks
                 .quote(
                     market_id,
                     SwapParams {
@@ -630,7 +678,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                     contract_address: solver.contract_address
                 };
                 rev_solver.set_model_params(market_id, Trend::Up, case.range);
-                let (quote_in_up, quote_out_up) = solver_hooks
+                let quote_up = solver_hooks
                     .quote(
                         market_id,
                         SwapParams {
@@ -643,14 +691,18 @@ fn run_swap_cases(cases: Span<TestCase>) {
                         }
                     );
                 if swap_case.is_buy {
-                    assert(quote_in_up == 0 && quote_out_up == 0, 'Quote amounts: uptrend');
+                    assert(
+                        quote_up.amount_in == 0 && quote_up.amount_out == 0 && quote_up.fees == 0,
+                        'Quote amounts: uptrend'
+                    );
                 } else {
-                    assert(quote_in_up == quote_in, 'Quote in: uptrend');
-                    assert(quote_out_up == quote_out, 'Quote out: uptrend');
+                    assert(quote_up.amount_in == quote.amount_in, 'Quote in: uptrend');
+                    assert(quote_up.amount_out == quote.amount_out, 'Quote out: uptrend');
+                    assert(quote_up.fees == 0, 'Quote fees: uptrend');
                 }
                 // Set downtrend and compare quotes.
                 rev_solver.set_model_params(market_id, Trend::Down, case.range);
-                let (quote_in_down, quote_out_down) = solver_hooks
+                let quote_down = solver_hooks
                     .quote(
                         market_id,
                         SwapParams {
@@ -663,17 +715,23 @@ fn run_swap_cases(cases: Span<TestCase>) {
                         }
                     );
                 if !swap_case.is_buy {
-                    assert(quote_in_down == 0 && quote_out_down == 0, 'Quote amounts: downtrend');
+                    assert(
+                        quote_down.amount_in == 0
+                            && quote_down.amount_out == 0
+                            && quote_down.fees == 0,
+                        'Quote amounts: downtrend'
+                    );
                 } else {
-                    assert(quote_in_down == quote_in, 'Quote in: downtrend');
-                    assert(quote_out_down == quote_out, 'Quote out: downtrend');
+                    assert(quote_down.amount_in == quote.amount_in, 'Quote in: downtrend');
+                    assert(quote_down.amount_out == quote.amount_out, 'Quote out: downtrend');
+                    assert(quote_down.fees == 0, 'Quote fees: downtrend');
                 }
                 // Reset trend.
                 rev_solver.set_model_params(market_id, Trend::Range, case.range);
             }
 
             // Execute swap.
-            let (amount_in, amount_out) = solver
+            let swap = solver
                 .swap(
                     market_id,
                     SwapParams {
@@ -687,19 +745,30 @@ fn run_swap_cases(cases: Span<TestCase>) {
                 );
 
             // Check results.
-            println!("    Amount in: {}, amount out: {}", amount_in, amount_out);
+            println!(
+                "    Amount in: {}, amount out: {}, fees: {}",
+                swap.amount_in,
+                swap.amount_out,
+                swap.fees
+            );
             assert(
-                approx_eq_pct(amount_in, swap_case.amount_in, 10)
-                    || approx_eq(amount_in, swap_case.amount_in, 1000),
+                approx_eq_pct(swap.amount_in, swap_case.amount_in, 10)
+                    || approx_eq(swap.amount_in, swap_case.amount_in, 1000),
                 'Amount in'
             );
             assert(
-                approx_eq_pct(amount_out, swap_case.amount_out, 10)
-                    || approx_eq(amount_out, swap_case.amount_out, 1000),
+                approx_eq_pct(swap.amount_out, swap_case.amount_out, 10)
+                    || approx_eq(swap.amount_out, swap_case.amount_out, 1000),
                 'Amount out'
             );
-            assert(amount_in == quote_in, 'Quote in');
-            assert(amount_out == quote_out, 'Quote out');
+            assert(
+                approx_eq_pct(swap.fees, swap_case.fees, 10)
+                    || approx_eq(swap.fees, swap_case.fees, 1000),
+                'Fees'
+            );
+            assert(swap.amount_in == quote.amount_in, 'Quote in');
+            assert(swap.amount_out == quote.amount_out, 'Quote out');
+            assert(swap.fees == quote.fees, 'Fees');
 
             j += 1;
         };
@@ -772,13 +841,14 @@ fn test_price_rises_above_last_cached_price_in_uptrend() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Run checks.
     let model_params = rev_solver.model_params(market_id);
     assert(model_params.cached_price == 1050000000, 'Cached price');
-    assert(amount_in == to_e18(5), 'Amount in');
-    assert(amount_out > to_e18(50), 'Amount out');
+    assert(swap.amount_in == to_e18(5), 'Amount in');
+    assert(swap.amount_out > to_e18(50), 'Amount out');
+    assert(swap.fees == 0, 'Fees'); // TODO: fix amount
 }
 
 #[test]
@@ -799,7 +869,7 @@ fn test_price_falls_below_last_cached_price_and_rises_again_in_uptrend() {
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
-    
+
     // Sell swap to cache price.
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let params = SwapParams {
@@ -811,7 +881,7 @@ fn test_price_falls_below_last_cached_price_and_rises_again_in_uptrend() {
         deadline: Option::None(()),
     };
     solver.swap(market_id, params);
-    
+
     // Oracle price falls above last cached price.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     oracle.set_data_with_USD_hop('ETH', 'USDC', 950000000, 8, 999, 5); // 9.5
@@ -826,24 +896,28 @@ fn test_price_falls_below_last_cached_price_and_rises_again_in_uptrend() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in_1, amount_out_1) = solver.swap(market_id, params);
-    
+    let swap_1 = solver.swap(market_id, params);
+
     // Oracle price recovers.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     oracle.set_data_with_USD_hop('ETH', 'USDC', 990000000, 8, 999, 5); // 9.9
 
     // Swap again to update cached price.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (amount_in_2, amount_out_2) = solver.swap(market_id, params);
-    println!("amount_in_2: {}, amount_out_2: {}", amount_in_2, amount_out_2);
+    let swap_2 = solver.swap(market_id, params);
+    println!("amount_in_2: {}, amount_out_2: {}", swap_2.amount_in, swap_2.amount_out);
 
     // Run checks.
     let model_params = rev_solver.model_params(market_id);
     assert(model_params.cached_price == 1000000000, 'Cached price');
-    assert(amount_in_1 == to_e18(1), 'Amount in 1');
-    assert(amount_out_1 < to_e18(95) / 100, 'Amount out 1');
-    assert(amount_in_2 == to_e18(1), 'Amount in 2');
-    assert(amount_out_2 > to_e18(95) / 1000 && amount_out_2 < to_e18(1) / 100, 'Amount out 2');
+    assert(swap_1.amount_in == to_e18(1), 'Amount in 1');
+    assert(swap_1.amount_out < to_e18(95) / 100, 'Amount out 1');
+    assert(swap_1.fees == 0, 'Fees 1'); // TODO: fix amount
+    assert(swap_2.amount_in == to_e18(1), 'Amount in 2');
+    assert(
+        swap_2.amount_out > to_e18(95) / 1000 && swap_2.amount_out < to_e18(1) / 100, 'Amount out 2'
+    );
+    assert(swap_2.fees == 0, 'Fees 2'); // TODO: fix amount
 }
 
 ////////////////////////////////
@@ -876,7 +950,7 @@ fn test_swap_emits_event() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Check events.
     spy
@@ -890,8 +964,9 @@ fn test_swap_emits_event() {
                             caller: alice(),
                             is_buy: params.is_buy,
                             exact_input: params.exact_input,
-                            amount_in,
-                            amount_out
+                            amount_in: swap.amount_in,
+                            amount_out: swap.amount_out,
+                            fees: swap.fees,
                         }
                     )
                 )

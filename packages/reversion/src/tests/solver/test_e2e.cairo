@@ -67,11 +67,10 @@ fn test_solver_e2e_private_market() {
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let (base_deposit_init, quote_deposit_init, shares_init) = solver
-        .deposit_initial(market_id, to_e18(100), to_e18(1000));
+    let dep_init = solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
 
     // Deposit.
-    let (base_deposit, quote_deposit, shares) = solver.deposit(market_id, to_e18(100), to_e18(500));
+    let dep = solver.deposit(market_id, to_e18(100), to_e18(500));
 
     // Swap.
     let params = SwapParams {
@@ -82,24 +81,30 @@ fn test_solver_e2e_private_market() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
+    let swap = solver.swap(market_id, params);
 
     // Withdraw.
-    let (base_withdraw, quote_withdraw) = solver
-        .withdraw_private(market_id, to_e18(50), to_e18(300));
+    let wd = solver.withdraw_private(market_id, to_e18(50), to_e18(300));
 
     // Run checks.
-    let (base_reserves, quote_reserves) = solver.get_balances(market_id);
+    let res = solver.get_balances(market_id);
     assert(
-        base_reserves == base_deposit + base_deposit_init - amount_out - base_withdraw,
+        res.base_amount == dep.base_amount
+            + dep_init.base_amount
+            - swap.amount_out
+            - wd.base_amount,
         'Base reserves'
     );
     assert(
-        quote_reserves == quote_deposit + quote_deposit_init + amount_in - quote_withdraw,
+        res.quote_amount == dep.quote_amount
+            + dep_init.quote_amount
+            + swap.amount_in
+            - swap.fees
+            - wd.quote_amount,
         'Quote reserves'
     );
-    assert(shares_init == 0, 'Shares init');
-    assert(shares == 0, 'Shares');
+    assert(dep_init.shares == 0, 'Shares init');
+    assert(dep.shares == 0, 'Shares');
 }
 
 #[test]
@@ -124,15 +129,16 @@ fn test_solver_e2e_public_market() {
     solver.set_withdraw_fee(market_id, 50);
 
     // Deposit initial.
-    let (base_deposit_init, quote_deposit_init, shares_init) = solver
-        .deposit_initial(market_id, to_e18(100), to_e18(1000));
+    let dep_init = solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
 
     // Deposit as LP.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_deposit, quote_deposit, shares) = solver
-        .deposit(market_id, to_e18(50), to_e18(600)); // Contains extra, should coerce.
+    let dep = solver.deposit(market_id, to_e18(50), to_e18(600)); // Contains extra, should coerce.
     println!(
-        "base_deposit: {}, quote_deposit: {}, shares: {}", base_deposit, quote_deposit, shares
+        "base_deposit: {}, quote_deposit: {}, shares: {}",
+        dep.base_amount,
+        dep.quote_amount,
+        dep.shares
     );
 
     // Swap.
@@ -145,13 +151,13 @@ fn test_solver_e2e_public_market() {
         threshold_amount: Option::None(()),
         deadline: Option::None(()),
     };
-    let (amount_in, amount_out) = solver.swap(market_id, params);
-    println!("amount_in: {}, amount_out: {}", amount_in, amount_out);
+    let swap = solver.swap(market_id, params);
+    println!("amount_in: {}, amount_out: {}", swap.amount_in, swap.amount_out);
 
     // Withdraw.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let (base_withdraw, quote_withdraw) = solver.withdraw_public(market_id, shares);
-    println!("base_withdraw: {}, quote_withdraw: {}", base_withdraw, quote_withdraw);
+    let wd = solver.withdraw_public(market_id, dep.shares);
+    println!("base_withdraw: {}, quote_withdraw: {}", wd.base_amount, wd.quote_amount);
 
     // Collect withdraw fees.
     start_prank(CheatTarget::One(solver.contract_address), owner());
@@ -162,31 +168,37 @@ fn test_solver_e2e_public_market() {
     println!("base_fees: {}, quote_fees: {}", base_fees, quote_fees);
 
     // Run checks.
-    let (base_reserves, quote_reserves) = solver.get_balances(market_id);
-    println!("base_reserves: {}, quote_reserves: {}", base_reserves, quote_reserves);
+    let res = solver.get_balances(market_id);
+    println!("base_reserves: {}, quote_reserves: {}", res.base_amount, res.quote_amount);
     let base_deposit_exp = to_e18(50);
     let quote_deposit_exp = to_e18(500);
     println!(
         "base_reserves_exp: {}, quote_reserves_exp: {}",
-        base_deposit_init + base_deposit_exp - amount_out - base_withdraw - base_fees,
-        quote_deposit_init + quote_deposit_exp + amount_in - quote_withdraw - quote_fees
+        dep_init.base_amount + base_deposit_exp - swap.amount_out - wd.base_amount - base_fees,
+        dep_init.quote_amount
+            + quote_deposit_exp
+            + swap.amount_in
+            - swap.fees
+            - wd.quote_amount
+            - quote_fees
     );
-    assert(base_deposit == base_deposit_exp, 'Base deposit');
-    assert(quote_deposit == quote_deposit_exp, 'Quote deposit');
-    assert(shares == shares_init / 2, 'Shares');
+    assert(dep.base_amount == base_deposit_exp, 'Base deposit');
+    assert(dep.quote_amount == quote_deposit_exp, 'Quote deposit');
+    assert(dep.shares == dep_init.shares / 2, 'Shares');
     assert(
-        base_reserves == base_deposit_init
+        res.base_amount == dep_init.base_amount
             + base_deposit_exp
-            - amount_out
-            - base_withdraw
+            - swap.amount_out
+            - wd.base_amount
             - base_fees,
         'Base reserves'
     );
     assert(
-        quote_reserves == quote_deposit_init
+        res.quote_amount == dep_init.quote_amount
             + quote_deposit_exp
-            + amount_in
-            - quote_withdraw
+            + swap.amount_in
+            - swap.fees
+            - wd.quote_amount
             - quote_fees,
         'Quote reserves'
     );

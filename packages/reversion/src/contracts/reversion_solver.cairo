@@ -339,12 +339,15 @@ pub mod ReversionSolver {
             assert(range != 0, 'RangeZero');
 
             // Update state.
-            // Whenever we update trend, we also need to update the cached price in case it is stale.
-            let oracle_output = self.get_unscaled_oracle_price(market_id);
             model_params.trend = trend;
             model_params.range = range;
-            model_params.cached_price = oracle_output.price;
-            model_params.cached_decimals = oracle_output.decimals;
+            // Whenever we update trend, we also need to update the cached price in case it is stale.
+            // This update is skipped if cached price is uninitialised.
+            if model_params.cached_decimals != 0 && model_params.cached_price != 0 {
+                let oracle_output = self.get_unscaled_oracle_price(market_id);
+                model_params.cached_price = oracle_output.price;
+                model_params.cached_decimals = oracle_output.decimals;
+            }
             self.model_params.write(market_id, model_params);
 
             // Emit event.

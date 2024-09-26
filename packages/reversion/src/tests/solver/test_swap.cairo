@@ -727,9 +727,177 @@ fn test_swap_cases_3() {
     run_swap_cases(get_test_cases_3());
 }
 
+#[test]
+fn test_price_rises_above_last_cached_price_in_uptrend() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, Trend::Up, model_params.range);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Sell swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(5),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, params);
+
+    // Oracle price rises above last cached price.
+    start_warp(CheatTarget::One(oracle.contract_address), 1000);
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1050000000, 8, 999, 5); // 10.5
+
+    // Swap again to update cached price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(5),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in, amount_out) = solver.swap(market_id, params);
+
+    // Run checks.
+    let model_params = rev_solver.model_params(market_id);
+    assert(model_params.cached_price == 1050000000, 'Cached price');
+    assert(amount_in == to_e18(5), 'Amount in');
+    assert(amount_out > to_e18(50), 'Amount out');
+}
+
+#[test]
+fn test_price_falls_below_last_cached_price_and_rises_again_in_uptrend() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, Trend::Up, model_params.range);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+    
+    // Sell swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(5),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, params);
+    
+    // Oracle price falls above last cached price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 950000000, 8, 999, 5); // 9.5
+
+    // Swap again to update cached price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in_1, amount_out_1) = solver.swap(market_id, params);
+    
+    // Oracle price recovers.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 990000000, 8, 999, 5); // 9.9
+
+    // Swap again to update cached price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let (amount_in_2, amount_out_2) = solver.swap(market_id, params);
+    println!("amount_in_2: {}, amount_out_2: {}", amount_in_2, amount_out_2);
+
+    // Run checks.
+    let model_params = rev_solver.model_params(market_id);
+    assert(model_params.cached_price == 1000000000, 'Cached price');
+    assert(amount_in_1 == to_e18(1), 'Amount in 1');
+    assert(amount_out_1 < to_e18(95) / 100, 'Amount out 1');
+    assert(amount_in_2 == to_e18(1), 'Amount in 2');
+    assert(amount_out_2 > to_e18(95) / 1000 && amount_out_2 < to_e18(1) / 100, 'Amount out 2');
+}
+
 ////////////////////////////////
 // TESTS - Events
 ////////////////////////////////
+
+#[test]
+fn test_swap_emits_event() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Spy on events.
+    let mut spy = spy_events(SpyOn::One(solver.contract_address));
+
+    // Swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: true,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let (amount_in, amount_out) = solver.swap(market_id, params);
+
+    // Check events.
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    solver.contract_address,
+                    SolverComponent::Event::Swap(
+                        SolverComponent::Swap {
+                            market_id,
+                            caller: alice(),
+                            is_buy: params.is_buy,
+                            exact_input: params.exact_input,
+                            amount_in,
+                            amount_out
+                        }
+                    )
+                )
+            ]
+        );
+}
 
 ////////////////////////////////
 // TESTS - Fail cases

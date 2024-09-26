@@ -3,7 +3,7 @@ use haiko_solver_replicating::types::MarketParams;
 
 pub fn default_market_params() -> MarketParams {
     MarketParams {
-        min_spread: 50,
+        fee_rate: 50,
         range: 1000,
         max_delta: 500,
         max_skew: 7500,

@@ -53,7 +53,7 @@ struct TestCase {
     // LIQUIDITY
     pub base_reserves: u256,
     pub quote_reserves: u256,
-    pub min_spread: u32,
+    pub fee_rate: u16,
     pub range: u32,
     pub max_delta: u32,
     pub max_skew: u16,
@@ -70,16 +70,17 @@ struct SwapCase {
     pub exact_input: bool,
     pub amount_in: u256,
     pub amount_out: u256,
+    pub fees: u256,
 }
 
 fn get_test_cases_1() -> Span<TestCase> {
     let cases: Array<TestCase> = array![
         TestCase {
-            description: "1) Full range liq, price 1, no spread",
+            description: "1) Full range liq, price 1, no fees",
             oracle_price: 1_00000000,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(1000),
-            min_spread: 0,
+            fee_rate: 0,
             range: 7906625,
             max_delta: 0,
             max_skew: 0,
@@ -91,35 +92,39 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 90909090909090909146
+                    amount_out: 90909090909090909146,
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 90909090909090909146
+                    amount_out: 90909090909090909146,
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 111111111111111111027,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 111111111111111111027,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0,
                 },
             ]
                 .span(),
         },
         TestCase {
-            description: "2) Full range liq, price 0.1, no spread",
+            description: "2) Full range liq, price 0.1, no fees",
             oracle_price: 0_10000000,
             base_reserves: to_e18(100),
             quote_reserves: to_e18(1000),
-            min_spread: 0,
+            fee_rate: 0,
             range: 7676365,
             max_delta: 0,
             max_skew: 0,
@@ -131,35 +136,39 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(10),
-                    amount_out: 49999834853317669644
+                    amount_out: 49999834853317669644,
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(10),
-                    amount_out: 998997611702025557
+                    amount_out: 998997611702025557,
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 1111118450987902274,
-                    amount_out: to_e18(10)
+                    amount_out: to_e18(10),
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 101010443847319896836,
-                    amount_out: to_e18(10)
+                    amount_out: to_e18(10),
+                    fees: 0,
                 },
             ]
                 .span(),
         },
         TestCase {
-            description: "3) Full range liq, price 10, no spread",
+            description: "3) Full range liq, price 10, no fees",
             oracle_price: 10_00000000,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(100),
-            min_spread: 0,
+            fee_rate: 0,
             range: 7676365,
             max_delta: 0,
             max_skew: 0,
@@ -171,35 +180,39 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 9900956827006555844
+                    amount_out: 9900956827006555844,
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 90909036314998803578
+                    amount_out: 90909036314998803578,
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 1111114882320518862795,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 466588818773133962045136853193659825,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0,
                 },
             ]
                 .span(),
         },
         TestCase {
-            description: "4) Concentrated liq, price 1, no spread",
+            description: "4) Concentrated liq, price 1, no fees",
             oracle_price: 1_00000000,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(1000),
-            min_spread: 0,
+            fee_rate: 0,
             range: 5000,
             max_delta: 0,
             max_skew: 0,
@@ -211,35 +224,39 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 99753708432456984326
+                    amount_out: 99753708432456984326,
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 99753708432456984326
+                    amount_out: 99753708432456984326,
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 100247510763823131034,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 100247510763823131034,
-                    amount_out: to_e18(100)
+                    amount_out: to_e18(100),
+                    fees: 0,
                 },
             ]
                 .span(),
         },
         TestCase {
-            description: "5) Concentrated liq, price 1, 100 spread",
+            description: "5) Concentrated liq, price 1, 1% fees",
             oracle_price: 1_00000000,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(1000),
-            min_spread: 100,
+            fee_rate: 100,
             range: 5000,
             max_delta: 0,
             max_skew: 0,
@@ -251,25 +268,29 @@ fn get_test_cases_1() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 99654250398634336911
+                    amount_out: 98758603689263513299,
+                    fees: to_e18(1),
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 99654250398634336911
+                    amount_out: 98758603689263513299,
+                    fees: to_e18(1),
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
-                    amount_in: 100347807913318736434,
-                    amount_out: to_e18(100)
+                    amount_in: 101260111882649627307,
+                    amount_out: to_e18(100),
+                    fees: 1012601118826496273,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
-                    amount_in: 100347807913318736434,
-                    amount_out: to_e18(100)
+                    amount_in: 101260111882649627307,
+                    amount_out: to_e18(100),
+                    fees: 1012601118826496273,
                 },
             ]
                 .span(),
@@ -281,11 +302,11 @@ fn get_test_cases_1() -> Span<TestCase> {
 fn get_test_cases_2() -> Span<TestCase> {
     let cases: Array<TestCase> = array![
         TestCase {
-            description: "6) Concentrated liq, price 1, 50000 spread",
+            description: "6) Concentrated liq, price 1, 50% fees",
             oracle_price: 10_00000000,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(1000),
-            min_spread: 50000,
+            fee_rate: 5000,
             range: 5000,
             max_delta: 0,
             max_skew: 0,
@@ -297,35 +318,39 @@ fn get_test_cases_2() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 6064393018672684143
+                    amount_out: 4999365860842892496,
+                    fees: 50000000000000000000,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 597579323442496790520
+                    amount_out: 493899555720718382442,
+                    fees: 50000000000000000000,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
-                    amount_in: 1652803511080475795527,
-                    amount_out: to_e18(100)
+                    amount_in: 2004957020254865157395,
+                    amount_out: to_e18(100),
+                    fees: 1002478510127432578697,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
-                    amount_in: 16528088195378414840,
-                    amount_out: to_e18(100)
+                    amount_in: 20049634597552599158,
+                    amount_out: to_e18(100),
+                    fees: 10024817298776299579,
                 },
             ]
                 .span(),
         },
         TestCase {
-            description: "7) Concentrated liq, price 1, 100 spread, 500 max delta",
+            description: "7) Concentrated liq, price 1, 1% fees, 500 max delta",
             oracle_price: 1_00000000,
             base_reserves: to_e18(500),
             quote_reserves: to_e18(1000),
-            min_spread: 100,
+            fee_rate: 100,
             range: 5000,
             max_delta: 500,
             max_skew: 0,
@@ -337,35 +362,39 @@ fn get_test_cases_2() -> Span<TestCase> {
                     is_buy: true,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 99245582637747914747
+                    amount_out: 98355771317925390873,
+                    fees: to_e18(1),
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 99819404970139967372
+                    amount_out: 98922277561466653632,
+                    fees: to_e18(1),
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
-                    amount_in: 100763924334713808578,
-                    amount_out: to_e18(100)
+                    amount_in: 101680011392792093046,
+                    amount_out: to_e18(100),
+                    fees: 1016800113927920930,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
-                    amount_in: 100181369566420499919,
-                    amount_out: to_e18(100)
+                    amount_in: 101092160374998987555,
+                    amount_out: to_e18(100),
+                    fees: 1010921603749989875,
                 },
             ]
                 .span(),
         },
         TestCase {
-            description: "8) Concentrated liq, price 0.1, 100 spread, 20000 max delta",
+            description: "8) Concentrated liq, price 0.1, 1% fees, 20000 max delta",
             oracle_price: 0_10000000,
             base_reserves: to_e18(500),
             quote_reserves: to_e18(1000),
-            min_spread: 100,
+            fee_rate: 100,
             range: 5000,
             max_delta: 20000,
             max_skew: 0,
@@ -376,26 +405,30 @@ fn get_test_cases_2() -> Span<TestCase> {
                 SwapCase {
                     is_buy: true,
                     exact_input: true,
-                    amount_in: 61495781354774112619,
-                    amount_out: 499999999999999999999
+                    amount_in: 62054865270942237718,
+                    amount_out: 499999999999999999999,
+                    fees: 620548652709422377,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
-                    amount_out: 11967866534829175688
+                    amount_out: 11860073497841049336,
+                    fees: to_e18(1),
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
-                    amount_in: 12055018117706607774,
-                    amount_out: to_e18(100)
+                    amount_in: 12164615338690643305,
+                    amount_out: to_e18(100),
+                    fees: 121646153386906433,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
-                    amount_in: 837391432418576103404,
-                    amount_out: to_e18(100)
+                    amount_in: 845004508813220005468,
+                    amount_out: to_e18(100),
+                    fees: 8450045088132200054,
                 },
             ]
                 .span(),
@@ -405,7 +438,7 @@ fn get_test_cases_2() -> Span<TestCase> {
             oracle_price: 1_00000000,
             base_reserves: to_e18(100),
             quote_reserves: to_e18(100),
-            min_spread: 100,
+            fee_rate: 100,
             range: 5000,
             max_delta: 0,
             max_skew: 0,
@@ -416,14 +449,16 @@ fn get_test_cases_2() -> Span<TestCase> {
                 SwapCase {
                     is_buy: true,
                     exact_input: true,
-                    amount_in: 102634081505001697489,
-                    amount_out: 99999999999999999999
+                    amount_in: 103567170945545576580,
+                    amount_out: 99999999999999999999,
+                    fees: 1035671709455455765,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
-                    amount_in: 102634081505001697489,
-                    amount_out: 99999999999999999999
+                    amount_in: 103567170945545576580,
+                    amount_out: 99999999999999999999,
+                    fees: 1035671709455455765,
                 },
             ]
                 .span(),
@@ -433,7 +468,7 @@ fn get_test_cases_2() -> Span<TestCase> {
             oracle_price: 1_000_000_000_000_000_00000000,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(1000),
-            min_spread: 100,
+            fee_rate: 100,
             range: 5000,
             max_delta: 0,
             max_skew: 0,
@@ -442,25 +477,32 @@ fn get_test_cases_2() -> Span<TestCase> {
             threshold_amount: Option::None(()),
             exp: array![
                 SwapCase {
-                    is_buy: true, exact_input: true, amount_in: to_e18(100), amount_out: 99899,
+                    is_buy: true,
+                    exact_input: true,
+                    amount_in: to_e18(100),
+                    amount_out: 98999,
+                    fees: to_e18(1)
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
-                    amount_in: 1026350,
+                    amount_in: 1035681,
                     amount_out: 999999999999999999999,
+                    fees: 10356,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
-                    amount_in: 100347899379444510663740995366407145,
-                    amount_out: 99999999999999999999,
+                    amount_in: 101260204180332276952555257675541019,
+                    amount_out: 100000000000000000000,
+                    fees: 1012602041803322769525552576755410,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
-                    amount_in: 100348,
+                    amount_in: 101261,
                     amount_out: 100000000000000000000,
+                    fees: 1012,
                 },
             ]
                 .span(),
@@ -476,7 +518,7 @@ fn get_test_cases_3() -> Span<TestCase> {
             oracle_price: 1,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(1000),
-            min_spread: 100,
+            fee_rate: 100,
             range: 5000,
             max_delta: 0,
             max_skew: 0,
@@ -487,26 +529,30 @@ fn get_test_cases_3() -> Span<TestCase> {
                 SwapCase {
                     is_buy: true,
                     exact_input: true,
-                    amount_in: 10263437372397,
+                    amount_in: 10356746582120,
                     amount_out: 999999999999999999999,
+                    fees: 103567465821,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
-                    amount_in: 99999999999999999999,
-                    amount_out: 998993359216,
+                    amount_in: 100000000000000000000,
+                    amount_out: 989992918767,
+                    fees: 1000000000000000000,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
-                    amount_in: 1003480936228,
-                    amount_out: 100000000000000000000,
+                    amount_in: 1012604001896,
+                    amount_out: 99999999999999999999,
+                    fees: 10126040018,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
-                    amount_in: 10034852567983843807643429092,
+                    amount_in: 10126083617468551702944516926,
                     amount_out: 100000000000000000000,
+                    fees: 101260836174685517029445169,
                 },
             ]
                 .span(),
@@ -516,7 +562,7 @@ fn get_test_cases_3() -> Span<TestCase> {
             oracle_price: 1_00000000,
             base_reserves: to_e18(100),
             quote_reserves: to_e18(100),
-            min_spread: 100,
+            fee_rate: 100,
             range: 50000,
             max_delta: 0,
             max_skew: 0,
@@ -527,14 +573,16 @@ fn get_test_cases_3() -> Span<TestCase> {
                 SwapCase {
                     is_buy: true,
                     exact_input: true,
-                    amount_in: 21850483612303829529,
-                    amount_out: 20823204527740984512,
+                    amount_in: 22288543558601668321,
+                    amount_out: 21038779527378539768,
+                    fees: 222885435586016683,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
-                    amount_in: 21850483612303829529,
-                    amount_out: 20823204527740984512,
+                    amount_in: 22288543558601668321,
+                    amount_out: 21038779527378539768,
+                    fees: 222885435586016683,
                 },
             ]
                 .span(),
@@ -544,7 +592,7 @@ fn get_test_cases_3() -> Span<TestCase> {
             oracle_price: 1_00000000,
             base_reserves: to_e18(100),
             quote_reserves: to_e18(100),
-            min_spread: 100,
+            fee_rate: 100,
             range: 50000,
             max_delta: 0,
             max_skew: 0,
@@ -555,14 +603,16 @@ fn get_test_cases_3() -> Span<TestCase> {
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
-                    amount_in: 24240352373112801069,
-                    amount_out: 22984922158048704819,
+                    amount_in: 24701345711211794538,
+                    amount_out: 23199416574442336449,
+                    fees: 247013457112117945,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
-                    amount_in: 24240352373112801069,
-                    amount_out: 22984922158048704819,
+                    amount_in: 24701345711211794538,
+                    amount_out: 23199416574442336449,
+                    fees: 247013457112117945,
                 },
             ]
                 .span(),
@@ -572,25 +622,27 @@ fn get_test_cases_3() -> Span<TestCase> {
             oracle_price: 1_00000000,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(1000),
-            min_spread: 100,
+            fee_rate: 100,
             range: 5000,
             max_delta: 0,
             max_skew: 0,
             amount: to_e18(100),
             threshold_sqrt_price: Option::None(()),
-            threshold_amount: Option::Some(99650000000000000000),
+            threshold_amount: Option::Some(98750000000000000000),
             exp: array![
                 SwapCase {
                     is_buy: true,
                     exact_input: true,
                     amount_in: 99999999999999999999,
-                    amount_out: 99654250398634336911,
+                    amount_out: 98758603689263513299,
+                    fees: 999999999999999999,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 100000000000000000000,
-                    amount_out: 99654250398634336911,
+                    amount_out: 98758603689263513299,
+                    fees: 1000000000000000000,
                 },
             ]
                 .span(),
@@ -600,25 +652,27 @@ fn get_test_cases_3() -> Span<TestCase> {
             oracle_price: 1_00000000,
             base_reserves: to_e18(1000),
             quote_reserves: to_e18(1000),
-            min_spread: 100,
+            fee_rate: 100,
             range: 5000,
             max_delta: 0,
             max_skew: 0,
             amount: to_e18(100),
             threshold_sqrt_price: Option::None(()),
-            threshold_amount: Option::Some(100350000000000000000),
+            threshold_amount: Option::Some(101500000000000000000),
             exp: array![
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
-                    amount_in: 100347807913318736434,
+                    amount_in: 101260111882649627307,
                     amount_out: 99999999999999999999,
+                    fees: 1012601118826496273,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
-                    amount_in: 100347807913318736434,
+                    amount_in: 101260111882649627307,
                     amount_out: 100000000000000000000,
+                    fees: 1012601118826496273,
                 },
             ]
                 .span(),
@@ -679,7 +733,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                 contract_address: solver.contract_address
             };
             let mut market_params = repl_solver.market_params(market_id);
-            market_params.min_spread = case.min_spread;
+            market_params.fee_rate = case.fee_rate;
             market_params.range = case.range;
             market_params.max_delta = case.max_delta;
             market_params.max_skew = case.max_skew;
@@ -705,7 +759,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
             // Obtain quotes and execute swaps.
             start_prank(CheatTarget::One(solver.contract_address), alice());
             let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
-            let (quote_in, quote_out) = solver_hooks
+            let quote = solver_hooks
                 .quote(
                     market_id,
                     SwapParams {
@@ -719,7 +773,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                 );
 
             // Execute swap.
-            let (amount_in, amount_out) = solver
+            let swap = solver
                 .swap(
                     market_id,
                     SwapParams {
@@ -733,20 +787,57 @@ fn run_swap_cases(cases: Span<TestCase>) {
                 );
 
             // Check results.
-            println!("amount in: {}, amount out: {}", amount_in, amount_out);
-            assert(
-                approx_eq_pct(amount_in, swap_case.amount_in, 10)
-                    || approx_eq(amount_in, swap_case.amount_in, 1000),
-                'Amount in'
+            println!(
+                "amount in: {}, amount out: {}, fees: {}",
+                swap.amount_in,
+                swap.amount_out,
+                swap.fees
             );
-            assert(
-                approx_eq_pct(amount_out, swap_case.amount_out, 10)
-                    || approx_eq(amount_out, swap_case.amount_out, 1000),
-                'Amount out'
-            );
-            assert(amount_in == quote_in, 'Quote in');
-            assert(amount_out == quote_out, 'Quote out');
-
+            if !(approx_eq_pct(swap.amount_in, swap_case.amount_in, 10)
+                || approx_eq(swap.amount_in, swap_case.amount_in, 1000)) {
+                panic(
+                    array![
+                        'Amount in',
+                        i.into() + 1,
+                        j.into() + 1,
+                        swap.amount_in.low.into(),
+                        swap.amount_in.high.into(),
+                        swap_case.amount_in.low.into(),
+                        swap_case.amount_in.high.into()
+                    ]
+                );
+            }
+            if !(approx_eq_pct(swap.amount_out, swap_case.amount_out, 10)
+                || approx_eq(swap.amount_out, swap_case.amount_out, 1000)) {
+                panic(
+                    array![
+                        'Amount out',
+                        i.into() + 1,
+                        j.into() + 1,
+                        swap.amount_out.low.into(),
+                        swap.amount_out.high.into(),
+                        swap_case.amount_out.low.into(),
+                        swap_case.amount_out.high.into()
+                    ]
+                );
+            }
+            if !(approx_eq_pct(swap.fees, swap_case.fees, 10)
+                || approx_eq(swap.fees, swap_case.fees, 1000)) {
+                panic(
+                    array![
+                        'Fees',
+                        i.into() + 1,
+                        j.into() + 1,
+                        swap.fees.low.into(),
+                        swap.fees.high.into(),
+                        swap_case.fees.low.into(),
+                        swap_case.fees.high.into()
+                    ]
+                );
+            }
+            assert(swap.amount_in == quote.amount_in, 'Quote in');
+            assert(swap.amount_out == quote.amount_out, 'Quote out');
+            assert(swap.fees == quote.fees, 'Quote fees');
             j += 1;
         };
 
@@ -850,7 +941,7 @@ fn test_swap_fails_if_invalid_oracle_price() {
 }
 
 #[test]
-#[should_panic(expected: ('ThresholdAmount', 1004501675692245436, 0))]
+#[should_panic(expected: ('ThresholdAmount', 999979051909438890, 0))]
 fn test_swap_fails_if_swap_buy_below_threshold_amount() {
     let (
         _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
@@ -885,7 +976,7 @@ fn test_swap_fails_if_swap_buy_below_threshold_amount() {
 }
 
 #[test]
-#[should_panic(expected: ('ThresholdAmount', 99492002490779814763, 0))]
+#[should_panic(expected: ('ThresholdAmount', 99044273158283891908, 0))]
 fn test_swap_fails_if_swap_sell_below_threshold_amount() {
     let (
         _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt

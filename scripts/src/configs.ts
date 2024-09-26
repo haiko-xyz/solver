@@ -16,7 +16,7 @@ export type RunnerMarketParams = {
   quote_token: string;
   owner: string;
   is_public: boolean;
-  min_spread: number;
+  fee_rate: number;
   range: number;
   max_delta: number;
   max_skew: number;
@@ -50,7 +50,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
     quote_token: ENV.USDC_ADDRESS,
     owner: ENV.OWNER_ADDRESS,
     is_public: true,
-    min_spread: 25,
+    fee_rate: 25,
     range: 5000,
     max_delta: 500,
     max_skew: 5000,
@@ -81,7 +81,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
     quote_token: ENV.USDC_ADDRESS,
     owner: ENV.OWNER_ADDRESS,
     is_public: true,
-    min_spread: 25,
+    fee_rate: 25,
     range: 5000,
     max_delta: 500,
     max_skew: 5000,
@@ -112,7 +112,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
     quote_token: ENV.ETH_ADDRESS,
     owner: ENV.OWNER_ADDRESS,
     is_public: true,
-    min_spread: 25,
+    fee_rate: 25,
     range: 5000,
     max_delta: 500,
     max_skew: 5000,
@@ -143,7 +143,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
     quote_token: ENV.USDT_ADDRESS,
     owner: ENV.OWNER_ADDRESS,
     is_public: true,
-    min_spread: 5,
+    fee_rate: 5,
     range: 100,
     max_delta: 0,
     max_skew: 5000,
@@ -174,7 +174,7 @@ export const MARKET_PARAMS: RunnerMarketParams[] = [
     quote_token: ENV.USDC_ADDRESS,
     owner: ENV.OWNER_ADDRESS,
     is_public: true,
-    min_spread: 25,
+    fee_rate: 25,
     range: 5000,
     max_delta: 500,
     max_skew: 5000,

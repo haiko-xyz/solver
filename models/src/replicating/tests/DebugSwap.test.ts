@@ -7,21 +7,19 @@ import { getSwapAmounts } from "../libraries/SwapLib";
 
 const isBuy = false;
 const exactInput = false;
-const amount = "10000000000";
-const minSpread = 25;
-const range = 5000;
-const maxDelta = 500;
-const oraclePrice = "0.37067545";
-const baseReserves = "268762.195878807302077639";
-const quoteReserves = "96834.519855";
+const amount = "1";
+const swapFeeRate = 0.003;
+const range = 11400;
+const maxDelta = 0;
+const oraclePrice = "0.00016718";
+const baseReserves = "10000";
+const quoteReserves = "16.707738619115042000";
 const baseDecimals = 18;
-const quoteDecimals = 6;
+const quoteDecimals = 18;
 
 const delta = getDelta(maxDelta, baseReserves, quoteReserves, oraclePrice);
-console.log({ delta });
 const { lowerLimit, upperLimit } = getVirtualPositionRange(
   !isBuy,
-  minSpread,
   delta,
   range,
   oraclePrice,
@@ -36,16 +34,17 @@ const { lowerSqrtPrice, upperSqrtPrice, liquidity } = getVirtualPosition(
   isBuy ? baseReserves : quoteReserves
 );
 console.log({ lowerSqrtPrice, upperSqrtPrice, liquidity });
-const { amountIn, amountOut } = getSwapAmounts(
+const { amountIn, amountOut } = getSwapAmounts({
   isBuy,
   exactInput,
   amount,
-  null,
-  null,
+  swapFeeRate,
+  thresholdSqrtPrice: null,
+  thresholdAmount: null,
   lowerSqrtPrice,
   upperSqrtPrice,
   liquidity,
   baseDecimals,
-  quoteDecimals
-);
+  quoteDecimals,
+});
 console.log({ amountIn, amountOut });

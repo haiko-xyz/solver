@@ -12,6 +12,19 @@ pub trait IMockSolver<TContractState> {
     // * `market_id` - market id
     // * `params` - market params
     fn set_price(ref self: TContractState, market_id: felt252, price: u256);
+
+    // Get fee rate for solver market.
+    //
+    // # Returns
+    // * `fee_rate` - fee rate
+    fn fee_rate(self: @TContractState, market_id: felt252) -> u16;
+
+    // Set fee rate for solver market.
+    //
+    // # Params
+    // * `market_id` - market id
+    // * `fee_rate` - fee rate
+    fn set_fee_rate(ref self: TContractState, market_id: felt252, fee_rate: u16);
 }
 
 #[starknet::contract]
@@ -21,16 +34,17 @@ pub mod MockSolver {
     use starknet::contract_address::contract_address_const;
     use starknet::get_block_timestamp;
     use starknet::class_hash::ClassHash;
+    use core::cmp::min;
 
     // Local imports.
     use super::IMockSolver;
     use haiko_solver_core::contracts::solver::SolverComponent;
     use haiko_solver_core::libraries::math::fast_sqrt;
     use haiko_solver_core::interfaces::ISolver::ISolverHooks;
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
+    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, SwapAmounts};
 
     // Haiko imports.
-    use haiko_lib::math::math;
+    use haiko_lib::math::{math, fee_math};
     use haiko_lib::constants::ONE;
 
     // External imports.
@@ -58,6 +72,8 @@ pub mod MockSolver {
         solver: SolverComponent::Storage,
         // Price (base 1e28, indexed by market id)
         price: LegacyMap::<felt252, u256>,
+        // Fee rate
+        fee_rate: LegacyMap::<felt252, u16>,
     }
 
     ////////////////////////////////
@@ -93,11 +109,12 @@ pub mod MockSolver {
         // * `swap_params` - swap parameters
         //
         // # Returns
-        // * `amount_in` - amount in
+        // * `amount_in` - amount in including fees
         // * `amount_out` - amount out
+        // * `fees` - fees
         fn quote(
             self: @ContractState, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256) {
+        ) -> SwapAmounts {
             // Run validity checks.
             let state: MarketState = self.solver.market_state.read(market_id);
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
@@ -115,31 +132,41 @@ pub mod MockSolver {
             let price = math::mul_div(unscaled_price, quote_scale, base_scale, false);
 
             // Calculate and return swap amounts.
-            let amount_calc = if swap_params.is_buy == swap_params.exact_input {
-                math::mul_div(swap_params.amount, ONE, price, false)
-            } else {
-                math::mul_div(swap_params.amount, price, ONE, false)
-            };
+            let fee_rate = self.fee_rate.read(market_id);
             let (amount_in, amount_out) = if swap_params.exact_input {
-                (swap_params.amount, amount_calc)
+                let fees = fee_math::calc_fee(swap_params.amount, fee_rate);
+                let amount_in_excl_fees = swap_params.amount - fees;
+                let amount_out = if swap_params.is_buy {
+                    math::mul_div(amount_in_excl_fees, ONE, price, false)
+                } else {
+                    math::mul_div(amount_in_excl_fees, price, ONE, false)
+                };
+                (swap_params.amount, amount_out)
             } else {
-                (amount_calc, swap_params.amount)
+                let amount_in_excl_fees = if swap_params.is_buy {
+                    math::mul_div(swap_params.amount, price, ONE, false)
+                } else {
+                    math::mul_div(swap_params.amount, ONE, price, false)
+                };
+                let amount_in = fee_math::net_to_gross(amount_in_excl_fees, fee_rate);
+                (amount_in, swap_params.amount)
             };
 
-            // Cap at available amount.
-            let (max_amount_in, max_amount_out) = if swap_params.is_buy {
-                let amount_in = math::mul_div(state.base_reserves, price, ONE, false);
-                (amount_in, state.base_reserves)
+            // Cap amount out by reserves.
+            let amount_out_capped = if swap_params.is_buy {
+                min(amount_out, state.base_reserves)
             } else {
-                let amount_out = math::mul_div(state.quote_reserves, ONE, price, false);
-                (state.quote_reserves, amount_out)
+                min(amount_out, state.quote_reserves)
             };
-
-            // Return capped amounts.
-            if amount_in > max_amount_in || amount_out > max_amount_out {
-                (max_amount_in, max_amount_out)
+            let amount_in_capped = if amount_out_capped < amount_out {
+                math::mul_div(amount_in, amount_out_capped, amount_out, true)
             } else {
-                (amount_in, amount_out)
+                amount_in
+            };
+            let fees_capped = fee_math::calc_fee(amount_in_capped, fee_rate);
+
+            SwapAmounts {
+                amount_in: amount_in_capped, amount_out: amount_out_capped, fees: fees_capped,
             }
         }
 
@@ -199,6 +226,26 @@ pub mod MockSolver {
         // * `price` - oracle price
         fn set_price(ref self: ContractState, market_id: felt252, price: u256) {
             self.price.write(market_id, price);
+        }
+
+        // Get fee rate
+        //
+        // # Arguments
+        // * `market_id` - market id
+        //
+        // # Returns
+        // * `fee_rate` - fee rate
+        fn fee_rate(self: @ContractState, market_id: felt252) -> u16 {
+            self.fee_rate.read(market_id)
+        }
+
+        // Set fee rate
+        //
+        // # Arguments
+        // * `market_id` - market id
+        // * `fee_rate` - fee rate
+        fn set_fee_rate(ref self: ContractState, market_id: felt252, fee_rate: u16) {
+            self.fee_rate.write(market_id, fee_rate);
         }
     }
 }

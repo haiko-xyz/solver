@@ -3,7 +3,10 @@ use starknet::ContractAddress;
 use starknet::class_hash::ClassHash;
 
 // Local imports.
-use haiko_solver_core::types::{MarketState, MarketInfo, PositionInfo, SwapParams};
+use haiko_solver_core::types::{
+    MarketState, MarketInfo, PositionInfo, SwapParams, Amounts, AmountsWithShares, SwapAmounts,
+    FeesPerShare
+};
 
 #[starknet::interface]
 pub trait ISolver<TContractState> {
@@ -37,6 +40,14 @@ pub trait ISolver<TContractState> {
     // Queued contract owner, used for ownership transfers
     fn queued_owner(self: @TContractState) -> ContractAddress;
 
+    // Fees per share for a given market
+    fn fees_per_share(self: @TContractState, market_id: felt252) -> FeesPerShare;
+
+    // Fees per share for a given market and user
+    fn user_fees_per_share(
+        self: @TContractState, market_id: felt252, user: ContractAddress
+    ) -> FeesPerShare;
+
     // Withdraw fee rate for a given market
     fn withdraw_fee_rate(self: @TContractState, market_id: felt252) -> u16;
 
@@ -51,31 +62,25 @@ pub trait ISolver<TContractState> {
     // # Returns
     // * `base_amount` - total base tokens owned
     // * `quote_amount` - total quote tokens owned
-    fn get_balances(self: @TContractState, market_id: felt252) -> (u256, u256);
+    // * `base_fees` - total base fees owned
+    // * `quote_fees` - total quote fees owned
+    fn get_balances(self: @TContractState, market_id: felt252) -> Amounts;
 
-    // Get token amounts held in reserve for a list of markets.
+    // Get user token balances held in solver market.
     // 
     // # Arguments
-    // * `market_ids` - list of market ids
-    //
-    // # Returns
-    // * `balances` - list of base and quote token amounts
-    fn get_balances_array(self: @TContractState, market_ids: Span<felt252>) -> Span<(u256, u256)>;
-
-    // Get token amounts and shares held in solver market for a list of users.
-    // 
-    // # Arguments
-    // * `users` - list of user address
-    // * `market_ids` - list of market ids
+    // * `user` - user address
+    // * `market_id` - market id
     //
     // # Returns
     // * `base_amount` - base tokens owned by user
     // * `quote_amount` - quote tokens owned by user
-    // * `user_shares` - user shares
-    // * `total_shares` - total shares in market
-    fn get_user_balances_array(
-        self: @TContractState, users: Span<ContractAddress>, market_ids: Span<felt252>
-    ) -> Span<(u256, u256, u256, u256)>;
+    // * `base_fees` - base fees owned by user
+    // * `quote_fees` - quote fees owned by user
+    fn get_user_balances(
+        self: @TContractState, user: ContractAddress, market_id: felt252
+    ) -> Amounts;
+
 
     // Create market for solver.
     // At the moment, only callable by contract owner to prevent unwanted claiming of markets. 
@@ -98,9 +103,10 @@ pub trait ISolver<TContractState> {
     // * `swap_params` - swap parameters
     //
     // # Returns
-    // * `amount_in` - amount in
+    // * `amount_in` - amount in including fees
     // * `amount_out` - amount out
-    fn swap(ref self: TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
+    // * `fees` - fees
+    fn swap(ref self: TContractState, market_id: felt252, swap_params: SwapParams,) -> SwapAmounts;
 
     // Deposit initial liquidity to market.
     // Should be used whenever total deposits in a market are zero. This can happen both
@@ -114,10 +120,12 @@ pub trait ISolver<TContractState> {
     // # Returns
     // * `base_deposit` - base asset deposited
     // * `quote_deposit` - quote asset deposited
+    // * `base_fees` - base fees deposited
+    // * `quote_fees` - quote fees deposited
     // * `shares` - pool shares minted in the form of liquidity
     fn deposit_initial(
         ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
-    ) -> (u256, u256, u256);
+    ) -> AmountsWithShares;
 
     // Same as `deposit_initial`, but with a referrer.
     //
@@ -130,6 +138,8 @@ pub trait ISolver<TContractState> {
     // # Returns
     // * `base_deposit` - base asset deposited
     // * `quote_deposit` - quote asset deposited
+    // * `base_fees` - base fees deposited
+    // * `quote_fees` - quote fees deposited
     // * `shares` - pool shares minted in the form of liquidity
     fn deposit_initial_with_referrer(
         ref self: TContractState,
@@ -137,7 +147,7 @@ pub trait ISolver<TContractState> {
         base_amount: u256,
         quote_amount: u256,
         referrer: ContractAddress
-    ) -> (u256, u256, u256);
+    ) -> AmountsWithShares;
 
     // Deposit liquidity to market.
     // For public markets, this will take the lower of requested and available balances, 
@@ -152,10 +162,12 @@ pub trait ISolver<TContractState> {
     // # Returns
     // * `base_deposit` - base asset deposited
     // * `quote_deposit` - quote asset deposited
+    // * `base_fees` - base fees deposited
+    // * `quote_fees` - quote fees deposited
     // * `shares` - pool shares minted
     fn deposit(
         ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
-    ) -> (u256, u256, u256);
+    ) -> AmountsWithShares;
 
     // Same as `deposit`, but with a referrer.
     //
@@ -168,6 +180,8 @@ pub trait ISolver<TContractState> {
     // # Returns
     // * `base_amount` - base asset deposited
     // * `quote_amount` - quote asset deposited
+    // * `base_fees` - base fees deposited
+    // * `quote_fees` - quote fees deposited
     // * `shares` - pool shares minted
     fn deposit_with_referrer(
         ref self: TContractState,
@@ -175,7 +189,7 @@ pub trait ISolver<TContractState> {
         base_amount: u256,
         quote_amount: u256,
         referrer: ContractAddress
-    ) -> (u256, u256, u256);
+    ) -> AmountsWithShares;
 
     // Burn pool shares and withdraw funds from market.
     // Called for public vaults. For private vaults, use `withdraw_private`.
@@ -185,9 +199,11 @@ pub trait ISolver<TContractState> {
     // * `shares` - pool shares to burn
     //
     // # Returns
-    // * `base_amount` - base asset withdrawn
-    // * `quote_amount` - quote asset withdrawn
-    fn withdraw_public(ref self: TContractState, market_id: felt252, shares: u256) -> (u256, u256);
+    // * `base_amount` - base asset withdrawn, including fees
+    // * `quote_amount` - quote asset withdrawn, including fees
+    // * `base_fees` - base fees withdrawn
+    // * `quote_fees` - quote fees withdrawn
+    fn withdraw_public(ref self: TContractState, market_id: felt252, shares: u256) -> Amounts;
 
     // Withdraw exact token amounts from market.
     // Called for private vaults. For public vaults, use `withdraw_public`.
@@ -198,11 +214,13 @@ pub trait ISolver<TContractState> {
     // * `quote_amount` - quote amount requested
     //
     // # Returns
-    // * `base_amount` - base asset withdrawn
-    // * `quote_amount` - quote asset withdrawn
+    // * `base_amount` - base asset withdrawn, including fees
+    // * `quote_amount` - quote asset withdrawn, including fees
+    // * `base_fees` - base fees withdrawn
+    // * `quote_fees` - quote fees withdrawn
     fn withdraw_private(
         ref self: TContractState, market_id: felt252, base_amount: u256, quote_amount: u256
-    ) -> (u256, u256);
+    ) -> Amounts;
 
     // Collect withdrawal fees.
     // Only callable by contract owner.
@@ -271,9 +289,10 @@ pub trait ISolverHooks<TContractState> {
     // * `swap_params` - swap parameters
     //
     // # Returns
-    // * `amount_in` - amount in
+    // * `amount_in` - amount in including fees
     // * `amount_out` - amount out
-    fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> (u256, u256);
+    // * `fees` - fees
+    fn quote(self: @TContractState, market_id: felt252, swap_params: SwapParams,) -> SwapAmounts;
 
     // Get the initial token supply to mint when first depositing to a market.
     //

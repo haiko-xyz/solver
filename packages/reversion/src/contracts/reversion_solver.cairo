@@ -19,7 +19,7 @@ pub mod ReversionSolver {
             IOracleABIDispatcherTrait
         },
     };
-    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams};
+    use haiko_solver_core::types::{PositionInfo, MarketState, MarketInfo, SwapParams, SwapAmounts};
     use haiko_solver_reversion::types::{MarketParams, ModelParams, Trend};
 
     // Haiko imports.
@@ -95,6 +95,7 @@ pub mod ReversionSolver {
         #[key]
         pub market_id: felt252,
         pub fee_rate: u16,
+        pub range: u32,
         pub base_currency_id: felt252,
         pub quote_currency_id: felt252,
         pub min_sources: u32,
@@ -156,11 +157,12 @@ pub mod ReversionSolver {
         // * `swap_params` - swap parameters
         //
         // # Returns
-        // * `amount_in` - amount in
+        // * `amount_in` - amount in including fees
         // * `amount_out` - amount out
+        // * `fees` - amount of fees
         fn quote(
             self: @ContractState, market_id: felt252, swap_params: SwapParams,
-        ) -> (u256, u256) {
+        ) -> SwapAmounts {
             // Run validity checks.
             let state: MarketState = self.solver.market_state.read(market_id);
             let market_info: MarketInfo = self.solver.market_info.read(market_id);
@@ -176,8 +178,12 @@ pub mod ReversionSolver {
             };
 
             // Calculate and return swap amounts.
-            let market_params: MarketParams = self.market_params.read(market_id);
-            swap_lib::get_swap_amounts(swap_params, position, market_params.fee_rate)
+            let market_params = self.market_params.read(market_id);
+            let (amount_in, amount_out, fees) = swap_lib::get_swap_amounts(
+                swap_params, market_params.fee_rate, position
+            );
+
+            SwapAmounts { amount_in, amount_out, fees }
         }
 
         // Get the initial token supply to mint when first depositing to a market.
@@ -379,6 +385,7 @@ pub mod ReversionSolver {
                         QueueMarketParams {
                             market_id,
                             fee_rate: params.fee_rate,
+                            range: params.range,
                             base_currency_id: params.base_currency_id,
                             quote_currency_id: params.quote_currency_id,
                             min_sources: params.min_sources,

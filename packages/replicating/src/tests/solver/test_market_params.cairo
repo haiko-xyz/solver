@@ -49,7 +49,7 @@ fn test_queue_and_set_market_params_no_delay() {
     // Set market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = MarketParams {
-        min_spread: 987,
+        fee_rate: 987,
         range: 12345,
         max_delta: 676,
         max_skew: 9989,
@@ -65,7 +65,7 @@ fn test_queue_and_set_market_params_no_delay() {
     let market_params = repl_solver.market_params(market_id);
 
     // Run checks.
-    assert(market_params.min_spread == params.min_spread, 'Min spread');
+    assert(market_params.fee_rate == params.fee_rate, 'Fee rate');
     assert(market_params.range == params.range, 'Range');
     assert(market_params.max_delta == params.max_delta, 'Max delta');
     assert(market_params.max_skew == params.max_skew, 'Max skew');
@@ -93,7 +93,7 @@ fn test_queue_and_set_market_params_with_delay() {
     // Queue market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
     let params = MarketParams {
-        min_spread: 987,
+        fee_rate: 987,
         range: 12345,
         max_delta: 676,
         max_skew: 9989,
@@ -113,7 +113,7 @@ fn test_queue_and_set_market_params_with_delay() {
     let queued_params = repl_solver.queued_market_params(market_id);
 
     // Run checks.
-    assert(market_params.min_spread == params.min_spread, 'Min spread');
+    assert(market_params.fee_rate == params.fee_rate, 'Fee rate');
     assert(market_params.range == params.range, 'Range');
     assert(market_params.max_delta == params.max_delta, 'Max delta');
     assert(market_params.max_skew == params.max_skew, 'Max skew');
@@ -145,7 +145,7 @@ fn test_queue_and_set_market_params_with_delay_first_initialisation() {
 
     // Run checks.
     let params = default_market_params();
-    assert(market_params.min_spread == params.min_spread, 'Min spread');
+    assert(market_params.fee_rate == params.fee_rate, 'Fee rate');
     assert(market_params.range == params.range, 'Range');
     assert(market_params.max_delta == params.max_delta, 'Max delta');
     assert(market_params.max_skew == params.max_skew, 'Max skew');
@@ -212,7 +212,7 @@ fn test_update_queued_market_params() {
     // Queue market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = MarketParams {
-        min_spread: 987,
+        fee_rate: 987,
         range: 12345,
         max_delta: 676,
         max_skew: 9989,
@@ -225,7 +225,7 @@ fn test_update_queued_market_params() {
 
     // Update queued market params.
     let updated_params = MarketParams {
-        min_spread: 123,
+        fee_rate: 123,
         range: 456,
         max_delta: 789,
         max_skew: 987,
@@ -238,7 +238,7 @@ fn test_update_queued_market_params() {
 
     // Run checks.
     let queued_params = repl_solver.queued_market_params(market_id);
-    assert(queued_params.min_spread == updated_params.min_spread, 'Min spread');
+    assert(queued_params.fee_rate == updated_params.fee_rate, 'Fee rate');
     assert(queued_params.range == updated_params.range, 'Range');
     assert(queued_params.max_delta == updated_params.max_delta, 'Max delta');
     assert(queued_params.max_skew == updated_params.max_skew, 'Max skew');
@@ -262,7 +262,7 @@ fn test_cancel_queued_market_params() {
     // Queue market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = MarketParams {
-        min_spread: 987,
+        fee_rate: 987,
         range: 12345,
         max_delta: 676,
         max_skew: 9989,
@@ -278,7 +278,7 @@ fn test_cancel_queued_market_params() {
 
     // Run checks.
     let queued_params = repl_solver.queued_market_params(market_id);
-    assert(queued_params.min_spread == 0, 'Min spread');
+    assert(queued_params.fee_rate == 0, 'Fee rate');
     assert(queued_params.range == 0, 'Range');
     assert(queued_params.max_delta == 0, 'Max delta');
     assert(queued_params.max_skew == 0, 'Max skew');
@@ -306,7 +306,7 @@ fn test_set_market_params_skips_delay_for_private_vault() {
     // Queue and immediately set market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = MarketParams {
-        min_spread: 987,
+        fee_rate: 987,
         range: 12345,
         max_delta: 676,
         max_skew: 9989,
@@ -342,7 +342,7 @@ fn test_queue_market_params_emits_event() {
     // Queue market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = MarketParams {
-        min_spread: 987,
+        fee_rate: 987,
         range: 12345,
         max_delta: 676,
         max_skew: 9989,
@@ -362,7 +362,7 @@ fn test_queue_market_params_emits_event() {
                     ReplicatingSolver::Event::QueueMarketParams(
                         ReplicatingSolver::QueueMarketParams {
                             market_id,
-                            min_spread: params.min_spread,
+                            fee_rate: params.fee_rate,
                             range: params.range,
                             max_delta: params.max_delta,
                             max_skew: params.max_skew,
@@ -421,7 +421,7 @@ fn test_set_market_params_emits_event() {
     // Set market params.
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let params = MarketParams {
-        min_spread: 987,
+        fee_rate: 987,
         range: 12345,
         max_delta: 676,
         max_skew: 9989,
@@ -442,7 +442,7 @@ fn test_set_market_params_emits_event() {
                     ReplicatingSolver::Event::SetMarketParams(
                         ReplicatingSolver::SetMarketParams {
                             market_id,
-                            min_spread: params.min_spread,
+                            fee_rate: params.fee_rate,
                             range: params.range,
                             max_delta: params.max_delta,
                             max_skew: params.max_skew,
@@ -614,7 +614,7 @@ fn test_set_market_params_fails_if_not_owner() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let repl_solver = IReplicatingSolverDispatcher { contract_address: solver.contract_address };
     let mut params = repl_solver.market_params(market_id);
-    params.min_spread = 987;
+    params.fee_rate = 987;
     repl_solver.queue_market_params(market_id, params);
 
     // Set market params.
@@ -641,7 +641,7 @@ fn test_set_market_params_fails_before_delay_complete() {
     // Queue new market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
     let mut params = default_market_params();
-    params.min_spread = 987;
+    params.fee_rate = 987;
     repl_solver.queue_market_params(market_id, params);
 
     // Set new market params.
@@ -689,7 +689,7 @@ fn test_set_market_params_fails_none_queued_null_params() {
     // Queue market params.
     start_warp(CheatTarget::One(solver.contract_address), 1000);
     let mut params = default_market_params();
-    params.min_spread = 987;
+    params.fee_rate = 987;
     repl_solver.queue_market_params(market_id, params);
 
     // Update queued market params to zero.

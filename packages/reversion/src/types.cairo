@@ -33,7 +33,8 @@ pub impl TrendDisplay of Display<Trend> {
 
 // Solver market parameters.
 //
-// * `fee_rate` - swap fee rate charged on amount in
+// * `fee_rate` - swap fee rate applied to swap amounts
+// * `range` - default range of spread applied on an imbalanced portfolio
 // * `base_currency_id` - Pragma oracle base currency id
 // * `quote_currency_id` - Pragma oracle quote currency id
 // * `min_sources` - minimum number of oracle data sources aggregated
@@ -41,6 +42,8 @@ pub impl TrendDisplay of Display<Trend> {
 #[derive(Drop, Copy, Serde, PartialEq, Default)]
 pub struct MarketParams {
     pub fee_rate: u16,
+    pub range: u32,
+    // Oracle params
     pub base_currency_id: felt252,
     pub quote_currency_id: felt252,
     pub min_sources: u32,
@@ -72,7 +75,7 @@ pub struct ModelParams {
 //
 // * `slab0` - base currency id
 // * `slab1` - quote currency id
-// * `slab2` - `fee_rate` (16) + `min_sources` (32) + `max_age` (64)
+// * `slab2` - `fee_rate` + `range` + `min_sources` + `max_age`
 #[derive(starknet::Store)]
 pub struct PackedMarketParams {
     pub slab0: felt252,

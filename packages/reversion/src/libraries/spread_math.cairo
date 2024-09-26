@@ -17,9 +17,9 @@ use haiko_lib::constants::MAX_LIMIT_SHIFTED;
 //
 // # Arguments
 // `is_bid` - whether to calculate bid or ask position
-// `spread` - spread to apply to the oracle price
-// `oracle_price` - current oracle price (base 10e28)
-// `amount` - token amount in reserve
+// `lower_limit` - lower limit price
+// `upper_limit` - upper limit price
+// `amount` - amount to swap
 // 
 // # Returns
 // `position` - virtual liquidity position to execute swap over

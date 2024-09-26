@@ -49,20 +49,19 @@ fn test_deposit_initial_public_both_tokens() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
     let quote_amount = to_e18(500);
-    let (base_deposit, quote_deposit, shares) = solver
-        .deposit_initial(market_id, base_amount, quote_amount);
+    let dep_init = solver.deposit_initial(market_id, base_amount, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
 
     // Run checks.
-    assert(base_deposit == base_amount, 'Base deposit');
-    assert(quote_deposit == quote_amount, 'Quote deposit');
-    assert(shares != 0, 'Shares');
+    assert(dep_init.base_amount == base_amount, 'Base deposit');
+    assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
+    assert(dep_init.shares != 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
-    assert(aft.vault_lp_bal == bef.vault_lp_bal + shares, 'LP shares');
-    assert(aft.vault_total_bal == bef.vault_total_bal + shares, 'LP total shares');
+    assert(aft.vault_lp_bal == bef.vault_lp_bal + dep_init.shares, 'LP shares');
+    assert(aft.vault_total_bal == bef.vault_total_bal + dep_init.shares, 'LP total shares');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
     assert(aft.market_state.quote_reserves == quote_amount, 'Quote reserve');
     assert(
@@ -98,20 +97,19 @@ fn test_deposit_initial_public_base_token_only() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
     let quote_amount = 0;
-    let (base_deposit, quote_deposit, shares) = solver
-        .deposit_initial(market_id, base_amount, quote_amount);
+    let dep_init = solver.deposit_initial(market_id, base_amount, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
 
     // Run checks.
-    assert(base_deposit == base_amount, 'Base deposit');
-    assert(quote_deposit == quote_amount, 'Quote deposit');
-    assert(shares != 0, 'Shares');
+    assert(dep_init.base_amount == base_amount, 'Base deposit');
+    assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
+    assert(dep_init.shares != 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
-    assert(aft.vault_lp_bal == bef.vault_lp_bal + shares, 'LP shares');
-    assert(aft.vault_total_bal == bef.vault_total_bal + shares, 'LP total shares');
+    assert(aft.vault_lp_bal == bef.vault_lp_bal + dep_init.shares, 'LP shares');
+    assert(aft.vault_total_bal == bef.vault_total_bal + dep_init.shares, 'LP total shares');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
     assert(aft.market_state.quote_reserves == quote_amount, 'Quote reserve');
     assert(
@@ -147,20 +145,19 @@ fn test_deposit_initial_public_quote_token_only() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = 0;
     let quote_amount = to_e18(500);
-    let (base_deposit, quote_deposit, shares) = solver
-        .deposit_initial(market_id, base_amount, quote_amount);
+    let dep_init = solver.deposit_initial(market_id, base_amount, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
 
     // Run checks.
-    assert(base_deposit == base_amount, 'Base deposit');
-    assert(quote_deposit == quote_amount, 'Quote deposit');
-    assert(shares != 0, 'Shares');
+    assert(dep_init.base_amount == base_amount, 'Base deposit');
+    assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
+    assert(dep_init.shares != 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
-    assert(aft.vault_lp_bal == bef.vault_lp_bal + shares, 'LP shares');
-    assert(aft.vault_total_bal == bef.vault_total_bal + shares, 'LP total shares');
+    assert(aft.vault_lp_bal == bef.vault_lp_bal + dep_init.shares, 'LP shares');
+    assert(aft.vault_total_bal == bef.vault_total_bal + dep_init.shares, 'LP total shares');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
     assert(aft.market_state.quote_reserves == quote_amount, 'Quote reserve');
     assert(
@@ -190,16 +187,15 @@ fn test_deposit_initial_private_both_tokens() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
     let quote_amount = to_e18(500);
-    let (base_deposit, quote_deposit, shares) = solver
-        .deposit_initial(market_id, base_amount, quote_amount);
+    let dep_init = solver.deposit_initial(market_id, base_amount, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
 
     // Run checks.
-    assert(base_deposit == base_amount, 'Base deposit');
-    assert(quote_deposit == quote_amount, 'Quote deposit');
-    assert(shares == 0, 'Shares');
+    assert(dep_init.base_amount == base_amount, 'Base deposit');
+    assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
+    assert(dep_init.shares == 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
@@ -239,16 +235,15 @@ fn test_deposit_initial_private_base_token_only() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = to_e18(100);
     let quote_amount = 0;
-    let (base_deposit, quote_deposit, shares) = solver
-        .deposit_initial(market_id, base_amount, quote_amount);
+    let dep_init = solver.deposit_initial(market_id, base_amount, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
 
     // Run checks.
-    assert(base_deposit == base_amount, 'Base deposit');
-    assert(quote_deposit == quote_amount, 'Quote deposit');
-    assert(shares == 0, 'Shares');
+    assert(dep_init.base_amount == base_amount, 'Base deposit');
+    assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
+    assert(dep_init.shares == 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');
@@ -288,16 +283,15 @@ fn test_deposit_initial_private_quote_token_only() {
     start_prank(CheatTarget::One(solver.contract_address), owner());
     let base_amount = 0;
     let quote_amount = to_e18(500);
-    let (base_deposit, quote_deposit, shares) = solver
-        .deposit_initial(market_id, base_amount, quote_amount);
+    let dep_init = solver.deposit_initial(market_id, base_amount, quote_amount);
 
     // Snapshot after.
     let aft = snapshot(solver, market_id, base_token, quote_token, vault_token, owner());
 
     // Run checks.
-    assert(base_deposit == base_amount, 'Base deposit');
-    assert(quote_deposit == quote_amount, 'Quote deposit');
-    assert(shares == 0, 'Shares');
+    assert(dep_init.base_amount == base_amount, 'Base deposit');
+    assert(dep_init.quote_amount == quote_amount, 'Quote deposit');
+    assert(dep_init.shares == 0, 'Shares');
     assert(aft.lp_base_bal == bef.lp_base_bal - base_amount, 'LP base bal');
     assert(aft.lp_quote_bal == bef.lp_quote_bal - quote_amount, 'LP quote bal');
     assert(aft.market_state.base_reserves == base_amount, 'Base reserve');

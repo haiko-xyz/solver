@@ -7,12 +7,13 @@ use haiko_solver_core::{
         ISolver::{ISolverDispatcher, ISolverDispatcherTrait},
         IVaultToken::{IVaultTokenDispatcher, IVaultTokenDispatcherTrait},
     },
-    tests::helpers::utils::before,
+    tests::helpers::utils::before, types::SwapParams
 };
 
 // Haiko imports.
+use haiko_lib::math::math;
 use haiko_lib::helpers::params::{owner, alice, bob};
-use haiko_lib::helpers::utils::{to_e18, approx_eq};
+use haiko_lib::helpers::utils::{to_e18, approx_eq, approx_eq_pct};
 
 // External imports.
 use snforge_std::{
@@ -38,14 +39,28 @@ fn test_get_balances() {
     let quote_owner = to_e18(500);
     solver.deposit_initial(market_id, base_owner, quote_owner);
 
+    // Swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: true,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let swap = solver.swap(market_id, params);
+
     // Get balances.
-    let (base, quote) = solver.get_balances(market_id);
-    assert(base == base_owner, 'Base amount');
-    assert(quote == quote_owner, 'Quote amount');
+    let bal = solver.get_balances(market_id);
+    assert(bal.base_amount == base_owner - swap.amount_out, 'Base amount');
+    assert(bal.quote_amount == quote_owner + swap.amount_in - swap.fees, 'Quote amount');
+    assert(bal.base_fees == 0, 'Base fees');
+    assert(bal.quote_fees == swap.fees, 'Quote fees');
 }
 
 #[test]
-fn test_get_balances_array() {
+fn test_get_user_balances() {
     let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
         before(
         true
@@ -53,69 +68,56 @@ fn test_get_balances_array() {
 
     // Deposit initial.
     start_prank(CheatTarget::One(solver.contract_address), owner());
-    let base_owner = to_e18(100);
-    let quote_owner = to_e18(500);
-    solver.deposit_initial(market_id, base_owner, quote_owner);
-
-    // Get balances.
-    let balances = solver.get_balances_array(array![market_id].span());
-    let (base, quote) = *balances.at(0);
-    assert(base == base_owner, 'Base amount');
-    assert(quote == quote_owner, 'Quote amount');
-}
-
-#[test]
-fn test_get_user_balances_array() {
-    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
-        before(
-        true
-    );
-
-    // Deposit initial.
-    start_prank(CheatTarget::One(solver.contract_address), owner());
-    let base_owner = to_e18(100);
-    let quote_owner = to_e18(500);
-    let (_, _, shares_owner) = solver.deposit_initial(market_id, base_owner, quote_owner);
+    let base_deposit_owner = to_e18(100);
+    let quote_deposit_owner = to_e18(500);
+    solver.deposit_initial(market_id, base_deposit_owner, quote_deposit_owner);
 
     // Deposit.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let base_alice = to_e18(50);
-    let quote_alice = to_e18(250);
-    let (_, _, shares_alice) = solver.deposit(market_id, base_alice, quote_alice);
+    let base_deposit_alice = to_e18(50);
+    let quote_deposit_alice = to_e18(250);
+    solver.deposit(market_id, base_deposit_alice, quote_deposit_alice);
+
+    // Swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: true,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let swap = solver.swap(market_id, params);
 
     // Get balances.
-    let balances = solver
-        .get_user_balances_array(
-            array![owner(), alice()].span(), array![market_id, market_id].span(),
-        );
-    let (base_owner_, quote_owner_, shares_owner_, shares_total_owner) = *balances.at(0);
-    let (base_alice_, quote_alice_, shares_alice_, shares_total_alice) = *balances.at(1);
+    let bal_owner = solver.get_user_balances(owner(), market_id);
+    let bal_alice = solver.get_user_balances(alice(), market_id);
 
     // Run checks.
-    assert(base_owner == base_owner_, 'Base owner');
-    assert(quote_owner == quote_owner_, 'Quote owner');
-    assert(shares_owner == shares_owner_, 'Shares owner');
-    assert(shares_total_owner == shares_owner + shares_alice, 'Shares total owner');
-    assert(approx_eq(base_alice, base_alice_, 10), 'Base alice');
-    assert(approx_eq(quote_alice, quote_alice_, 10), 'Quote alice');
-    assert(shares_alice == shares_alice_, 'Shares alice');
-    assert(shares_total_alice == shares_owner + shares_alice, 'Shares total alice');
-}
-
-////////////////////////////////
-// TESTS - Fail cases
-////////////////////////////////
-
-#[test]
-#[should_panic(expected: ('LengthMismatch',))]
-fn test_get_user_balances_array_length_mismatch() {
-    let (_base_token, _quote_token, _vault_token_class, solver, market_id, _vault_token_opt) =
-        before(
-        true
+    assert(swap.amount_in == params.amount, 'Amount in');
+    assert(swap.fees == math::mul_div(params.amount, 50, 10000, true), 'Fees');
+    assert(
+        approx_eq(bal_owner.base_amount, base_deposit_owner - swap.amount_out * 2 / 3, 1),
+        'Base owner'
     );
-
-    solver
-        .get_user_balances_array(
-            array![owner(), alice(), bob()].span(), array![market_id, market_id].span(),
-        );
+    assert(
+        approx_eq(
+            bal_owner.quote_amount, quote_deposit_owner + (swap.amount_in - swap.fees) * 2 / 3, 1
+        ),
+        'Quote owner'
+    );
+    assert(bal_owner.base_fees == 0, 'Base fees owner');
+    assert(approx_eq_pct(bal_owner.quote_fees, swap.fees * 2 / 3, 10), 'Quote fees owner');
+    assert(
+        approx_eq(bal_alice.base_amount, base_deposit_alice - swap.amount_out / 3, 1), 'Base alice'
+    );
+    assert(
+        approx_eq(
+            bal_alice.quote_amount, quote_deposit_alice + (swap.amount_in - swap.fees) / 3, 1
+        ),
+        'Quote alice'
+    );
+    assert(bal_alice.base_fees == 0, 'Base fees alice');
+    assert(approx_eq_pct(bal_alice.quote_fees, swap.fees / 3, 10), 'Quote fees alice');
 }

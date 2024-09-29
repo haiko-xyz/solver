@@ -19,16 +19,26 @@ starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STAR
 # Replicating Solver
 starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STARKNET_KEYSTORE '/Users/parkyeung/dev/solver/target/dev/haiko_solver_replicating_ReplicatingSolver.contract_class.json'
 
+# Reversion Solver
+starkli declare --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT --keystore $STARKNET_KEYSTORE '/Users/parkyeung/dev/solver/target/dev/haiko_solver_reversion_ReversionSolver.contract_class.json'
+
 #############################
 # Deploy contracts
 #############################
 
 # Replicating Solver
-starkli deploy --rpc $STARKNET_RPC $REPLICATING_SOLVER_CLASS $OWNER $ORACLE $VAULT_TOKEN_CLASS
+starkli deploy --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT $REPLICATING_SOLVER_CLASS $OWNER $ORACLE $VAULT_TOKEN_CLASS
+
+# Reversion Solver
+starkli deploy --rpc $STARKNET_RPC --account $STARKNET_ACCOUNT $REVERSION_SOLVER_CLASS $OWNER $ORACLE $VAULT_TOKEN_CLASS
 
 #############################
 # Deployments
 #############################
+
+# 29 September 2024
+export REVERSION_SOLVER=0x02dadd1655400572bbbec530ce4f7c4a691566614cf3d3a3ca602387bc852f33
+export REVERSION_SOLVER_CLASS=0x05d2e696c1205022d858d44ca15fda56e374acd63cd90c601648079f8c3c2fc3
 
 # 12 September 2024
 export REPLICATING_SOLVER=0x0674de91977103c1902f35007263d0f5fdaa90aaf0959493c2721e23df108a4c

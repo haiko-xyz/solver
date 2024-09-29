@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { getSwapAmounts } from "../../src/libraries/SwapLib";
+import { getSwapAmounts } from "../libraries/SwapLib";
 
 type SwapParams = {
   isBuy: boolean;
@@ -18,7 +18,7 @@ const testGetSwapAmounts = () => {
       isBuy: true,
       exactInput: true,
       amount: 1,
-      swapFeeRate: 0.005,
+      swapFeeRate: 0,
       thresholdSqrtPrice: null,
       thresholdAmount: null,
       lowerSqrtPrice: 0.8 ** 0.5,

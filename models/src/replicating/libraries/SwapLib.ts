@@ -1,7 +1,10 @@
 import Decimal from "decimal.js";
-import { PRECISION, ROUNDING } from "../config";
-import { liquidityToBase, liquidityToQuote } from "../math/liquidityMath";
-import { grossToNet, netToFee } from "../math/feeMath";
+import { PRECISION, ROUNDING } from "../../common/config";
+import {
+  liquidityToBase,
+  liquidityToQuote,
+} from "../../common/math/liquidityMath";
+import { grossToNet, netToFee } from "../../common/math/feeMath";
 
 export const getSwapAmounts = ({
   isBuy,

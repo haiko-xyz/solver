@@ -106,33 +106,50 @@ pub fn get_virtual_position_range(
     // Note that if a position should be disabled, ranges are returned as 0.
     match trend {
         Trend::Up => {
-            if new_bid_upper > bid_upper {
+            if new_bid_upper >= bid_upper {
+                // println!("[case U1] new_bid_upper: {}, new_bid_upper: {}", new_bid_upper, new_bid_upper);
                 (new_bid_lower, new_bid_upper, 0, 0)
             } else if new_bid_upper <= bid_lower {
+                // println!("[case U2] new_bid_upper: {}, bid_lower: {}", new_bid_upper, bid_lower);
                 (0, 0, bid_lower, bid_upper)
             } else {
-                // Handle special case: oracle limit + spread can exceed bid upper, so disable ask
-                if new_ask_lower >= bid_upper {
-                    (bid_lower, new_bid_upper, 0, 0)
-                } else {
-                    (bid_lower, new_bid_upper, new_ask_lower, bid_upper)
-                }
+                // println!(
+                //     "[case U3] bid_lower: {}, new_bid_upper: {}, new_ask_lower: {}, bid_upper: {}",
+                //     bid_lower,
+                //     new_bid_upper,
+                //     new_ask_lower,
+                //     bid_upper
+                // );
+                (bid_lower, new_bid_upper, new_ask_lower, bid_upper)
             }
         },
         Trend::Down => {
-            if new_ask_lower < ask_lower {
+            if new_ask_lower <= ask_lower {
+                // println!("[case D1] new_ask_lower: {}, new_ask_upper: {}", new_ask_lower, new_ask_upper);
                 (0, 0, new_ask_lower, new_ask_upper)
             } else if new_ask_lower >= ask_upper {
+                // println!("[case D2] new_ask_lower: {}, ask_upper: {}", new_ask_lower, ask_upper);
                 (ask_lower, ask_upper, 0, 0)
             } else {
-                // Handle special case: oracle limit - spread can be less than ask lower, disable bid
-                if new_bid_upper <= ask_lower {
-                    (0, 0, new_ask_lower, ask_upper)
-                } else {
-                    (ask_lower, new_bid_upper, new_ask_lower, ask_upper)
-                }
+                // println!(
+                //     "[case D3] ask_lower: {}, new_bid_upper: {}, new_ask_lower: {}, ask_upper: {}",
+                //     ask_lower,
+                //     new_bid_upper,
+                //     new_ask_lower,
+                //     ask_upper
+                // );
+                (ask_lower, new_bid_upper, new_ask_lower, ask_upper)
             }
         },
-        Trend::Range => (new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper),
+        Trend::Range => {
+            // println!(
+            //     "[case R] new_bid_lower: {}, new_bid_upper: {}, new_ask_lower: {}, new_ask_upper: {}",
+            //     new_bid_lower,
+            //     new_bid_upper,
+            //     new_ask_lower,
+            //     new_ask_upper
+            // );
+            (new_bid_lower, new_bid_upper, new_ask_lower, new_ask_upper)
+        },
     }
 }

@@ -1,5 +1,6 @@
 // Core lib imports.
 use starknet::ContractAddress;
+use core::fmt::{Display, Formatter, Error};
 
 ////////////////////////////////
 // TYPES
@@ -18,18 +19,28 @@ pub enum Trend {
     Down,
 }
 
+pub impl TrendDisplay of Display<Trend> {
+    fn fmt(self: @Trend, ref f: Formatter) -> Result<(), Error> {
+        let str: ByteArray = match self {
+            Trend::Range => "Range",
+            Trend::Up => "Up",
+            Trend::Down => "Down",
+        };
+        f.buffer.append(@str);
+        Result::Ok(())
+    }
+}
+
 // Solver market parameters.
 //
 // * `fee_rate` - swap fee rate applied to swap amounts
-// * `range` - default range of spread applied on an imbalanced portfolio
 // * `base_currency_id` - Pragma oracle base currency id
 // * `quote_currency_id` - Pragma oracle quote currency id
 // * `min_sources` - minimum number of oracle data sources aggregated
 // * `max_age` - maximum age of quoted oracle price
-#[derive(Drop, Copy, Serde, PartialEq)]
+#[derive(Drop, Copy, Serde, PartialEq, Default)]
 pub struct MarketParams {
     pub fee_rate: u16,
-    pub range: u32,
     // Oracle params
     pub base_currency_id: felt252,
     pub quote_currency_id: felt252,
@@ -39,17 +50,19 @@ pub struct MarketParams {
 
 // Trend state.
 //
-// * `trend` - trend classification
 // * `cached_price` - last cached oracle price, used in combination with trend to decide whether to quote for bid, ask or both
 //    1. if price trends up and price > cached price, quote for bids only (and update cached price)
 //    2. if price trends down and price < cached price, quote for asks only (and update cached price)
 //    3. otherwise, quote for both
 // * `cached_decimals` - decimals of cached oracle price
+// * `range` - range of virtual liquidity position
+// * `trend` - trend classification
 #[derive(Drop, Copy, Serde, PartialEq)]
-pub struct TrendState {
-    pub trend: Trend,
+pub struct ModelParams {
     pub cached_price: u128,
     pub cached_decimals: u32,
+    pub range: u32,
+    pub trend: Trend,
 }
 
 ////////////////////////////////
@@ -70,9 +83,9 @@ pub struct PackedMarketParams {
 
 // Packed trend state.
 //
-// * `slab0` - `cached_price` (128) + `cached_decimals` (32) + `trend` (2)
+// * `slab0` - `cached_price` (128) + `cached_decimals` (32) + range (32) + `trend` (2)
 //             where `trend` is encoded as: `0` (Range), `1` (Up), `2` (Down) 
 #[derive(starknet::Store)]
-pub struct PackedTrendState {
+pub struct PackedModelParams {
     pub slab0: felt252,
 }

@@ -2,8 +2,8 @@ import {
   getDelta,
   getVirtualPosition,
   getVirtualPositionRange,
-} from "../../src/libraries/SpreadMath";
-import { getSwapAmounts } from "../../src/libraries/SwapLib";
+} from "../libraries/SpreadMath";
+import { getSwapAmounts } from "../libraries/SwapLib";
 
 const isBuy = false;
 const exactInput = false;

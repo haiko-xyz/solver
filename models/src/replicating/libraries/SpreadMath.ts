@@ -1,7 +1,10 @@
 import Decimal from "decimal.js";
-import { PRECISION, ROUNDING } from "../config";
-import { baseToLiquidity, quoteToLiquidity } from "../math/liquidityMath";
-import { limitToSqrtPrice, priceToLimit } from "../math/priceMath";
+import { PRECISION, ROUNDING } from "../../common/config";
+import {
+  baseToLiquidity,
+  quoteToLiquidity,
+} from "../../common/math/liquidityMath";
+import { limitToSqrtPrice, priceToLimit } from "../../common/math/priceMath";
 
 type PositionInfo = {
   lowerSqrtPrice: Decimal.Value;

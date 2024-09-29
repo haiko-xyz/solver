@@ -3,8 +3,8 @@ import {
   getDelta,
   getVirtualPosition,
   getVirtualPositionRange,
-} from "../../src/libraries/SpreadMath";
-import { getSwapAmounts } from "../../src/libraries/SwapLib";
+} from "../libraries/SpreadMath";
+import { getSwapAmounts } from "../libraries/SwapLib";
 
 type Case = {
   description: string;
@@ -328,19 +328,19 @@ const testSwapCases = () => {
         upperLimit,
         isBuy ? baseReserves : quoteReserves
       );
-      const { amountIn, amountOut, fees } = getSwapAmounts(
+      const { amountIn, amountOut, fees } = getSwapAmounts({
         isBuy,
         exactInput,
         amount,
-        Number(feeRate) / 10000,
+        swapFeeRate: Number(feeRate) / 10000,
         thresholdSqrtPrice,
         thresholdAmount,
         lowerSqrtPrice,
         upperSqrtPrice,
         liquidity,
         baseDecimals,
-        quoteDecimals
-      );
+        quoteDecimals,
+      });
       console.log({
         amountIn: new Decimal(amountIn).mul(1e18).toFixed(0),
         amountOut: new Decimal(amountOut).mul(1e18).toFixed(0),

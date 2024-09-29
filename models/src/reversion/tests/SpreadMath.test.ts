@@ -2,7 +2,8 @@ import Decimal from "decimal.js";
 import {
   getVirtualPosition,
   getVirtualPositionRange,
-} from "../../src/libraries/SpreadMath";
+} from "../libraries/SpreadMath";
+import { Trend } from "../types";
 
 const testGetVirtualPositionCases = () => {
   const cases = [
@@ -49,87 +50,32 @@ const testGetVirtualPositionCases = () => {
 };
 
 const testGetVirtualPositionRangeCases = () => {
-  const baseDecimals = 18;
-  const quoteDecimals = 18;
-
   const cases = [
-    {
-      delta: 0,
-      range: 1,
-      oraclePrice: 1,
-    },
-    {
-      delta: 0,
-      range: 1000,
-      oraclePrice: 1,
-    },
-    {
-      delta: -100,
-      range: 1000,
-      oraclePrice: 1,
-    },
-    {
-      delta: 100,
-      range: 1000,
-      oraclePrice: 1,
-    },
-    {
-      delta: -5000,
-      range: 1000,
-      oraclePrice: 1,
-    },
-    {
-      delta: 5000,
-      range: 1000,
-      oraclePrice: 1,
-    },
-    {
-      delta: -7905625,
-      range: 1000,
-      oraclePrice: 1,
-    },
-    {
-      delta: 7905625,
-      range: 1000,
-      oraclePrice: 1,
-    },
-    {
-      delta: 0,
-      range: 1000,
-      oraclePrice: "0.0000000000000000000000000001",
-    },
-    {
-      delta: 0,
-      range: 1000,
-      oraclePrice:
-        "21445968470833706281754813411422482.6295263805072231182393896500",
-    },
+    getVirtualPositionRange(Trend.Up, 1000, 1, 1.1),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 1),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 0.995),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 0.99005),
+    getVirtualPositionRange(Trend.Up, 1000, 1, 0.95),
+    getVirtualPositionRange(Trend.Up, 1000, 0, 0.9),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 0.9),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 1),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 1.005),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 1.01006),
+    getVirtualPositionRange(Trend.Down, 1000, 1, 1.05),
+    getVirtualPositionRange(Trend.Down, 1000, 0, 1.1),
+    getVirtualPositionRange(Trend.Range, 1000, 1, 1),
+    getVirtualPositionRange(Trend.Range, 1000, 1, 1.5),
+    getVirtualPositionRange(Trend.Range, 1000, 1, 0.5),
   ];
 
   for (let i = 0; i < cases.length; i++) {
-    const c = cases[i];
+    const pos = cases[i];
     console.log(`Case ${i + 1}`);
-    const bid = getVirtualPositionRange(
-      true,
-      c.delta,
-      c.range,
-      c.oraclePrice,
-      baseDecimals,
-      quoteDecimals
-    );
-    const ask = getVirtualPositionRange(
-      false,
-      c.delta,
-      c.range,
-      c.oraclePrice,
-      baseDecimals,
-      quoteDecimals
-    );
     console.log({
-      bidLower: new Decimal(bid.lowerLimit).toFixed(0),
-      bidUpper: new Decimal(bid.upperLimit).toFixed(0),
-      askLower: new Decimal(ask.lowerLimit).toFixed(0),
-      askUpper: new Decimal(ask.upperLimit).toFixed(0),
+      bidLower: new Decimal(pos.bidLower).toFixed(0),
+      bidUpper: new Decimal(pos.bidUpper).toFixed(0),
+      askLower: new Decimal(pos.askLower).toFixed(0),
+      askUpper: new Decimal(pos.askUpper).toFixed(0),
     });
   }
 };

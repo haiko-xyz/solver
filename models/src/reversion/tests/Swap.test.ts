@@ -252,6 +252,9 @@ const testSwapCases = () => {
       trendCasesOverride,
     } = cases[i];
 
+    const baseDecimals = 18;
+    const quoteDecimals = 18;
+
     console.log(`Test Case ${description}`);
 
     // Loop through swap cases
@@ -269,21 +272,25 @@ const testSwapCases = () => {
         isBuy ? askUpper : bidUpper,
         isBuy ? baseReserves : quoteReserves
       );
-      const { amountIn, amountOut } = getSwapAmounts(
+      const { amountIn, amountOut, fees } = getSwapAmounts({
         isBuy,
         exactInput,
         amount,
+        swapFeeRate: feeRate,
         thresholdSqrtPrice,
         thresholdAmount,
         lowerSqrtPrice,
         upperSqrtPrice,
         liquidity,
-        feeRate
-      );
+        baseDecimals,
+        quoteDecimals,
+      });
       console.log(
         `    amountIn: ${green}${new Decimal(amountIn)
           .mul(1e18)
           .toFixed(0)}${reset}, amountOut: ${green}${new Decimal(amountOut)
+          .mul(1e18)
+          .toFixed(0)}${reset}, fees: ${green}${new Decimal(fees)
           .mul(1e18)
           .toFixed(0)}${reset}`
       );

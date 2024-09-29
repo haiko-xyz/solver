@@ -169,19 +169,8 @@ fn test_solver_e2e_public_market() {
 
     // Run checks.
     let res = solver.get_balances(market_id);
-    println!("base_reserves: {}, quote_reserves: {}", res.base_amount, res.quote_amount);
     let base_deposit_exp = to_e18(50);
     let quote_deposit_exp = to_e18(500);
-    println!(
-        "base_reserves_exp: {}, quote_reserves_exp: {}",
-        dep_init.base_amount + base_deposit_exp - swap.amount_out - wd.base_amount - base_fees,
-        dep_init.quote_amount
-            + quote_deposit_exp
-            + swap.amount_in
-            - swap.fees
-            - wd.quote_amount
-            - quote_fees
-    );
     assert(dep.base_amount == base_deposit_exp, 'Base deposit');
     assert(dep.quote_amount == quote_deposit_exp, 'Quote deposit');
     assert(dep.shares == dep_init.shares / 2, 'Shares');
@@ -189,8 +178,7 @@ fn test_solver_e2e_public_market() {
         res.base_amount == dep_init.base_amount
             + base_deposit_exp
             - swap.amount_out
-            - wd.base_amount
-            - base_fees,
+            - wd.base_amount,
         'Base reserves'
     );
     assert(
@@ -198,8 +186,7 @@ fn test_solver_e2e_public_market() {
             + quote_deposit_exp
             + swap.amount_in
             - swap.fees
-            - wd.quote_amount
-            - quote_fees,
+            - wd.quote_amount,
         'Quote reserves'
     );
 }

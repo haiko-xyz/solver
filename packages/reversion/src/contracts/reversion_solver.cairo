@@ -224,7 +224,8 @@ pub mod ReversionSolver {
             if model_params.trend == Trend::Up
                 && oracle_output.price > model_params.cached_price
                     || model_params.trend == Trend::Down
-                && oracle_output.price < model_params.cached_price {
+                && oracle_output.price < model_params.cached_price
+                    || model_params.cached_price == 0 {
                 model_params.cached_price = oracle_output.price;
                 model_params.cached_decimals = oracle_output.decimals;
                 self.model_params.write(market_id, model_params);

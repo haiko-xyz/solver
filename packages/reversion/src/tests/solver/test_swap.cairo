@@ -87,28 +87,28 @@ fn get_test_cases_1() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 90909090909090909146,
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 90909090909090909146,
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 111111111111111111027,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 111111111111111111027,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
             ]
                 .span(),
@@ -129,28 +129,28 @@ fn get_test_cases_1() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: to_e18(10),
                     amount_out: 50000084852067677296,
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(10),
                     amount_out: 998997611702025557,
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 1111107339914503129,
                     amount_out: to_e18(10),
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 101010443847319896836,
                     amount_out: to_e18(10),
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
             ]
                 .span(),
@@ -171,28 +171,28 @@ fn get_test_cases_1() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 9901054856275659172,
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 90909036314998803578,
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 1111103771282806034735,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 466588818773133962045136853193659825,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
             ]
                 .span(),
@@ -213,28 +213,28 @@ fn get_test_cases_1() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 99753708432456984326,
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 99753708432456984326,
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 100247510763823131034,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 100247510763823131034,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 0,
                 },
             ]
                 .span(),
@@ -261,28 +261,28 @@ fn get_test_cases_2() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 98758603689263513299,
-                    fees: 0, // TODO: fix amount
+                    fees: 999999999999999999
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 98758603689263513299,
-                    fees: 0, // TODO: fix amount
+                    fees: 1000000000000000000,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 101260111882649627307,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 1012601118826496273,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 101260111882649627307,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 1012601118826496273,
                 },
             ]
                 .span(),
@@ -303,28 +303,28 @@ fn get_test_cases_2() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 4999415848330513296,
-                    fees: 0, // TODO: fix amount
+                    fees: 49999999999999999999,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 493899555720718382442,
-                    fees: 0, // TODO: fix amount
+                    fees: 50000000000000000000,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 2004936970885156305832,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 1002468485442578152916,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 20049634597552599158,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount    
+                    fees: 10024817298776299579,
                 },
             ]
                 .span(),
@@ -345,28 +345,28 @@ fn get_test_cases_2() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: 103567170945545576580,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 1035671709455455765,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 103567170945545576580,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 1035671709455455765,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 103567170945545576580,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 1035671709455455765,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 103567170945545576580,
                     amount_out: to_e18(100),
-                    fees: 0, // TODO: fix amount
+                    fees: 1035671709455455765,
                 },
             ]
                 .span(),
@@ -387,28 +387,28 @@ fn get_test_cases_2() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: to_e18(100),
                     amount_out: 99000,
-                    fees: 0, // TODO: fix amount
+                    fees: 999999999999999999,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 1035681,
                     amount_out: 999999999999999999999,
-                    fees: 0, // TODO: fix amount
+                    fees: 10356,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 101259191588416392788627371401827001,
                     amount_out: 100000000000000000000,
-                    fees: 0, // TODO: fix amount
+                    fees: 1012591915884163927886273714018270,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 101261,
                     amount_out: 100000000000000000000,
-                    fees: 0, // TODO: fix amount
+                    fees: 1012,
                 },
             ]
                 .span(),
@@ -435,28 +435,28 @@ fn get_test_cases_3() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: 10356643015690,
                     amount_out: 999999999999999999999,
-                    fees: 0, // TODO: fix amount
+                    fees: 103566430156,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 100000000000000000000,
                     amount_out: 989992918767,
-                    fees: 0, // TODO: fix amount
+                    fees: 1000000000000000000,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 1012593875957,
                     amount_out: 99999999999999999999,
-                    fees: 0, // TODO: fix amount
+                    fees: 10125938759,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 10126083617468551702944516926,
                     amount_out: 100000000000000000000,
-                    fees: 0, // TODO: fix amount
+                    fees: 101260836174685517029445169,
                 },
             ]
                 .span(),
@@ -477,14 +477,14 @@ fn get_test_cases_3() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: 22288543558601668321,
                     amount_out: 21038779527378539768,
-                    fees: 0, // TODO: fix amount
+                    fees: 222885435586016683,
                 },
                 SwapCase {
                     is_buy: true,
                     exact_input: false,
                     amount_in: 22288543558601668321,
                     amount_out: 21038779527378539768,
-                    fees: 0, // TODO: fix amount
+                    fees: 222885435586016683,
                 },
             ]
                 .span(),
@@ -505,14 +505,14 @@ fn get_test_cases_3() -> Span<TestCase> {
                     exact_input: true,
                     amount_in: 24701345711211794538,
                     amount_out: 23199416574442336449,
-                    fees: 0, // TODO: fix amount
+                    fees: 247013457112117945,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: false,
                     amount_in: 24701345711211794538,
                     amount_out: 23199416574442336449,
-                    fees: 0, // TODO: fix amount
+                    fees: 247013457112117945,
                 },
             ]
                 .span(),
@@ -526,53 +526,53 @@ fn get_test_cases_3() -> Span<TestCase> {
             range: 5000,
             amount: to_e18(100),
             threshold_sqrt_price: Option::None(()),
-            threshold_amount: Option::Some(98650000000000000000),
+            threshold_amount: Option::Some(98750000000000000000),
             exp: array![
                 SwapCase {
                     is_buy: true,
                     exact_input: true,
                     amount_in: 99999999999999999999,
                     amount_out: 98758603689263513299,
-                    fees: 0, // TODO: fix amount
+                    fees: 999999999999999999,
                 },
                 SwapCase {
                     is_buy: false,
                     exact_input: true,
                     amount_in: 100000000000000000000,
                     amount_out: 98758603689263513299,
-                    fees: 0, // TODO: fix amount
+                    fees: 1000000000000000000,
                 },
             ]
                 .span(),
         },
-    // TestCase {
-    //     description: "13) Swap capped at threshold amount, exact output",
-    //     oracle_price: 1_00000000,
-    //     base_reserves: to_e18(1000),
-    //     quote_reserves: to_e18(1000),
-    //     fee_rate: 100,
-    //     range: 5000,
-    //     amount: to_e18(100),
-    //     threshold_sqrt_price: Option::None(()),
-    //     threshold_amount: Option::Some(101350000000000000000),
-    //     exp: array![
-    //         SwapCase {
-    //             is_buy: true,
-    //             exact_input: false,
-    //             amount_in: 101260111882649627307,
-    //             amount_out: 99999999999999999999,
-    //             fees: 0, // TODO: fix amount
-    //         },
-    //         SwapCase {
-    //             is_buy: false,
-    //             exact_input: false,
-    //             amount_in: 101260111882649627307,
-    //             amount_out: 100000000000000000000,
-    //             fees: 0, // TODO: fix amount
-    //         },
-    //     ]
-    //         .span(),
-    // },
+        TestCase {
+            description: "13) Swap capped at threshold amount, exact output",
+            oracle_price: 1_00000000,
+            base_reserves: to_e18(1000),
+            quote_reserves: to_e18(1000),
+            fee_rate: 100,
+            range: 5000,
+            amount: to_e18(100),
+            threshold_sqrt_price: Option::None(()),
+            threshold_amount: Option::Some(101500000000000000000),
+            exp: array![
+                SwapCase {
+                    is_buy: true,
+                    exact_input: false,
+                    amount_in: 101260111882649627307,
+                    amount_out: 99999999999999999999,
+                    fees: 1012601118826496273,
+                },
+                SwapCase {
+                    is_buy: false,
+                    exact_input: false,
+                    amount_in: 101260111882649627307,
+                    amount_out: 100000000000000000000,
+                    fees: 1012601118826496273,
+                },
+            ]
+                .span(),
+        },
     ];
     cases.span()
 }
@@ -698,7 +698,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                 } else {
                     assert(quote_up.amount_in == quote.amount_in, 'Quote in: uptrend');
                     assert(quote_up.amount_out == quote.amount_out, 'Quote out: uptrend');
-                    assert(quote_up.fees == 0, 'Quote fees: uptrend');
+                    assert(quote_up.fees == quote.fees, 'Quote fees: uptrend');
                 }
                 // Set downtrend and compare quotes.
                 rev_solver.set_model_params(market_id, Trend::Down, case.range);
@@ -724,7 +724,7 @@ fn run_swap_cases(cases: Span<TestCase>) {
                 } else {
                     assert(quote_down.amount_in == quote.amount_in, 'Quote in: downtrend');
                     assert(quote_down.amount_out == quote.amount_out, 'Quote out: downtrend');
-                    assert(quote_down.fees == 0, 'Quote fees: downtrend');
+                    assert(quote_down.fees == quote.fees, 'Quote fees: downtrend');
                 }
                 // Reset trend.
                 rev_solver.set_model_params(market_id, Trend::Range, case.range);
@@ -797,7 +797,7 @@ fn test_swap_cases_3() {
 }
 
 #[test]
-fn test_price_rises_above_last_cached_price_in_uptrend() {
+fn test_swap_price_rises_above_last_cached_price_in_uptrend() {
     let (
         _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
     ) =
@@ -833,14 +833,6 @@ fn test_price_rises_above_last_cached_price_in_uptrend() {
 
     // Swap again to update cached price.
     start_prank(CheatTarget::One(solver.contract_address), alice());
-    let params = SwapParams {
-        is_buy: false,
-        amount: to_e18(5),
-        exact_input: true,
-        threshold_sqrt_price: Option::None(()),
-        threshold_amount: Option::None(()),
-        deadline: Option::None(()),
-    };
     let swap = solver.swap(market_id, params);
 
     // Run checks.
@@ -848,11 +840,11 @@ fn test_price_rises_above_last_cached_price_in_uptrend() {
     assert(model_params.cached_price == 1050000000, 'Cached price');
     assert(swap.amount_in == to_e18(5), 'Amount in');
     assert(swap.amount_out > to_e18(50), 'Amount out');
-    assert(swap.fees == 0, 'Fees'); // TODO: fix amount
+    assert(swap.fees == 25000000000000000, 'Fees');
 }
 
 #[test]
-fn test_price_falls_below_last_cached_price_and_rises_again_in_uptrend() {
+fn test_swap_price_falls_below_last_cached_price_and_rises_again_in_uptrend() {
     let (
         _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
     ) =
@@ -882,7 +874,7 @@ fn test_price_falls_below_last_cached_price_and_rises_again_in_uptrend() {
     };
     solver.swap(market_id, params);
 
-    // Oracle price falls above last cached price.
+    // Oracle price falls below last cached price.
     start_prank(CheatTarget::One(solver.contract_address), owner());
     oracle.set_data_with_USD_hop('ETH', 'USDC', 950000000, 8, 999, 5); // 9.5
 
@@ -905,19 +897,756 @@ fn test_price_falls_below_last_cached_price_and_rises_again_in_uptrend() {
     // Swap again to update cached price.
     start_prank(CheatTarget::One(solver.contract_address), alice());
     let swap_2 = solver.swap(market_id, params);
-    println!("amount_in_2: {}, amount_out_2: {}", swap_2.amount_in, swap_2.amount_out);
 
     // Run checks.
     let model_params = rev_solver.model_params(market_id);
     assert(model_params.cached_price == 1000000000, 'Cached price');
     assert(swap_1.amount_in == to_e18(1), 'Amount in 1');
-    assert(swap_1.amount_out < to_e18(95) / 100, 'Amount out 1');
-    assert(swap_1.fees == 0, 'Fees 1'); // TODO: fix amount
+    assert(
+        swap_1.amount_out > to_e18(1) / 10 && swap_1.amount_out < to_e18(10) / 95, 'Amount out 1'
+    );
+    assert(swap_1.fees == 5000000000000000, 'Fees 1');
     assert(swap_2.amount_in == to_e18(1), 'Amount in 2');
     assert(
-        swap_2.amount_out > to_e18(95) / 1000 && swap_2.amount_out < to_e18(1) / 100, 'Amount out 2'
+        swap_2.amount_out > to_e18(1) / 10 && swap_2.amount_out < to_e18(10) / 99, 'Amount out 2'
     );
-    assert(swap_2.fees == 0, 'Fees 2'); // TODO: fix amount
+    assert(swap_2.fees == 5000000000000000, 'Fees 2');
+}
+
+#[test]
+fn test_swap_price_falls_below_bid_position_in_uptrend() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, Trend::Up, model_params.range);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let dep_init = solver.deposit_initial(market_id, to_e18(10), to_e18(100));
+
+    // Sell swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let mut params = SwapParams {
+        is_buy: false,
+        amount: to_e18(20),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let swap = solver.swap(market_id, params);
+
+    // Get reserves.
+    let res = solver.get_balances(market_id);
+
+    // Quote for buy and sell.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_sell = solver_hooks.quote(market_id, params);
+    params.is_buy = true;
+    let quote_buy = solver_hooks.quote(market_id, params);
+
+    // Run checks.
+    assert(
+        approx_eq(res.base_amount, dep_init.base_amount + swap.amount_in - swap.fees, 10),
+        'Base amount'
+    );
+    assert(approx_eq(res.quote_amount, 0, 10), 'Quote amount');
+    assert(swap.amount_in > to_e18(10), 'Amount in');
+    assert(approx_eq(swap.amount_out, to_e18(100), 10), 'Amount out');
+    assert(swap.fees > 50000000000000000, 'Fees');
+    assert(approx_eq(quote_sell.amount_in, 0, 10), 'Quote in sell');
+    assert(approx_eq(quote_sell.amount_out, 0, 10), 'Quote out sell');
+    assert(approx_eq(quote_sell.fees, 0, 10), 'Quote fees sell');
+    assert(approx_eq(quote_buy.amount_in, 0, 10), 'Quote in buy');
+    assert(approx_eq(quote_buy.amount_out, 0, 10), 'Quote out buy');
+    assert(approx_eq(quote_buy.fees, 0, 10), 'Quote fees buy');
+}
+
+#[test]
+fn test_swap_price_falls_below_last_cached_price_in_downtrend() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let mut model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, Trend::Down, model_params.range);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Sell buy to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, params);
+
+    // Oracle price falls below last cached price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 950000000, 8, 999, 5); // 9.5
+
+    // Swap again to update cached price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let swap = solver.swap(market_id, params);
+
+    // Run checks.
+    model_params = rev_solver.model_params(market_id);
+    assert(model_params.cached_price == 950000000, 'Cached price');
+    assert(swap.amount_in == to_e18(1), 'Amount in 1');
+    assert(
+        swap.amount_out > to_e18(1) / 10 && swap.amount_out < to_e18(105) / 1000, 'Amount out 1'
+    );
+    assert(swap.fees == 5000000000000000, 'Fees 1');
+}
+
+#[test]
+fn test_swap_price_rises_above_last_cached_price_and_falls_again_in_downtrend() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, Trend::Down, model_params.range);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Buy swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, params);
+
+    // Oracle price rises above last cached price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1050000000, 8, 999, 5); // 10.5
+
+    // Swap again to update cached price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let params = SwapParams {
+        is_buy: false,
+        amount: to_e18(5),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let swap_1 = solver.swap(market_id, params);
+
+    // Oracle price recovers.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1010000000, 8, 999, 5); // 10.1
+
+    // Swap again to update cached price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let swap_2 = solver.swap(market_id, params);
+
+    // Run checks.
+    let model_params = rev_solver.model_params(market_id);
+    assert(model_params.cached_price == 1000000000, 'Cached price');
+    assert(swap_1.amount_in == to_e18(5), 'Amount in 1');
+    assert(
+        swap_1.amount_out > to_e18(50) && swap_1.amount_out < to_e18(5 * 105) / 10, 'Amount out 1'
+    );
+    assert(swap_1.fees == 25000000000000000, 'Fees 1');
+    assert(swap_2.amount_in == to_e18(5), 'Amount in 2');
+    assert(
+        swap_2.amount_out > to_e18(50) && swap_2.amount_out < to_e18(5 * 101) / 10, 'Amount out 2'
+    );
+    assert(swap_2.fees == 25000000000000000, 'Fees 2');
+}
+
+#[test]
+fn test_swap_price_rises_above_ask_position_in_downtrend() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let model_params = rev_solver.model_params(market_id);
+    rev_solver.set_model_params(market_id, Trend::Down, model_params.range);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let dep_init = solver.deposit_initial(market_id, to_e18(10), to_e18(100));
+
+    // Buy swap.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let mut params = SwapParams {
+        is_buy: true,
+        amount: to_e18(200),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let swap = solver.swap(market_id, params);
+
+    // Get reserves.
+    let res = solver.get_balances(market_id);
+
+    // Quote for buy and sell.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_sell = solver_hooks.quote(market_id, params);
+    params.is_buy = false;
+    let quote_buy = solver_hooks.quote(market_id, params);
+
+    // Run checks.
+    assert(approx_eq(res.base_amount, 0, 10), 'Base amount');
+    assert(
+        approx_eq(res.quote_amount, dep_init.quote_amount + swap.amount_in - swap.fees, 10),
+        'Quote amount'
+    );
+    assert(swap.amount_in > to_e18(100), 'Amount in');
+    assert(approx_eq(swap.amount_out, to_e18(10), 10), 'Amount out');
+    assert(swap.fees > 500000000000000000, 'Fees');
+    assert(approx_eq(quote_sell.amount_in, 0, 10), 'Quote in sell');
+    assert(approx_eq(quote_sell.amount_out, 0, 10), 'Quote out sell');
+    assert(approx_eq(quote_sell.fees, 0, 10), 'Quote fees sell');
+    assert(approx_eq(quote_buy.amount_in, 0, 10), 'Quote in buy');
+    assert(approx_eq(quote_buy.amount_out, 0, 10), 'Quote out buy');
+    assert(approx_eq(quote_buy.fees, 0, 10), 'Quote fees buy');
+}
+
+#[test]
+fn test_swap_buying_then_selling_in_ranging_market_quoted_at_oracle_price() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Disable swap fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    let mut market_params = default_market_params();
+    market_params.fee_rate = 0;
+    rev_solver.queue_market_params(market_id, market_params);
+    rev_solver.set_market_params(market_id);
+
+    // Set range 1.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    rev_solver.set_model_params(market_id, Trend::Range, 1);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Oracle price falls.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 950000000, 8, 999, 5); // 9.5
+
+    // Buy.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let buy_params = SwapParams {
+        is_buy: true,
+        amount: to_e18(10),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let swap_1 = solver.swap(market_id, buy_params);
+
+    // Oracle price rises.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1050000000, 8, 999, 5); // 10.5
+
+    // Sell.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let sell_params = SwapParams {
+        is_buy: false,
+        amount: to_e18(2),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let swap_2 = solver.swap(market_id, sell_params);
+
+    // Oracle price returns to original.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 5); // 10
+
+    // Quote buy.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_buy = solver_hooks.quote(market_id, buy_params);
+    let quote_sell = solver_hooks.quote(market_id, sell_params);
+
+    // Run checks.
+    assert(approx_eq_pct(swap_1.amount_out, to_e18(10) * 10 / 95, 4), 'Amount out 1');
+    assert(approx_eq_pct(swap_2.amount_out, to_e18(2) * 105 / 10, 4), 'Amount out 2');
+    assert(approx_eq_pct(quote_buy.amount_out, to_e18(10) / 10, 4), 'Quote out buy');
+    assert(approx_eq_pct(quote_sell.amount_out, to_e18(2) * 10, 4), 'Quote out sell');
+}
+
+#[test]
+fn test_swap_trend_changes_from_uptrend_to_ranging() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    rev_solver.set_model_params(market_id, Trend::Up, 1);
+
+    // Disable swap fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = default_market_params();
+    market_params.fee_rate = 0;
+    rev_solver.queue_market_params(market_id, market_params);
+    rev_solver.set_market_params(market_id);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Oracle price falls.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 950000000, 8, 999, 5); // 9.5
+
+    // Swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let sell_params = SwapParams {
+        is_buy: false,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, sell_params);
+
+    // Reset oracle price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 5); // 10.5
+
+    // Snapshot cached price before.
+    let cached_price_bef = rev_solver.model_params(market_id).cached_price;
+
+    // Update trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    rev_solver.set_model_params(market_id, Trend::Range, 1);
+
+    // Snapshot cached price after.
+    let cached_price_aft = rev_solver.model_params(market_id).cached_price;
+
+    // Quote sell.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_sell = solver_hooks.quote(market_id, sell_params);
+
+    // Quote buy.
+    let buy_params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let quote_buy = solver_hooks.quote(market_id, buy_params);
+
+    // Run checks.
+    assert(cached_price_bef == 950000000, 'Cached price before');
+    assert(cached_price_aft == 1000000000, 'Cached price after');
+    assert(approx_eq_pct(quote_buy.amount_out, to_e18(1) / 10, 4), 'Quote out buy');
+    assert(approx_eq_pct(quote_sell.amount_out, to_e18(1) * 10, 4), 'Quote out sell');
+}
+
+#[test]
+fn test_swap_trend_changes_from_downtrend_to_ranging() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    rev_solver.set_model_params(market_id, Trend::Down, 1);
+
+    // Disable swap fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = default_market_params();
+    market_params.fee_rate = 0;
+    rev_solver.queue_market_params(market_id, market_params);
+    rev_solver.set_market_params(market_id);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Oracle price rises.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1050000000, 8, 999, 5); // 10.5
+
+    // Swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let buy_params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, buy_params);
+
+    // Reset oracle price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1000000000, 8, 999, 5); // 10
+
+    // Snapshot cached price before.
+    let cached_price_bef = rev_solver.model_params(market_id).cached_price;
+
+    // Update trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    rev_solver.set_model_params(market_id, Trend::Range, 1);
+
+    // Snapshot cached price after.
+    let cached_price_aft = rev_solver.model_params(market_id).cached_price;
+
+    // Quote buy.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_buy = solver_hooks.quote(market_id, buy_params);
+
+    // Quote sell.
+    let sell_params = SwapParams {
+        is_buy: false,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let quote_sell = solver_hooks.quote(market_id, sell_params);
+
+    // Run checks.
+    assert(cached_price_bef == 1050000000, 'Cached price before');
+    assert(cached_price_aft == 1000000000, 'Cached price after');
+    assert(approx_eq_pct(quote_buy.amount_out, to_e18(1) / 10, 4), 'Quote out buy');
+    assert(approx_eq_pct(quote_sell.amount_out, to_e18(1) * 10, 4), 'Quote out sell');
+}
+
+#[test]
+fn test_swap_trend_changes_from_uptrend_to_downtrend() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    rev_solver.set_model_params(market_id, Trend::Up, 1);
+
+    // Disable swap fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = default_market_params();
+    market_params.fee_rate = 0;
+    rev_solver.queue_market_params(market_id, market_params);
+    rev_solver.set_market_params(market_id);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let sell_params = SwapParams {
+        is_buy: false,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, sell_params);
+
+    // Lower oracle price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 950000000, 8, 999, 5); // 10
+
+    // Update trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    rev_solver.set_model_params(market_id, Trend::Down, 1);
+
+    // Snapshot cached price after.
+    let cached_price = rev_solver.model_params(market_id).cached_price;
+    // Quote sell.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_sell = solver_hooks.quote(market_id, sell_params);
+
+    // Quote buy.
+    let buy_params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let quote_buy = solver_hooks.quote(market_id, buy_params);
+
+    // Run checks.
+    let model_params = rev_solver.model_params(market_id);
+    assert(model_params.trend == Trend::Down, 'Trend');
+    assert(cached_price == 950000000, 'Cached price');
+    assert(approx_eq_pct(quote_buy.amount_out, to_e18(1) * 10 / 95, 4), 'Quote out buy');
+    assert(quote_sell.amount_out == 0, 'Quote out sell');
+}
+
+#[test]
+fn test_swap_trend_changes_from_downtrend_to_uptrend() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Set trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    rev_solver.set_model_params(market_id, Trend::Down, 1);
+
+    // Disable swap fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = default_market_params();
+    market_params.fee_rate = 0;
+    rev_solver.queue_market_params(market_id, market_params);
+    rev_solver.set_market_params(market_id);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let buy_params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, buy_params);
+
+    // Raise oracle price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1050000000, 8, 999, 5); // 10
+
+    // Update trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    rev_solver.set_model_params(market_id, Trend::Up, 1);
+
+    // Snapshot cached price after.
+    let cached_price = rev_solver.model_params(market_id).cached_price;
+
+    // Quote buy.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_buy = solver_hooks.quote(market_id, buy_params);
+
+    // Quote sell.
+    let sell_params = SwapParams {
+        is_buy: false,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let quote_sell = solver_hooks.quote(market_id, sell_params);
+
+    // Run checks.
+    let model_params = rev_solver.model_params(market_id);
+    assert(model_params.trend == Trend::Up, 'Trend');
+    assert(cached_price == 1050000000, 'Cached price');
+    assert(approx_eq_pct(quote_sell.amount_out, to_e18(1) * 105 / 10, 4), 'Quote out sell');
+    assert(quote_buy.amount_out == 0, 'Quote out buy');
+}
+
+#[test]
+fn test_swap_trend_changes_from_ranging_to_uptrend() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Disable swap fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = default_market_params();
+    market_params.fee_rate = 0;
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    rev_solver.queue_market_params(market_id, market_params);
+    rev_solver.set_market_params(market_id);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let buy_params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, buy_params);
+
+    // Raise oracle price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 1050000000, 8, 999, 5); // 10.5
+
+    // Update trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    rev_solver.set_model_params(market_id, Trend::Up, 1);
+
+    // Snapshot cached price after.
+    let cached_price = rev_solver.model_params(market_id).cached_price;
+
+    // Quote buy.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_buy = solver_hooks.quote(market_id, buy_params);
+
+    // Quote sell.
+    let sell_params = SwapParams {
+        is_buy: false,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let quote_sell = solver_hooks.quote(market_id, sell_params);
+
+    // Run checks.
+    let model_params = rev_solver.model_params(market_id);
+    assert(model_params.trend == Trend::Up, 'Trend');
+    assert(cached_price == 1050000000, 'Cached price');
+    assert(approx_eq_pct(quote_sell.amount_out, to_e18(1) * 105 / 10, 4), 'Quote out sell');
+    assert(quote_buy.amount_out == 0, 'Quote out buy');
+}
+
+#[test]
+fn test_swap_trend_changes_from_ranging_to_downtrend() {
+    let (
+        _base_token, _quote_token, oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Disable swap fees.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    let mut market_params = default_market_params();
+    market_params.fee_rate = 0;
+    let rev_solver = IReversionSolverDispatcher { contract_address: solver.contract_address };
+    rev_solver.queue_market_params(market_id, market_params);
+    rev_solver.set_market_params(market_id);
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(100), to_e18(1000));
+
+    // Swap to cache price.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let buy_params = SwapParams {
+        is_buy: true,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, buy_params);
+
+    // Lower oracle price.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    oracle.set_data_with_USD_hop('ETH', 'USDC', 950000000, 8, 999, 5); // 9.5
+
+    // Update trend.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    rev_solver.set_model_params(market_id, Trend::Down, 1);
+
+    // Snapshot cached price after.
+    let cached_price = rev_solver.model_params(market_id).cached_price;
+
+    // Quote buy.
+    let solver_hooks = ISolverHooksDispatcher { contract_address: solver.contract_address };
+    let quote_buy = solver_hooks.quote(market_id, buy_params);
+
+    // Quote sell.
+    let sell_params = SwapParams {
+        is_buy: false,
+        amount: to_e18(1),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let quote_sell = solver_hooks.quote(market_id, sell_params);
+
+    // Run checks.
+    let model_params = rev_solver.model_params(market_id);
+    assert(model_params.trend == Trend::Down, 'Trend');
+    assert(cached_price == 950000000, 'Cached price');
+    assert(approx_eq_pct(quote_buy.amount_out, to_e18(1) * 10 / 95, 4), 'Quote out sell');
+    assert(quote_sell.amount_out == 0, 'Quote out buy');
 }
 
 ////////////////////////////////
@@ -1153,4 +1882,64 @@ fn test_after_swap_fails_for_non_solver_caller() {
         deadline: Option::None(()),
     };
     solver_hooks.after_swap(market_id, params);
+}
+
+#[test]
+#[should_panic(expected: ('AmountZero',))]
+fn test_swap_sell_exhausts_bid_liquidity_and_prevents_further_sell_swaps() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(10), to_e18(100));
+
+    // Swap sell to exhaust bid liquidity.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let swap_params = SwapParams {
+        is_buy: false,
+        amount: to_e18(20),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, swap_params);
+
+    // Try to swap again.
+    solver.swap(market_id, swap_params);
+}
+
+#[test]
+#[should_panic(expected: ('AmountZero',))]
+fn test_swap_buy_exhausts_ask_liquidity_and_prevents_further_buy_swaps() {
+    let (
+        _base_token, _quote_token, _oracle, _vault_token_class, solver, market_id, _vault_token_opt
+    ) =
+        before(
+        false
+    );
+
+    // Deposit initial.
+    start_prank(CheatTarget::One(solver.contract_address), owner());
+    solver.deposit_initial(market_id, to_e18(10), to_e18(100));
+
+    // Swap buy to exhaust ask liquidity.
+    start_prank(CheatTarget::One(solver.contract_address), alice());
+    let swap_params = SwapParams {
+        is_buy: true,
+        amount: to_e18(200),
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    solver.swap(market_id, swap_params);
+
+    // Try to swap again.
+    solver.swap(market_id, swap_params);
 }

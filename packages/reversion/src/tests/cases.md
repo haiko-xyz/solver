@@ -126,5 +126,5 @@ Sequential cases
 - `Success` Swap after trend change from downtrend to uptrend
 - `Success` Swap after trend change from ranging to uptrend
 - `Success` Swap after trend change from ranging to downtrend
-- `Fail` Swap sell exhausts bid liquidity and prevents further sell swaps
-- `Fail` Swap buy exhausts ask liquidity and prevents further buy swaps
+- `Fail` Swap sell exhausts bid liquidity and prevents further sell swaps (TODO)
+- `Fail` Swap buy exhausts ask liquidity and prevents further buy swaps (TODO)

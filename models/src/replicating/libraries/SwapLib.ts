@@ -51,7 +51,12 @@ export const getSwapAmounts = ({
     ? Decimal.max(thresholdSqrtPrice, scaledLowerSqrtPrice)
     : scaledLowerSqrtPrice;
 
-  const { amountIn, amountOut, fees, nextSqrtPrice } = computeSwapAmount({
+  const {
+    amountIn: netAmountIn,
+    amountOut,
+    fees,
+    nextSqrtPrice,
+  } = computeSwapAmount({
     currSqrtPrice: startSqrtPrice,
     targetSqrtPrice,
     liquidity,
@@ -60,19 +65,24 @@ export const getSwapAmounts = ({
     exactInput,
   });
 
-  const grossAmountIn = new Decimal(amountIn).add(fees);
+  const amountIn =
+    nextSqrtPrice !== targetSqrtPrice &&
+    new Decimal(liquidity).gt(0) &&
+    exactInput
+      ? amount
+      : new Decimal(netAmountIn).add(fees);
 
   if (thresholdAmount) {
     if (exactInput) {
       if (amountOut < thresholdAmount)
         throw new Error("Threshold amount not met");
     } else {
-      if (grossAmountIn > thresholdAmount)
+      if (amountIn > thresholdAmount)
         throw new Error("Threshold amount exceeded");
     }
   }
 
-  return { amountIn: grossAmountIn, amountOut, fees };
+  return { amountIn, amountOut, fees };
 };
 
 export const computeSwapAmount = ({

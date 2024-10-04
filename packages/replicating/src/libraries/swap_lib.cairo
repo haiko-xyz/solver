@@ -49,7 +49,7 @@ pub fn get_swap_amounts(
     };
 
     // Compute swap amounts.
-    let (amount_in, amount_out, fees, _) = compute_swap_amounts(
+    let (net_amount_in, amount_out, fees, next_sqrt_price) = compute_swap_amounts(
         start_sqrt_price,
         target_sqrt_price,
         position.liquidity,
@@ -58,7 +58,17 @@ pub fn get_swap_amounts(
         swap_params.exact_input,
     );
 
-    (amount_in + fees, amount_out, fees)
+    // If liquidity is sufficient to fill entire swap amount, we want to make sure the
+    // requested amount is fully consumed for exact input case. 
+    let amount_in = if next_sqrt_price != target_sqrt_price
+        && position.liquidity != 0
+        && swap_params.exact_input {
+        swap_params.amount
+    } else {
+        net_amount_in + fees
+    };
+
+    (amount_in, amount_out, fees)
 }
 
 // Compute amounts swapped and new price after swapping between two prices.
@@ -72,7 +82,7 @@ pub fn get_swap_amounts(
 // * `exact_input` - whether swap amount is exact input or output
 //  
 // # Returns
-// * `amount_in` - amount of tokens swapped in
+// * `net_amount_in` - net amount of tokens swapped in
 // * `amount_out` - amount of tokens swapped out
 // * `fee_amount` - amount of fees
 // * `next_sqrt_price` - next sqrt price

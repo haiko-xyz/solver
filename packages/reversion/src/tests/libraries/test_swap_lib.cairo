@@ -104,6 +104,24 @@ fn test_get_swap_amounts_ask_threshold_sqrt_price() {
     );
 }
 
+#[test]
+fn test_swap_amount_always_consumes_full_input_if_sufficient_liquidity() {
+    let swap_params = SwapParams {
+        is_buy: true,
+        amount: 9268910,
+        exact_input: true,
+        threshold_sqrt_price: Option::None(()),
+        threshold_amount: Option::None(()),
+        deadline: Option::None(()),
+    };
+    let position = PositionInfo {
+        lower_sqrt_price: to_e18(6100), upper_sqrt_price: to_e18(6500), liquidity: to_e18_u128(1),
+    };
+    let swap_fee_rate = 50;
+    let (amount_in, _, _) = get_swap_amounts(swap_params, swap_fee_rate, position);
+    assert(amount_in == swap_params.amount, 'Swap amount');
+}
+
 ////////////////////////////////
 // TESTS - compute_swap_amounts
 ////////////////////////////////
